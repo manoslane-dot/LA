@@ -1,22 +1,23 @@
-import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
-import { env } from "@/env";
-import { appRouter } from "@/server/api/root";
-import { createTRPCContext } from "@/server/api/trpc";
+import { postRouter } from "@/server/api/routers/post";
+import { createCallerFactory, createTRPCRouter } from "@/server/api/trpc";
 
-const handler = (req: Request) =>
-  fetchRequestHandler({
-    endpoint: "/api/trpc",
-    req,
-    router: appRouter,
-    createContext: () => createTRPCContext({ req }),
-    onError:
-      env.NODE_ENV === "development"
-        ? ({ path, error }) => {
-            console.error(
-              `❌ tRPC failed on ${path ?? "<no-path>"}: ${error.message}`
-            );
-          }
-        : undefined,
-  });
+/**
+ * This is the primary router for your server.
+ *
+ * All routers added in /api/routers should be manually added here.
+ */
+export const appRouter = createTRPCRouter({
+  post: postRouter,
+});
 
-export { handler as GET, handler as POST };
+// export type definition of API
+export type AppRouter = typeof appRouter;
+
+/**
+ * Create a server-side caller for the tRPC API.
+ * @example
+ * const trpc = createCaller(createContext);
+ * const res = await trpc.post.all();
+ *       ^? Post[]
+ */
+export const createCaller = createCallerFactory(appRouter);
