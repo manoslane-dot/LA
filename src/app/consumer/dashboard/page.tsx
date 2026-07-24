@@ -20,7 +20,7 @@ interface PurchaseRequest {
   product_title: string;
   requested_quantity: number;
   status: 'pending' | 'confirmed' | 'ready' | 'rejected';
-  products: { unit: string; price: number }[] | null;
+  products: { unit: string; price: number } | null;
 }
 
 const requestStatusLabels: Record<PurchaseRequest['status'], string> = {
@@ -250,8 +250,8 @@ export default function ConsumerDashboard() {
             {requests.length === 0 ? <p className="text-sm text-stone-500">Δεν έχετε στείλει ακόμη αίτημα σε παραγωγό.</p> : (
               <ul className="divide-y divide-stone-200">
                 {requests.map((request) => {
-                  const unit = request.products?.[0]?.unit ?? '';
-                  const unitPrice = request.products?.[0]?.price ?? 0;
+                  const unit = request.products?.unit ?? '';
+                  const unitPrice = request.products?.price ?? 0;
                   const totalCost = request.requested_quantity * unitPrice;
                   return (
                     <li key={request.id} className="flex flex-wrap items-center justify-between gap-2 p-3 text-sm">
