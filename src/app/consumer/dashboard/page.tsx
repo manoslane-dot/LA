@@ -93,23 +93,16 @@ export default function ConsumerDashboard() {
   useEffect(() => {
     const loadDashboard = async () => {
       setLoading(true);
-
-      // Public products are visible to all visitors.
+      // Fetch products for everyone
       await fetchProducts();
 
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
+      const { data: { session } } = await supabase.auth.getSession();
       if (session) {
+        // If logged in, fetch user-specific data
         setBuyerId(session.user.id);
         setBuyerEmail(session.user.email ?? null);
         await fetchRequests(session.user.id);
-      } else {
-        setBuyerId(null);
-        setBuyerEmail(null);
       }
-
       setLoading(false);
     };
 
