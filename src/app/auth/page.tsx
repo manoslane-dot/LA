@@ -2,8 +2,17 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
+import GoogleSignInButton from './GoogleSignInButton';
+
+const allowedDomains = ['gmail.com', 'outlook.com', 'yahoo.com', 'icloud.com', 'proton.me', 'hotmail.com'];
+
+function validateEmailDomain(email: string): boolean {
+  const domain = email.split('@')[1]?.toLowerCase();
+  if (!domain) return false;
+  return allowedDomains.includes(domain);
+}
 
 export default function AuthPage() {
   const router = useRouter();
@@ -12,11 +21,16 @@ export default function AuthPage() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const supabase = createClient();
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setErrorMsg('');
+    setSuccessMsg('');
+    setShowForgotPassword(false);
 
     if (isLogin) {
       // Σύνδεση
@@ -27,12 +41,19 @@ export default function AuthPage() {
 
       if (error) {
         setErrorMsg(error.message);
+        setShowForgotPassword(true);
       } else {
         // Αν συνδεθεί επιτυχώς, τον πηγαίνουμε στο dashboard του αγρότη/πωλητή
         router.push('/farmer/dashboard');
       }
     } else {
       // Εγγραφή
+      if (!validateEmailDomain(email)) {
+        setErrorMsg('Παρακαλώ χρησιμοποιήστε ένα έγκυρο email (π.χ. Gmail, Outlook, Yahoo, iCloud, Proton).');
+        setLoading(false);
+        return;
+      }
+
       const { error } = await supabase.auth.signUp({
         email,
         password,
@@ -45,6 +66,29 @@ export default function AuthPage() {
         setIsLogin(true);
       }
     }
+    setLoading(false);
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email) {
+      setErrorMsg('Συμπλήρωσε πρώτα το email σου για να στείλουμε email αλλαγής κωδικού.');
+      return;
+    }
+
+    setLoading(true);
+    setErrorMsg('');
+    setSuccessMsg('');
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/reset-password`,
+    });
+
+    if (error) {
+      setErrorMsg(error.message);
+    } else {
+      setSuccessMsg('Στάλθηκε email επαναφοράς κωδικού. Έλεγξε το inbox σου.');
+    }
+
     setLoading(false);
   };
 
@@ -65,6 +109,12 @@ export default function AuthPage() {
         {errorMsg && (
           <div className="mb-4 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md text-sm">
             {errorMsg}
+          </div>
+        )}
+
+        {successMsg && (
+          <div className="mb-4 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md text-sm">
+            {successMsg}
           </div>
         )}
 
@@ -100,6 +150,28 @@ export default function AuthPage() {
           >
             {loading ? 'Επεξεργασία...' : isLogin ? 'Σύνδεση' : 'Εγγραφή'}
           </button>
+
+          {isLogin && showForgotPassword && (
+            <button
+              type="button"
+              onClick={handleForgotPassword}
+              disabled={loading}
+              className="w-full text-sm text-green-700 hover:underline font-medium text-left"
+            >
+              Ξέχασα τον κωδικό μου
+            </button>
+          )}
+
+          <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="bg-white px-2 text-gray-500">ή</span>
+            </div>
+          </div>
+
+          <GoogleSignInButton />
         </form>
 
         <div className="mt-6 text-center">

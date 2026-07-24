@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { useEffect, useState, useCallback } from 'react';
+import { createClient } from '@/lib/supabase/client';
 
 interface Product {
   id: number;
@@ -17,12 +17,9 @@ export default function ConsumerDashboard() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [successMsg, setSuccessMsg] = useState('');
+  const supabase = createClient();
 
-  useEffect(() => {
-    void fetchProducts();
-  }, []);
-
-  async function fetchProducts() {
+  const fetchProducts = useCallback(async () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
@@ -40,7 +37,11 @@ export default function ConsumerDashboard() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [supabase]);
+
+  useEffect(() => {
+    void fetchProducts();
+  }, [fetchProducts]);
 
   const handleOrder = (title: string) => {
     setSuccessMsg(`Επιτυχής παραγγελία για: ${title}! Ο παραγωγός ειδοποιήθηκε.`);
