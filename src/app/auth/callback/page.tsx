@@ -3,6 +3,7 @@
 import { Suspense, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { resolvePostLoginRedirect, resolveRoleFromIntent } from '@/lib/auth/roleRouting';
 import { saveLoginPreference } from '@/lib/auth/sessionPersistence';
 
 function AuthCallbackContent() {
@@ -25,10 +26,26 @@ function AuthCallbackContent() {
 
       if (session) {
         const redirectUrl = searchParams.get('redirectUrl');
+        const intendedRole = resolveRoleFromIntent(searchParams.get('role'), redirectUrl);
+        let resolvedRole = session.user.user_metadata?.role;
+
+        if (intendedRole && resolvedRole !== intendedRole) {
+          const { data: updateData, error: updateError } = await supabase.auth.updateUser({
+            data: { role: intendedRole },
+          });
+
+          if (updateError) {
+            console.error('Auth callback role update error', updateError);
+          } else {
+            resolvedRole = updateData.user?.user_metadata?.role;
+          }
+        }
+
         const remember = searchParams.get('remember') !== '0';
-        const safeRedirectUrl = redirectUrl && redirectUrl.startsWith('/') && !redirectUrl.startsWith('//')
-          ? redirectUrl
-          : '/consumer/dashboard';
+        const safeRedirectUrl = resolvePostLoginRedirect({
+          requestedRedirectUrl: redirectUrl,
+          userRole: resolvedRole ?? intendedRole,
+        });
 
         saveLoginPreference(remember);
         router.replace(safeRedirectUrl);

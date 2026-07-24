@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { saveLoginPreference } from '@/lib/auth/sessionPersistence';
+import { resolvePostLoginRedirect, resolveRoleFromIntent } from '@/lib/auth/roleRouting';
 import Link from 'next/link';
 import GoogleSignInButton from './GoogleSignInButton';
 
@@ -38,11 +39,11 @@ function AuthForm() {
       } = await supabase.auth.getSession();
 
       if (session) {
-        const redirectUrl = searchParams.get('redirectUrl');
-        const safeRedirectUrl = redirectUrl && redirectUrl.startsWith('/') && !redirectUrl.startsWith('//')
-          ? redirectUrl
-          : '/consumer/dashboard';
-        router.replace(safeRedirectUrl);
+        const nextUrl = resolvePostLoginRedirect({
+          requestedRedirectUrl: searchParams.get('redirectUrl'),
+          userRole: session.user.user_metadata?.role,
+        });
+        router.replace(nextUrl);
         return;
       }
 
@@ -78,7 +79,7 @@ function AuthForm() {
 
     if (isLogin) {
       // Σύνδεση
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
@@ -87,10 +88,27 @@ function AuthForm() {
         setErrorMsg(error.message);
         setShowForgotPassword(true);
       } else {
+        const intendedRole = resolveRoleFromIntent(
+          searchParams.get('role'),
+          searchParams.get('redirectUrl'),
+        );
+
+        if (intendedRole) {
+          const { error: roleUpdateError } = await supabase.auth.updateUser({
+            data: { role: intendedRole },
+          });
+
+          if (roleUpdateError) {
+            console.error('Σφάλμα ενημέρωσης ρόλου:', roleUpdateError.message);
+          }
+        }
+
         saveLoginPreference(rememberMe);
-        const redirectUrl = searchParams.get('redirectUrl');
-        // Ανακατεύθυνση στο consumer dashboard by default, εκτός αν ορίζεται αλλιώς.
-        router.push(redirectUrl || '/consumer/dashboard');
+        const nextUrl = resolvePostLoginRedirect({
+          requestedRedirectUrl: searchParams.get('redirectUrl'),
+          userRole: intendedRole ?? data.user?.user_metadata?.role,
+        });
+        router.push(nextUrl);
       }
     } else {
       // Εγγραφή
@@ -231,6 +249,7 @@ function AuthForm() {
           <GoogleSignInButton
             redirectUrl={searchParams.get('redirectUrl') ?? '/consumer/dashboard'}
             rememberMe={rememberMe}
+            role={searchParams.get('role') ?? undefined}
           />
         </form>
 

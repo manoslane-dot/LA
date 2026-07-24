@@ -5,6 +5,12 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ShoppingBag, ClipboardList, LogOut, Leaf } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import {
+  clearLoginPreference,
+  ensureLoginPreferenceInitialized,
+  shouldLogoutOnAppClose,
+} from '@/lib/auth/sessionPersistence';
+import { getDashboardForRole, normalizeUserRole } from '@/lib/auth/roleRouting';
 
 interface Product {
   id: number;
@@ -22,6 +28,8 @@ interface PurchaseRequest {
   product_title: string;
   requested_quantity: number;
   status: 'pending' | 'confirmed' | 'ready' | 'rejected';
+  unit_at_request: string;
+  unit_price_at_request: number;
   products: { unit: string; price: number } | { unit: string; price: number }[] | null;
 }
 
@@ -87,7 +95,7 @@ export default function ConsumerDashboard() {
   const fetchRequests = useCallback(async (userId: string) => {
     const { data, error } = await supabase
       .from('purchase_requests')
-      .select('id, product_id, product_title, requested_quantity, status, products(unit,price)')
+      .select('id, product_id, product_title, requested_quantity, status, unit_at_request, unit_price_at_request, products(unit,price)')
       .eq('buyer_id', userId)
       .order('created_at', { ascending: false });
 
@@ -105,6 +113,30 @@ export default function ConsumerDashboard() {
       if (!session) {
         router.push('/auth');
         return;
+      }
+
+      ensureLoginPreferenceInitialized();
+      if (shouldLogoutOnAppClose()) {
+        clearLoginPreference();
+        await supabase.auth.signOut();
+        router.push('/auth');
+        return;
+      }
+
+      const currentRole = normalizeUserRole(session.user.user_metadata?.role);
+      if (currentRole === 'farmer') {
+        router.replace(getDashboardForRole('farmer'));
+        return;
+      }
+
+      if (!currentRole) {
+        const { error: roleUpdateError } = await supabase.auth.updateUser({
+          data: { role: 'consumer' },
+        });
+
+        if (roleUpdateError) {
+          console.error('Σφάλμα ενημέρωσης ρόλου καταναλωτή:', roleUpdateError.message);
+        }
       }
 
       setLoading(true);
@@ -155,6 +187,8 @@ export default function ConsumerDashboard() {
       buyer_id: buyerId,
       buyer_email: buyerEmail,
       requested_quantity: quantity,
+      unit_at_request: selectedProduct.unit,
+      unit_price_at_request: selectedProduct.price,
       message: message.trim() || null,
     });
 
@@ -173,11 +207,19 @@ export default function ConsumerDashboard() {
   };
 
   const handleLogout = async () => {
+    clearLoginPreference();
     await supabase.auth.signOut();
     router.replace('/auth');
   };
 
   const getRequestProductDetails = (request: PurchaseRequest): { unit: string; price: number } => {
+    if (request.unit_at_request && request.unit_price_at_request !== null) {
+      return {
+        unit: request.unit_at_request,
+        price: Number(request.unit_price_at_request) || 0,
+      };
+    }
+
     const relatedProduct = Array.isArray(request.products)
       ? request.products[0]
       : request.products;

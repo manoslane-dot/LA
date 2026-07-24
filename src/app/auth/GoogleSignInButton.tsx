@@ -1,6 +1,7 @@
 'use client';
 
 import { createClient } from '@/lib/supabase/client';
+import { resolveRoleFromIntent, sanitizeRedirectUrl } from '@/lib/auth/roleRouting';
 
 const GoogleIcon = () => (
   <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -26,21 +27,24 @@ const GoogleIcon = () => (
 type GoogleSignInButtonProps = {
   redirectUrl?: string;
   rememberMe?: boolean;
+  role?: string;
 };
 
 export default function GoogleSignInButton({
   redirectUrl = '/consumer/dashboard',
   rememberMe = true,
+  role,
 }: GoogleSignInButtonProps) {
   const supabase = createClient();
   const handleGoogleLogin = async () => {
-    const safeRedirectUrl = redirectUrl.startsWith('/') ? redirectUrl : '/consumer/dashboard';
+    const safeRedirectUrl = sanitizeRedirectUrl(redirectUrl) ?? '/consumer/dashboard';
     const rememberParam = rememberMe ? '1' : '0';
+    const roleParam = resolveRoleFromIntent(role, safeRedirectUrl) ?? 'consumer';
 
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?redirectUrl=${encodeURIComponent(safeRedirectUrl)}&remember=${rememberParam}`,
+        redirectTo: `${window.location.origin}/auth/callback?redirectUrl=${encodeURIComponent(safeRedirectUrl)}&remember=${rememberParam}&role=${roleParam}`,
       },
     });
   };

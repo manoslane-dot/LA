@@ -15,7 +15,7 @@ export default function RoleSelectionPage() {
 
         <div className="mt-8 space-y-3">
           <Link
-            href="/auth?redirectUrl=/consumer/dashboard"
+            href="/auth?role=consumer&redirectUrl=/consumer/dashboard"
             className="flex w-full items-center justify-between rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-left transition hover:bg-emerald-100"
           >
             <span className="flex items-center gap-3">
@@ -26,7 +26,7 @@ export default function RoleSelectionPage() {
           </Link>
 
           <Link
-            href="/auth?redirectUrl=/farmer/dashboard"
+            href="/auth?role=farmer&redirectUrl=/farmer/dashboard"
             className="flex w-full items-center justify-between rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-left transition hover:bg-amber-100"
           >
             <span className="flex items-center gap-3">

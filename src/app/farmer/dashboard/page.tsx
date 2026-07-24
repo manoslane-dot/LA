@@ -10,6 +10,7 @@ import {
   ensureLoginPreferenceInitialized,
   shouldLogoutOnAppClose,
 } from '@/lib/auth/sessionPersistence';
+import { getDashboardForRole, normalizeUserRole } from '@/lib/auth/roleRouting';
 
 interface Crop {
   id: string;
@@ -29,13 +30,16 @@ interface Product {
 
 interface PurchaseRequest {
   id: number;
+  product_id: number | null;
   product_title: string;
   buyer_email: string | null;
   requested_quantity: number;
   message: string | null;
   status: 'pending' | 'confirmed' | 'ready' | 'rejected';
   created_at: string;
-  products: { unit: string; price: number }[] | null;
+  unit_at_request: string;
+  unit_price_at_request: number;
+  products: { unit: string; price: number } | { unit: string; price: number }[] | null;
 }
 
 const requestStatusLabels: Record<PurchaseRequest['status'], string> = {
@@ -107,7 +111,7 @@ export default function FarmerDashboard() {
   const fetchRequests = useCallback(async (farmerId: string) => {
     const { data, error } = await supabase
       .from('purchase_requests')
-      .select('id, product_title, buyer_email, requested_quantity, message, status, created_at, products(unit,price)')
+      .select('id, product_id, product_title, buyer_email, requested_quantity, message, status, created_at, unit_at_request, unit_price_at_request, products(unit,price)')
       .eq('farmer_id', farmerId)
       .order('created_at', { ascending: false });
 
@@ -133,6 +137,22 @@ export default function FarmerDashboard() {
         await supabase.auth.signOut();
         router.push('/auth');
         return;
+      }
+
+      const currentRole = normalizeUserRole(session.user.user_metadata?.role);
+      if (currentRole === 'consumer') {
+        router.replace(getDashboardForRole('consumer'));
+        return;
+      }
+
+      if (!currentRole) {
+        const { error: roleUpdateError } = await supabase.auth.updateUser({
+          data: { role: 'farmer' },
+        });
+
+        if (roleUpdateError) {
+          console.error('Σφάλμα ενημέρωσης ρόλου αγρότη:', roleUpdateError.message);
+        }
       }
       
       setUserEmail(session.user.email ?? 'Πωλητής');
@@ -260,11 +280,49 @@ export default function FarmerDashboard() {
     router.replace('/auth');
   };
 
+  const getRequestProductDetails = (request: PurchaseRequest): { unit: string; price: number } => {
+    if (request.unit_at_request && request.unit_price_at_request !== null) {
+      return {
+        unit: request.unit_at_request,
+        price: Number(request.unit_price_at_request) || 0,
+      };
+    }
+
+    const relatedProduct = Array.isArray(request.products)
+      ? request.products[0]
+      : request.products;
+
+    if (relatedProduct) {
+      return {
+        unit: relatedProduct.unit ?? '',
+        price: Number(relatedProduct.price) || 0,
+      };
+    }
+
+    const productFromList = products.find((product) => product.id === request.product_id);
+    if (productFromList) {
+      return {
+        unit: productFromList.unit ?? '',
+        price: Number(productFromList.price) || 0,
+      };
+    }
+
+    return { unit: '', price: 0 };
+  };
+
   const activeProducts = products.filter((product) => product.status.toLowerCase().includes('ενεργ')).length;
   const estimatedInventoryValue = products.reduce(
     (total, product) => total + product.price * product.quantity,
     0,
   );
+  const estimatedOpenRequestsRevenue = requests.reduce((total, request) => {
+    if (request.status !== 'pending' && request.status !== 'confirmed') {
+      return total;
+    }
+
+    const { price } = getRequestProductDetails(request);
+    return total + request.requested_quantity * price;
+  }, 0);
   const formatCurrency = (value: number) => new Intl.NumberFormat('el-GR', {
     style: 'currency',
     currency: 'EUR',
@@ -330,7 +388,7 @@ export default function FarmerDashboard() {
             <a href="#new-product" className="inline-flex items-center justify-center gap-2 rounded-md bg-emerald-700 hover:bg-emerald-800 text-white px-4 py-2.5 text-sm font-semibold transition-colors"><Plus className="h-4 w-4" />Νέο προϊόν</a>
           </section>
 
-          <section className="grid grid-cols-1 sm:grid-cols-3 gap-4" aria-label="Στατιστικά προϊόντων">
+          <section className="grid grid-cols-1 sm:grid-cols-4 gap-4" aria-label="Στατιστικά προϊόντων">
             <article className="border border-stone-200 bg-white p-5">
               <div className="flex justify-between"><div><p className="text-sm font-medium text-stone-500">Συνολικά προϊόντα</p><p className="mt-2 text-3xl font-bold">{products.length}</p></div><Package className="h-5 w-5 text-emerald-700" /></div>
             </article>
@@ -339,6 +397,9 @@ export default function FarmerDashboard() {
             </article>
             <article className="border border-stone-200 bg-white p-5">
               <div className="flex justify-between"><div><p className="text-sm font-medium text-stone-500">Αξία αποθέματος</p><p className="mt-2 text-2xl font-bold">{formatCurrency(estimatedInventoryValue)}</p></div><CircleDollarSign className="h-5 w-5 text-sky-700" /></div>
+            </article>
+            <article className="border border-stone-200 bg-white p-5">
+              <div className="flex justify-between"><div><p className="text-sm font-medium text-stone-500">Εκτιμώμενο κέρδος από ανοιχτά αιτήματα</p><p className="mt-2 text-2xl font-bold">{formatCurrency(estimatedOpenRequestsRevenue)}</p></div><CircleDollarSign className="h-5 w-5 text-emerald-700" /></div>
             </article>
           </section>
           
@@ -502,8 +563,9 @@ export default function FarmerDashboard() {
                     <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                       <div>
                         {(() => {
-                          const unit = request.products?.[0]?.unit ?? '';
-                          const unitPrice = request.products?.[0]?.price ?? 0;
+                          const productDetails = getRequestProductDetails(request);
+                          const unit = productDetails.unit;
+                          const unitPrice = productDetails.price;
                           const totalCost = request.requested_quantity * unitPrice;
 
                           return (

@@ -22,6 +22,10 @@ create index if not exists purchase_requests_buyer_id_idx on public.purchase_req
 
 alter table public.purchase_requests enable row level security;
 
+drop policy if exists "buyers create their purchase requests" on public.purchase_requests;
+drop policy if exists "participants view their purchase requests" on public.purchase_requests;
+drop policy if exists "farmers update their purchase requests" on public.purchase_requests;
+
 create policy "buyers create their purchase requests"
   on public.purchase_requests for insert to authenticated
   with check (
