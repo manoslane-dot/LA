@@ -20,6 +20,7 @@ interface PurchaseRequest {
   product_title: string;
   requested_quantity: number;
   status: 'pending' | 'confirmed' | 'ready' | 'rejected';
+  products: { unit: string }[] | null;
 }
 
 const requestStatusLabels: Record<PurchaseRequest['status'], string> = {
@@ -27,6 +28,20 @@ const requestStatusLabels: Record<PurchaseRequest['status'], string> = {
   confirmed: 'Επιβεβαιώθηκε',
   ready: 'Έτοιμο για παραλαβή',
   rejected: 'Δεν είναι διαθέσιμο',
+};
+
+const getUnitLabel = (unit: string, quantity: number): string => {
+  if (!unit) return '';
+  if (quantity === 1) {
+    return unit;
+  }
+  switch (unit) {
+    case 'κιλό': return 'κιλά';
+    case 'τεμάχιο': return 'τεμάχια';
+    case 'λίτρο': return 'λίτρα';
+    case 'ματσάκι': return 'ματσάκια';
+    default: return unit;
+  }
 };
 
 export default function ConsumerDashboard() {
@@ -63,7 +78,7 @@ export default function ConsumerDashboard() {
   const fetchRequests = useCallback(async (userId: string) => {
     const { data, error } = await supabase
       .from('purchase_requests')
-      .select('id, product_title, requested_quantity, status')
+      .select('id, product_title, requested_quantity, status, products(unit)')
       .eq('buyer_id', userId)
       .order('created_at', { ascending: false });
 
@@ -164,7 +179,7 @@ export default function ConsumerDashboard() {
               {products.map((item) => (
                 <article key={item.id} className="rounded-lg border border-emerald-200 bg-emerald-50/30 p-4">
                   <div className="mb-2 flex items-start justify-between gap-3"><h3 className="text-base font-bold text-stone-900">{item.title}</h3><span className="rounded-full bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-800">{item.status}</span></div>
-                  <p className="mb-4 text-sm text-stone-600">Τιμή: <strong className="text-emerald-700">{item.price} EUR / {item.unit}</strong><br />Διαθέσιμη ποσότητα: <strong>{item.quantity} {item.unit}</strong></p>
+                  <p className="mb-4 text-sm text-stone-600">Τιμή: <strong className="text-emerald-700">{item.price} EUR / {item.unit}</strong><br />Διαθέσιμη ποσότητα: <strong>{item.quantity} {getUnitLabel(item.unit, item.quantity)}</strong></p>
                   <button type="button" onClick={() => openRequestForm(item)} className="w-full rounded-md bg-emerald-700 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-emerald-800">Αποστολή αιτήματος</button>
                 </article>
               ))}
@@ -176,7 +191,15 @@ export default function ConsumerDashboard() {
           <h2 className="mb-3 text-lg font-semibold text-stone-800">Τα αιτήματά μου</h2>
           {requests.length === 0 ? <p className="text-sm text-stone-500">Δεν έχετε στείλει ακόμη αίτημα σε παραγωγό.</p> : (
             <ul className="divide-y divide-stone-200 rounded-md border border-stone-200">
-              {requests.map((request) => <li key={request.id} className="flex flex-wrap items-center justify-between gap-2 p-3 text-sm"><div><strong className="text-stone-900">{request.product_title}</strong><span className="text-stone-500"> · {request.requested_quantity} τεμάχια</span></div><span className="font-medium text-emerald-800">{requestStatusLabels[request.status]}</span></li>)}
+              {requests.map((request) => {
+                const unit = request.products?.[0]?.unit ?? '';
+                return (
+                  <li key={request.id} className="flex flex-wrap items-center justify-between gap-2 p-3 text-sm">
+                    <div><strong className="text-stone-900">{request.product_title}</strong><span className="text-stone-500"> · {request.requested_quantity} {getUnitLabel(unit, request.requested_quantity)}</span></div>
+                    <span className="font-medium text-emerald-800">{requestStatusLabels[request.status]}</span>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </section>

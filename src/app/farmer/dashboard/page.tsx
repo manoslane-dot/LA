@@ -29,6 +29,7 @@ interface PurchaseRequest {
   message: string | null;
   status: 'pending' | 'confirmed' | 'ready' | 'rejected';
   created_at: string;
+  products: { unit: string }[] | null;
 }
 
 const requestStatusLabels: Record<PurchaseRequest['status'], string> = {
@@ -36,6 +37,20 @@ const requestStatusLabels: Record<PurchaseRequest['status'], string> = {
   confirmed: 'Επιβεβαιώθηκε',
   ready: 'Έτοιμο για παραλαβή',
   rejected: 'Απορρίφθηκε',
+};
+
+const getUnitLabel = (unit: string, quantity: number): string => {
+  if (!unit) return '';
+  if (quantity === 1) {
+    return unit;
+  }
+  switch (unit) {
+    case 'κιλό': return 'κιλά';
+    case 'τεμάχιο': return 'τεμάχια';
+    case 'λίτρο': return 'λίτρα';
+    case 'ματσάκι': return 'ματσάκια';
+    default: return unit;
+  }
 };
 
 export default function FarmerDashboard() {
@@ -85,7 +100,7 @@ export default function FarmerDashboard() {
   const fetchRequests = useCallback(async (farmerId: string) => {
     const { data, error } = await supabase
       .from('purchase_requests')
-      .select('id, product_title, buyer_email, requested_quantity, message, status, created_at')
+      .select('id, product_title, buyer_email, requested_quantity, message, status, created_at, products(unit)')
       .eq('farmer_id', farmerId)
       .order('created_at', { ascending: false });
 
@@ -348,12 +363,10 @@ export default function FarmerDashboard() {
                       onChange={(e) => setProdUnit(e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-white"
                     >
-                      <option value="τεμάχιο">Ανά τεμάχιο</option>
-                      <option value="τενεκές">Τενεκές</option>
-                      <option value="λίτρα">Δοχείο σε λίτρα</option>
-                      <option value="ματσάκι">Ματσάκι</option>
-                      <option value="κούτα">Κούτα</option>
                       <option value="κιλό">Κιλό</option>
+                      <option value="τεμάχιο">Τεμάχιο(α)</option>
+                      <option value="λίτρο">Λίτρο(α)</option>
+                      <option value="ματσάκι">Ματσάκι</option>
                     </select>
                   </div>
                 </div>
@@ -391,7 +404,7 @@ export default function FarmerDashboard() {
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           <p className="font-medium text-gray-800">{prod.title}</p>
-                          <p className="text-xs text-gray-500">Ποσότητα: {prod.quantity} {prod.unit}</p>
+                          <p className="text-xs text-gray-500">Ποσότητα: {prod.quantity} {getUnitLabel(prod.unit, prod.quantity)}</p>
                           {editingPriceId === prod.id ? (
                             <div className="mt-2 flex items-center gap-2">
                               <input
@@ -472,7 +485,7 @@ export default function FarmerDashboard() {
                     <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                       <div>
                         <p className="font-semibold text-stone-900">{request.product_title}</p>
-                        <p className="mt-1 text-sm text-stone-600">Ποσότητα: {request.requested_quantity} · Αγοραστής: {request.buyer_email ?? 'Δεν υπάρχει email'}</p>
+                        <p className="mt-1 text-sm text-stone-600">Ποσότητα: {request.requested_quantity} {getUnitLabel(request.products?.[0]?.unit ?? '', request.requested_quantity)} · Αγοραστής: {request.buyer_email ?? 'Δεν υπάρχει email'}</p>
                         {request.message && <p className="mt-2 rounded-md bg-stone-50 p-2 text-sm text-stone-600">{request.message}</p>}
                       </div>
                       <div className="flex flex-wrap items-center gap-2">
