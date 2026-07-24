@@ -160,6 +160,11 @@ export default function ConsumerDashboard() {
     setSubmitting(false);
   };
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.replace('/auth');
+  };
+
   return (
     <div className="min-h-screen bg-stone-50 text-stone-900 flex">
       {/* Sidebar */}
