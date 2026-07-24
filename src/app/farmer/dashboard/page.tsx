@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { CircleDollarSign, ClipboardList, LayoutDashboard, Leaf, LogOut, Package, Pencil, Plus, ShoppingBag, Trash2 } from 'lucide-react';
+import { CircleDollarSign, ClipboardList, Home, LayoutDashboard, Leaf, LogOut, Package, Pencil, Plus, ShoppingBag, Trash2 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
 interface Crop {
@@ -296,12 +296,20 @@ export default function FarmerDashboard() {
         <header className="bg-white border-b border-stone-200 h-16 flex items-center justify-between px-4 sm:px-8">
           <div className="flex items-center gap-2 lg:hidden"><Leaf className="h-5 w-5 text-emerald-700" /><span className="font-bold text-emerald-900">AgroDirect</span></div>
           <p className="hidden lg:block text-sm text-stone-500">Πίνακας ελέγχου αγρότη</p>
-          <button
-            onClick={handleLogout}
-            className="inline-flex items-center gap-2 border border-stone-300 hover:border-red-200 hover:bg-red-50 hover:text-red-700 text-stone-700 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-          >
-            <LogOut className="h-4 w-4" /><span className="hidden sm:inline">Αποσύνδεση</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <a
+              href="/#products"
+              className="inline-flex items-center gap-2 border border-stone-300 hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 text-stone-700 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+            >
+              <Home className="h-4 w-4" /><span className="hidden sm:inline">Αρχική σελίδα</span>
+            </a>
+            <button
+              onClick={handleLogout}
+              className="inline-flex items-center gap-2 border border-stone-300 hover:border-red-200 hover:bg-red-50 hover:text-red-700 text-stone-700 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+            >
+              <LogOut className="h-4 w-4" /><span className="hidden sm:inline">Αποσύνδεση</span>
+            </button>
+          </div>
         </header>
 
         {/* Dashboard Body */}
