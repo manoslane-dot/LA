@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
@@ -14,7 +14,9 @@ function validateEmailDomain(email: string): boolean {
   return allowedDomains.includes(domain);
 }
 
-export default function AuthPage() {
+// Μετονομάσαμε το component σε AuthForm για να το τυλίξουμε σε Suspense.
+// Αυτό είναι απαραίτητο επειδή χρησιμοποιεί το useSearchParams.
+function AuthForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isLogin, setIsLogin] = useState(true);
@@ -196,5 +198,15 @@ export default function AuthPage() {
 
       </div>
     </div>
+  );
+}
+
+export default function AuthPage() {
+  // Το Suspense boundary είναι απαραίτητο για τη χρήση του useSearchParams() σε μια σελίδα
+  // που γίνεται pre-render. Επιτρέπει στο Next.js να αποδώσει ένα fallback στον server
+  // και να φορτώσει το δυναμικό component (AuthForm) στον client.
+  return (
+    // Χρησιμοποιούμε ένα απλό div για fallback για να αποφύγουμε το τρεμόπαιγμα του περιεχομένου.
+    <Suspense fallback={<div className="min-h-screen bg-gray-100" />}><AuthForm /></Suspense>
   );
 }
