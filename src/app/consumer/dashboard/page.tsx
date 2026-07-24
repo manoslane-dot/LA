@@ -92,22 +92,37 @@ export default function ConsumerDashboard() {
 
   useEffect(() => {
     const loadDashboard = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        router.replace('/auth');
-        return;
+      setLoading(true);
+
+      // Public products are visible to all visitors.
+      await fetchProducts();
+
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (session) {
+        setBuyerId(session.user.id);
+        setBuyerEmail(session.user.email ?? null);
+        await fetchRequests(session.user.id);
+      } else {
+        setBuyerId(null);
+        setBuyerEmail(null);
       }
 
-      setBuyerId(session.user.id);
-      setBuyerEmail(session.user.email ?? null);
-      await Promise.all([fetchProducts(), fetchRequests(session.user.id)]);
       setLoading(false);
     };
 
     void loadDashboard();
-  }, [fetchProducts, fetchRequests, router, supabase]);
+  }, [fetchProducts, fetchRequests, supabase]);
 
   const openRequestForm = (product: Product) => {
+    if (!buyerId) {
+      // Redirect to login if user is not authenticated
+      router.push('/auth');
+      return;
+    }
+
     if (!product.farmer_id) {
       setErrorMsg('Το προϊόν δεν είναι ακόμη συνδεδεμένο με παραγωγό.');
       return;
