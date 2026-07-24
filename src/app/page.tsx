@@ -37,16 +37,25 @@ export default function Home() {
             <a href="#about" className="transition hover:text-[#ffd47d]">Σχετικά με εμάς</a>
             <a href="#contact" className="transition hover:text-[#ffd47d]">Επικοινωνία</a>
           </div>
-          <Link
-            href="/auth?redirectUrl=/farmer/dashboard"
-            className="hidden rounded-md border border-white/40 px-4 py-2 text-sm font-semibold transition hover:bg-white hover:text-[#173b2a] sm:block"
-          >
-            Σύνδεση
-          </Link>
-          <div className="flex items-center gap-3 text-xs font-semibold sm:gap-4 md:hidden">
+          <div className="hidden items-center gap-2 sm:flex">
+            <Link
+              href="/auth?redirectUrl=/consumer/dashboard"
+              className="rounded-md border border-white/40 px-4 py-2 text-sm font-semibold transition hover:bg-white hover:text-[#173b2a]"
+            >
+              Σύνδεση καταναλωτή
+            </Link>
+            <Link
+              href="/auth?redirectUrl=/farmer/dashboard"
+              className="rounded-md bg-[#e9a83a] px-4 py-2 text-sm font-semibold text-[#173b2a] transition hover:bg-[#f5bd5c]"
+            >
+              Σύνδεση παραγωγού
+            </Link>
+          </div>
+          <div className="flex items-center gap-2 text-xs font-semibold sm:gap-3 md:hidden">
             <a href="#products" className="transition hover:text-[#ffd47d]">Προϊόντα</a>
             <a href="#about" className="transition hover:text-[#ffd47d]">Σχετικά</a>
-            <Link href="/auth?redirectUrl=/farmer/dashboard" className="rounded-md border border-white/40 px-2.5 py-1.5 transition hover:bg-white hover:text-[#173b2a]">Σύνδεση</Link>
+            <Link href="/auth?redirectUrl=/consumer/dashboard" className="rounded-md border border-white/40 px-2.5 py-1.5 transition hover:bg-white hover:text-[#173b2a]">Καταναλωτής</Link>
+            <Link href="/auth?redirectUrl=/farmer/dashboard" className="rounded-md bg-[#e9a83a] px-2.5 py-1.5 text-[#173b2a] transition hover:bg-[#f5bd5c]">Παραγωγός</Link>
           </div>
         </nav>
 
