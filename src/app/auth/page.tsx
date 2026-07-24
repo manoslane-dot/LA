@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import GoogleSignInButton from './GoogleSignInButton';
@@ -16,6 +16,7 @@ function validateEmailDomain(email: string): boolean {
 
 export default function AuthPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -44,7 +45,8 @@ export default function AuthPage() {
         setShowForgotPassword(true);
       } else {
         // Αν συνδεθεί επιτυχώς, τον πηγαίνουμε στο dashboard του αγρότη/πωλητή
-        router.push('/farmer/dashboard');
+        const redirectUrl = searchParams.get('redirectUrl');
+        router.push(redirectUrl || '/farmer/dashboard');
       }
     } else {
       // Εγγραφή
@@ -102,7 +104,7 @@ export default function AuthPage() {
             {isLogin ? 'Σύνδεση στον λογαριασμό σας' : 'Δημιουργία νέου λογαριασμού'}
           </h2>
           <p className="text-sm text-gray-500 mt-1">
-            {isLogin ? 'Εισάγετε τα στοιχεία σας για πρόσβαση' : 'Εγγραφείτε για να διαχειριστείτε τις καλλιέργειές σας'}
+            {isLogin ? 'Εισάγετε τα στοιχεία σας για πρόσβαση' : 'Εγγραφείτε για να αγοράσετε ή να πουλήσετε προϊόντα'}
           </p>
         </div>
 

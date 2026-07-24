@@ -40,6 +40,7 @@ const getUnitLabel = (unit: string, quantity: number): string => {
     case 'τεμάχιο': return 'τεμάχια';
     case 'λίτρο': return 'λίτρα';
     case 'ματσάκι': return 'ματσάκια';
+    case 'γραμμάριο': return 'γραμμάρια';
     default: return unit;
   }
 };
@@ -112,7 +113,7 @@ export default function ConsumerDashboard() {
   const openRequestForm = (product: Product) => {
     if (!buyerId) {
       // Redirect to login if user is not authenticated
-      router.push('/auth');
+      router.push(`/auth?redirectUrl=/consumer/dashboard`);
       return;
     }
 

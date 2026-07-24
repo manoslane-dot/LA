@@ -49,6 +49,7 @@ const getUnitLabel = (unit: string, quantity: number): string => {
     case 'τεμάχιο': return 'τεμάχια';
     case 'λίτρο': return 'λίτρα';
     case 'ματσάκι': return 'ματσάκια';
+    case 'γραμμάριο': return 'γραμμάρια';
     default: return unit;
   }
 };
@@ -366,6 +367,7 @@ export default function FarmerDashboard() {
                       <option value="κιλό">Κιλό</option>
                       <option value="τεμάχιο">Τεμάχιο(α)</option>
                       <option value="λίτρο">Λίτρο(α)</option>
+                      <option value="γραμμάριο">Γραμμάριο(α)</option>
                       <option value="ματσάκι">Ματσάκι</option>
                     </select>
                   </div>
