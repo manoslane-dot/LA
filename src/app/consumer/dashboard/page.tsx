@@ -139,6 +139,11 @@ export default function ConsumerDashboard() {
 
         if (roleUpdateError) {
           console.error('Σφάλμα ενημέρωσης ρόλου καταναλωτή:', roleUpdateError.message);
+        } else {
+          const { error: refreshError } = await supabase.auth.refreshSession();
+          if (refreshError) {
+            console.error('Σφάλμα ανανέωσης συνεδρίας μετά την ενημέρωση ρόλου:', refreshError.message);
+          }
         }
       }
 
