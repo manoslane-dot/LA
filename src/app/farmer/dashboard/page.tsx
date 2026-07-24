@@ -35,7 +35,7 @@ interface PurchaseRequest {
   message: string | null;
   status: 'pending' | 'confirmed' | 'ready' | 'rejected';
   created_at: string;
-  products: { unit: string }[] | null;
+  products: { unit: string; price: number }[] | null;
 }
 
 const requestStatusLabels: Record<PurchaseRequest['status'], string> = {
@@ -107,7 +107,7 @@ export default function FarmerDashboard() {
   const fetchRequests = useCallback(async (farmerId: string) => {
     const { data, error } = await supabase
       .from('purchase_requests')
-      .select('id, product_title, buyer_email, requested_quantity, message, status, created_at, products(unit)')
+      .select('id, product_title, buyer_email, requested_quantity, message, status, created_at, products(unit,price)')
       .eq('farmer_id', farmerId)
       .order('created_at', { ascending: false });
 
@@ -501,9 +501,24 @@ export default function FarmerDashboard() {
                   <li key={request.id} className="py-4">
                     <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                       <div>
-                        <p className="font-semibold text-stone-900">{request.product_title}</p>
-                        <p className="mt-1 text-sm text-stone-600">Ποσότητα: {request.requested_quantity} {getUnitLabel(request.products?.[0]?.unit ?? '', request.requested_quantity)} · Αγοραστής: {request.buyer_email ?? 'Δεν υπάρχει email'}</p>
-                        {request.message && <p className="mt-2 rounded-md bg-stone-50 p-2 text-sm text-stone-600">{request.message}</p>}
+                        {(() => {
+                          const unit = request.products?.[0]?.unit ?? '';
+                          const unitPrice = request.products?.[0]?.price ?? 0;
+                          const totalCost = request.requested_quantity * unitPrice;
+
+                          return (
+                            <>
+                              <p className="font-semibold text-stone-900">{request.product_title}</p>
+                              <p className="mt-1 text-sm text-stone-600">
+                                Ποσότητα: {request.requested_quantity} {getUnitLabel(unit, request.requested_quantity)} · Αγοραστής: {request.buyer_email ?? 'Δεν υπάρχει email'}
+                              </p>
+                              <p className="mt-1 text-sm text-stone-600">
+                                Ενδεικτικό κόστος: {formatCurrency(totalCost)} ({formatCurrency(unitPrice)} / {unit || 'μονάδα'})
+                              </p>
+                              {request.message && <p className="mt-2 rounded-md bg-stone-50 p-2 text-sm text-stone-600">{request.message}</p>}
+                            </>
+                          );
+                        })()}
                       </div>
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="mr-1 text-sm font-medium text-emerald-800">{requestStatusLabels[request.status]}</span>

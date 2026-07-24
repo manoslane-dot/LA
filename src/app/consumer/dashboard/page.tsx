@@ -26,7 +26,7 @@ interface PurchaseRequest {
   product_title: string;
   requested_quantity: number;
   status: 'pending' | 'confirmed' | 'ready' | 'rejected';
-  products: { unit: string }[] | null;
+  products: { unit: string; price: number }[] | null;
 }
 
 const requestStatusLabels: Record<PurchaseRequest['status'], string> = {
@@ -66,6 +66,12 @@ export default function ConsumerDashboard() {
   const [message, setMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  const formatCurrency = (value: number) => new Intl.NumberFormat('el-GR', {
+    style: 'currency',
+    currency: 'EUR',
+    maximumFractionDigits: 2,
+  }).format(value);
+
   const fetchProducts = useCallback(async () => {
     const { data, error } = await supabase
       .from('products')
@@ -85,7 +91,7 @@ export default function ConsumerDashboard() {
   const fetchRequests = useCallback(async (userId: string) => {
     const { data, error } = await supabase
       .from('purchase_requests')
-      .select('id, product_title, requested_quantity, status, products(unit)')
+      .select('id, product_title, requested_quantity, status, products(unit,price)')
       .eq('buyer_id', userId)
       .order('created_at', { ascending: false });
 
@@ -150,6 +156,8 @@ export default function ConsumerDashboard() {
       return;
     }
 
+    const totalCost = quantity * selectedProduct.price;
+
     setSubmitting(true);
     setErrorMsg('');
     const { error } = await supabase.from('purchase_requests').insert({
@@ -166,7 +174,9 @@ export default function ConsumerDashboard() {
       setErrorMsg(`Δεν στάλθηκε το αίτημα: ${error.message}`);
     } else {
       setSelectedProduct(null);
-      setSuccessMsg(`Το αίτημα για ${selectedProduct.title} στάλθηκε στον παραγωγό.`);
+      setSuccessMsg(
+        `Το αίτημα για ${selectedProduct.title} στάλθηκε: ${quantity} ${getUnitLabel(selectedProduct.unit, quantity)} με εκτιμώμενο κόστος ${formatCurrency(totalCost)}.`,
+      );
       await fetchRequests(buyerId);
       window.setTimeout(() => setSuccessMsg(''), 5000);
     }
@@ -251,9 +261,15 @@ export default function ConsumerDashboard() {
               <ul className="divide-y divide-stone-200">
                 {requests.map((request) => {
                   const unit = request.products?.[0]?.unit ?? '';
+                  const unitPrice = request.products?.[0]?.price ?? 0;
+                  const totalCost = request.requested_quantity * unitPrice;
                   return (
                     <li key={request.id} className="flex flex-wrap items-center justify-between gap-2 p-3 text-sm">
-                      <div><strong className="text-stone-900">{request.product_title}</strong><span className="text-stone-500"> · {request.requested_quantity} {getUnitLabel(unit, request.requested_quantity)}</span></div>
+                      <div>
+                        <strong className="text-stone-900">{request.product_title}</strong>
+                        <span className="text-stone-500"> · {request.requested_quantity} {getUnitLabel(unit, request.requested_quantity)}</span>
+                        <p className="text-xs text-stone-500">Ενδεικτικό κόστος: {formatCurrency(totalCost)} ({formatCurrency(unitPrice)} / {unit || 'μονάδα'})</p>
+                      </div>
                       <span className="font-medium text-emerald-800">{requestStatusLabels[request.status]}</span>
                     </li>
                   );
@@ -270,6 +286,11 @@ export default function ConsumerDashboard() {
             <div className="mb-5 flex items-start justify-between gap-4"><div><h2 id="request-title" className="text-lg font-bold text-stone-900">Αίτημα για {selectedProduct.title}</h2><p className="mt-1 text-sm text-stone-500">Ο παραγωγός θα απαντήσει στη διαθεσιμότητα.</p></div><button type="button" onClick={() => setSelectedProduct(null)} className="text-sm text-stone-500 hover:text-stone-900">Κλείσιμο</button></div>
             {errorMsg && <div className="mb-4 rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{errorMsg}</div>}
             <label className="mb-4 block text-sm font-medium text-stone-700">Ποσότητα ({selectedProduct.unit})<input type="number" min="0.01" step="any" max={selectedProduct.quantity} required value={requestedQuantity} onChange={(event) => setRequestedQuantity(event.target.value)} className="mt-1 w-full rounded-md border border-stone-300 px-3 py-2" /></label>
+            <div className="mb-4 rounded-md border border-stone-200 bg-stone-50 px-3 py-2 text-sm text-stone-700">
+              Εκτιμώμενο κόστος: {
+                formatCurrency((Number(requestedQuantity) > 0 ? Number(requestedQuantity) : 0) * selectedProduct.price)
+              } ({formatCurrency(selectedProduct.price)} / {selectedProduct.unit})
+            </div>
             <label className="mb-5 block text-sm font-medium text-stone-700">Μήνυμα για τον παραγωγό (προαιρετικό)<textarea value={message} onChange={(event) => setMessage(event.target.value)} maxLength={1000} rows={3} className="mt-1 w-full rounded-md border border-stone-300 px-3 py-2" /></label>
             <button type="submit" disabled={submitting} className="w-full rounded-md bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white disabled:bg-emerald-400">{submitting ? 'Αποστολή...' : 'Στείλε αίτημα'}</button>
           </form>
