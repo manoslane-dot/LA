@@ -258,7 +258,7 @@ export default function ConsumerDashboard() {
                       <div className="flex-grow">
                         <strong className="text-stone-900">{request.product_title}</strong>
                         <span className="text-stone-500"> · {request.requested_quantity} {getUnitLabel(unit, request.requested_quantity)}</span>
-                        <p className="mt-0.5 text-xs text-stone-500">Εκτιμώμενο κόστος: <strong className="font-semibold text-stone-700">{formatCurrency(totalCost)}</strong> ({formatCurrency(unitPrice)} / {unit || 'μονάδα'})</p>
+                        <p className="mt-1 text-sm text-stone-600">Εκτιμώμενο κόστος: <strong className="text-base font-bold text-emerald-700">{formatCurrency(totalCost)}</strong> <span className="text-xs">({formatCurrency(unitPrice)} / {unit || 'μονάδα'})</span></p>
                       </div>
                       <span className="shrink-0 font-medium text-emerald-800">{requestStatusLabels[request.status]}</span>
                     </li>
