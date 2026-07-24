@@ -174,7 +174,7 @@ function AuthForm() {
             </div>
           </div>
 
-          <GoogleSignInButton />
+          <GoogleSignInButton redirectUrl={searchParams.get('redirectUrl') ?? '/consumer/dashboard'} />
         </form>
 
         <div className="mt-6 text-center">

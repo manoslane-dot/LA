@@ -23,13 +23,19 @@ const GoogleIcon = () => (
   </svg>
 );
 
-export default function GoogleSignInButton() {
+type GoogleSignInButtonProps = {
+  redirectUrl?: string;
+};
+
+export default function GoogleSignInButton({ redirectUrl = '/consumer/dashboard' }: GoogleSignInButtonProps) {
   const supabase = createClient();
   const handleGoogleLogin = async () => {
+    const safeRedirectUrl = redirectUrl.startsWith('/') ? redirectUrl : '/consumer/dashboard';
+
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: `${window.location.origin}/auth/callback?redirectUrl=${encodeURIComponent(safeRedirectUrl)}`,
       },
     });
   };

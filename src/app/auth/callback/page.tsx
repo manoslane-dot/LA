@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 
-export default function AuthCallbackPage() {
+function AuthCallbackContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = createClient();
 
   useEffect(() => {
@@ -22,14 +23,19 @@ export default function AuthCallbackPage() {
       }
 
       if (session) {
-        router.replace('/farmer/dashboard');
+        const redirectUrl = searchParams.get('redirectUrl');
+        const safeRedirectUrl = redirectUrl && redirectUrl.startsWith('/') && !redirectUrl.startsWith('//')
+          ? redirectUrl
+          : '/consumer/dashboard';
+
+        router.replace(safeRedirectUrl);
       } else {
         router.replace('/auth');
       }
     };
 
     void finalizeAuth();
-  }, [router]);
+  }, [router, searchParams, supabase]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
@@ -38,5 +44,13 @@ export default function AuthCallbackPage() {
         <p className="mt-2 text-sm text-gray-500">You’ll be redirected shortly.</p>
       </div>
     </div>
+  );
+}
+
+export default function AuthCallbackPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-100" />}>
+      <AuthCallbackContent />
+    </Suspense>
   );
 }
