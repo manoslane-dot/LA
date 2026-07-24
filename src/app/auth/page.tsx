@@ -39,9 +39,27 @@ function AuthForm() {
       } = await supabase.auth.getSession();
 
       if (session) {
+        const intendedRole = resolveRoleFromIntent(
+          searchParams.get('role'),
+          searchParams.get('redirectUrl'),
+        );
+
+        let resolvedRole = session.user.user_metadata?.role;
+        if (intendedRole && resolvedRole !== intendedRole) {
+          const { data: updateData, error: roleUpdateError } = await supabase.auth.updateUser({
+            data: { role: intendedRole },
+          });
+
+          if (roleUpdateError) {
+            console.error('Σφάλμα αλλαγής ρόλου:', roleUpdateError.message);
+          } else {
+            resolvedRole = updateData.user?.user_metadata?.role;
+          }
+        }
+
         const nextUrl = resolvePostLoginRedirect({
           requestedRedirectUrl: searchParams.get('redirectUrl'),
-          userRole: session.user.user_metadata?.role,
+          userRole: resolvedRole,
         });
         router.replace(nextUrl);
         return;
