@@ -1,15 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ShoppingBag, ClipboardList, LogOut, Leaf } from 'lucide-react';
+import { ShoppingBag, ClipboardList, LogOut, Leaf, Home } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
-import {
-  clearLoginPreference,
-  ensureLoginPreferenceInitialized,
-  shouldLogoutOnAppClose,
-} from '@/lib/auth/sessionPersistence';
 
 interface Product {
   id: number;
@@ -111,14 +105,6 @@ export default function ConsumerDashboard() {
         return;
       }
 
-      ensureLoginPreferenceInitialized();
-      if (shouldLogoutOnAppClose()) {
-        clearLoginPreference();
-        await supabase.auth.signOut();
-        router.push('/auth');
-        return;
-      }
-
       setLoading(true);
       setBuyerId(session.user.id);
       setBuyerEmail(session.user.email ?? null);
@@ -174,9 +160,7 @@ export default function ConsumerDashboard() {
       setErrorMsg(`Δεν στάλθηκε το αίτημα: ${error.message}`);
     } else {
       setSelectedProduct(null);
-      setSuccessMsg(
-        `Το αίτημα για ${selectedProduct.title} στάλθηκε: ${quantity} ${getUnitLabel(selectedProduct.unit, quantity)} με εκτιμώμενο κόστος ${formatCurrency(totalCost)}.`,
-      );
+      setSuccessMsg(`Το αίτημα για ${selectedProduct.title} στάλθηκε στον παραγωγό.`);
       await fetchRequests(buyerId);
       window.setTimeout(() => setSuccessMsg(''), 5000);
     }
@@ -185,7 +169,6 @@ export default function ConsumerDashboard() {
   };
 
   const handleLogout = async () => {
-    clearLoginPreference();
     await supabase.auth.signOut();
     router.replace('/auth');
   };
@@ -195,13 +178,13 @@ export default function ConsumerDashboard() {
       {/* Sidebar */}
       <aside className="w-64 shrink-0 border-r border-stone-200 bg-white hidden lg:block">
         <div className="p-6 border-b border-stone-100">
-          <Link href="/" className="flex items-center gap-3">
+          <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-700 text-white"><Leaf className="h-5 w-5" /></div>
             <div>
               <h1 className="text-lg font-bold text-emerald-900">AgroDirect</h1>
               <p className="text-xs text-stone-500">Χώρος καταναλωτή</p>
             </div>
-          </Link>
+          </div>
         </div>
         <nav className="mt-5 px-3 space-y-1" aria-label="Κύρια πλοήγηση">
           <a href="#products" className="flex items-center gap-3 rounded-md bg-emerald-50 px-3 py-2.5 text-sm font-semibold text-emerald-800">
@@ -211,13 +194,18 @@ export default function ConsumerDashboard() {
             <ClipboardList className="h-4 w-4" /> Τα Αιτήματά μου
           </a>
         </nav>
+        <div className="absolute bottom-0 w-full p-3">
+          <a href="/" className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-stone-600 hover:bg-stone-100 hover:text-stone-900">
+            <Home className="h-4 w-4" /> Επιστροφή στην Αρχική
+          </a>
+        </div>
       </aside>
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
         {/* Top Header */}
         <header className="bg-white border-b border-stone-200 h-16 flex items-center justify-between px-4 sm:px-8">
-          <Link href="/" className="flex items-center gap-2 lg:hidden"><Leaf className="h-5 w-5 text-emerald-700" /><span className="font-bold text-emerald-900">AgroDirect</span></Link>
+          <div className="flex items-center gap-2 lg:hidden"><Leaf className="h-5 w-5 text-emerald-700" /><span className="font-bold text-emerald-900">AgroDirect</span></div>
           <p className="hidden lg:block text-sm text-stone-500">Πίνακας ελέγχου καταναλωτή</p>
           <button
             onClick={handleLogout}
@@ -261,15 +249,9 @@ export default function ConsumerDashboard() {
               <ul className="divide-y divide-stone-200">
                 {requests.map((request) => {
                   const unit = request.products?.[0]?.unit ?? '';
-                  const unitPrice = request.products?.[0]?.price ?? 0;
-                  const totalCost = request.requested_quantity * unitPrice;
                   return (
                     <li key={request.id} className="flex flex-wrap items-center justify-between gap-2 p-3 text-sm">
-                      <div>
-                        <strong className="text-stone-900">{request.product_title}</strong>
-                        <span className="text-stone-500"> · {request.requested_quantity} {getUnitLabel(unit, request.requested_quantity)}</span>
-                        <p className="text-xs text-stone-500">Ενδεικτικό κόστος: {formatCurrency(totalCost)} ({formatCurrency(unitPrice)} / {unit || 'μονάδα'})</p>
-                      </div>
+                      <div><strong className="text-stone-900">{request.product_title}</strong><span className="text-stone-500"> · {request.requested_quantity} {getUnitLabel(unit, request.requested_quantity)}</span></div>
                       <span className="font-medium text-emerald-800">{requestStatusLabels[request.status]}</span>
                     </li>
                   );
