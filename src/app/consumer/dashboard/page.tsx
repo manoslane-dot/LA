@@ -160,7 +160,9 @@ export default function ConsumerDashboard() {
       setErrorMsg(`Δεν στάλθηκε το αίτημα: ${error.message}`);
     } else {
       setSelectedProduct(null);
-      setSuccessMsg(`Το αίτημα για ${selectedProduct.title} στάλθηκε στον παραγωγό.`);
+      setSuccessMsg(
+        `Το αίτημα για ${selectedProduct.title} στάλθηκε: ${quantity} ${getUnitLabel(selectedProduct.unit, quantity)} με εκτιμώμενο κόστος ${formatCurrency(totalCost)}.`,
+      );
       await fetchRequests(buyerId);
       window.setTimeout(() => setSuccessMsg(''), 5000);
     }
@@ -249,10 +251,16 @@ export default function ConsumerDashboard() {
               <ul className="divide-y divide-stone-200">
                 {requests.map((request) => {
                   const unit = request.products?.[0]?.unit ?? '';
+                  const unitPrice = request.products?.[0]?.price ?? 0;
+                  const totalCost = request.requested_quantity * unitPrice;
                   return (
                     <li key={request.id} className="flex flex-wrap items-center justify-between gap-2 p-3 text-sm">
-                      <div><strong className="text-stone-900">{request.product_title}</strong><span className="text-stone-500"> · {request.requested_quantity} {getUnitLabel(unit, request.requested_quantity)}</span></div>
-                      <span className="font-medium text-emerald-800">{requestStatusLabels[request.status]}</span>
+                      <div className="flex-grow">
+                        <strong className="text-stone-900">{request.product_title}</strong>
+                        <span className="text-stone-500"> · {request.requested_quantity} {getUnitLabel(unit, request.requested_quantity)}</span>
+                        <p className="mt-0.5 text-xs text-stone-500">Εκτιμώμενο κόστος: <strong className="font-semibold text-stone-700">{formatCurrency(totalCost)}</strong> ({formatCurrency(unitPrice)} / {unit || 'μονάδα'})</p>
+                      </div>
+                      <span className="shrink-0 font-medium text-emerald-800">{requestStatusLabels[request.status]}</span>
                     </li>
                   );
                 })}
