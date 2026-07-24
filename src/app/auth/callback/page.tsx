@@ -3,6 +3,7 @@
 import { Suspense, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { saveLoginPreference } from '@/lib/auth/sessionPersistence';
 
 function AuthCallbackContent() {
   const router = useRouter();
@@ -24,10 +25,12 @@ function AuthCallbackContent() {
 
       if (session) {
         const redirectUrl = searchParams.get('redirectUrl');
+        const remember = searchParams.get('remember') !== '0';
         const safeRedirectUrl = redirectUrl && redirectUrl.startsWith('/') && !redirectUrl.startsWith('//')
           ? redirectUrl
           : '/consumer/dashboard';
 
+        saveLoginPreference(remember);
         router.replace(safeRedirectUrl);
       } else {
         router.replace('/auth');

@@ -4,6 +4,11 @@ import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ShoppingBag, ClipboardList, LogOut, Leaf, Home } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import {
+  clearLoginPreference,
+  ensureLoginPreferenceInitialized,
+  shouldLogoutOnAppClose,
+} from '@/lib/auth/sessionPersistence';
 
 interface Product {
   id: number;
@@ -99,6 +104,14 @@ export default function ConsumerDashboard() {
         return;
       }
 
+      ensureLoginPreferenceInitialized();
+      if (shouldLogoutOnAppClose()) {
+        clearLoginPreference();
+        await supabase.auth.signOut();
+        router.push('/auth');
+        return;
+      }
+
       setLoading(true);
       setBuyerId(session.user.id);
       setBuyerEmail(session.user.email ?? null);
@@ -161,6 +174,7 @@ export default function ConsumerDashboard() {
   };
 
   const handleLogout = async () => {
+    clearLoginPreference();
     await supabase.auth.signOut();
     router.replace('/auth');
   };

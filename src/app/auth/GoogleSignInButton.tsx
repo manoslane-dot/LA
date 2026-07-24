@@ -25,17 +25,22 @@ const GoogleIcon = () => (
 
 type GoogleSignInButtonProps = {
   redirectUrl?: string;
+  rememberMe?: boolean;
 };
 
-export default function GoogleSignInButton({ redirectUrl = '/consumer/dashboard' }: GoogleSignInButtonProps) {
+export default function GoogleSignInButton({
+  redirectUrl = '/consumer/dashboard',
+  rememberMe = true,
+}: GoogleSignInButtonProps) {
   const supabase = createClient();
   const handleGoogleLogin = async () => {
     const safeRedirectUrl = redirectUrl.startsWith('/') ? redirectUrl : '/consumer/dashboard';
+    const rememberParam = rememberMe ? '1' : '0';
 
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?redirectUrl=${encodeURIComponent(safeRedirectUrl)}`,
+        redirectTo: `${window.location.origin}/auth/callback?redirectUrl=${encodeURIComponent(safeRedirectUrl)}&remember=${rememberParam}`,
       },
     });
   };

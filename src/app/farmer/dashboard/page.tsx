@@ -4,6 +4,11 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { CircleDollarSign, ClipboardList, Home, LayoutDashboard, Leaf, LogOut, Package, Pencil, Plus, ShoppingBag, Trash2 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import {
+  clearLoginPreference,
+  ensureLoginPreferenceInitialized,
+  shouldLogoutOnAppClose,
+} from '@/lib/auth/sessionPersistence';
 
 interface Crop {
   id: string;
@@ -117,6 +122,14 @@ export default function FarmerDashboard() {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
+        router.push('/auth');
+        return;
+      }
+
+      ensureLoginPreferenceInitialized();
+      if (shouldLogoutOnAppClose()) {
+        clearLoginPreference();
+        await supabase.auth.signOut();
         router.push('/auth');
         return;
       }
@@ -241,6 +254,7 @@ export default function FarmerDashboard() {
   };
 
   const handleLogout = async () => {
+    clearLoginPreference();
     await supabase.auth.signOut();
     router.replace('/auth');
   };

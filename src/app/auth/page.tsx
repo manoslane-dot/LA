@@ -3,6 +3,7 @@
 import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { saveLoginPreference } from '@/lib/auth/sessionPersistence';
 import Link from 'next/link';
 import GoogleSignInButton from './GoogleSignInButton';
 
@@ -25,6 +26,7 @@ function AuthForm() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const [rememberMe, setRememberMe] = useState(true);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const supabase = createClient();
 
@@ -46,6 +48,7 @@ function AuthForm() {
         setErrorMsg(error.message);
         setShowForgotPassword(true);
       } else {
+        saveLoginPreference(rememberMe);
         const redirectUrl = searchParams.get('redirectUrl');
         // Ανακατεύθυνση στο consumer dashboard by default, εκτός αν ορίζεται αλλιώς.
         router.push(redirectUrl || '/consumer/dashboard');
@@ -154,6 +157,18 @@ function AuthForm() {
             {loading ? 'Επεξεργασία...' : isLogin ? 'Σύνδεση' : 'Εγγραφή'}
           </button>
 
+          {isLogin && (
+            <label className="flex items-center gap-2 text-sm text-gray-600">
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
+              />
+              Να με θυμάσαι
+            </label>
+          )}
+
           {isLogin && showForgotPassword && (
             <button
               type="button"
@@ -174,7 +189,10 @@ function AuthForm() {
             </div>
           </div>
 
-          <GoogleSignInButton redirectUrl={searchParams.get('redirectUrl') ?? '/consumer/dashboard'} />
+          <GoogleSignInButton
+            redirectUrl={searchParams.get('redirectUrl') ?? '/consumer/dashboard'}
+            rememberMe={rememberMe}
+          />
         </form>
 
         <div className="mt-6 text-center">
