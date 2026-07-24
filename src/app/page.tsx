@@ -64,7 +64,7 @@ export default function Home() {
             </p>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
               <Link
-                href="/consumer/dashboard"
+                href="/auth"
                 className="inline-flex items-center justify-center gap-2 rounded-md bg-[#e9a83a] px-6 py-4 font-bold text-[#173b2a] transition hover:bg-[#f5bd5c]"
               >
                 <ShoppingBasket size={19} />
@@ -175,7 +175,7 @@ export default function Home() {
       <section id="contact" className="bg-[#173b2a] py-14 text-white">
         <div className="mx-auto flex max-w-7xl flex-col gap-7 px-5 sm:px-8 md:flex-row md:items-center md:justify-between lg:px-10">
           <div><h2 className="text-3xl font-bold">Η επόμενη καλή αγορά ξεκινά εδώ.</h2><p className="mt-2 text-white/75">Μπείτε στην κοινότητα του AgroDirect σήμερα.</p></div>
-          <Link href="/consumer/dashboard" className="inline-flex w-fit items-center gap-2 rounded-md bg-[#e9a83a] px-5 py-3.5 font-bold text-[#173b2a] transition hover:bg-[#f5bd5c]">Δείτε τα προϊόντα <ArrowRight size={18} /></Link>
+          <Link href="/auth" className="inline-flex w-fit items-center gap-2 rounded-md bg-[#e9a83a] px-5 py-3.5 font-bold text-[#173b2a] transition hover:bg-[#f5bd5c]">Δείτε τα προϊόντα <ArrowRight size={18} /></Link>
         </div>
       </section>
 
