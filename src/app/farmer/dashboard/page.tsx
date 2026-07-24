@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { CircleDollarSign, LayoutDashboard, Leaf, LogOut, Package, Pencil, Plus, ShoppingBag, Trash2 } from 'lucide-react';
+import { CircleDollarSign, ClipboardList, LayoutDashboard, Leaf, LogOut, Package, Pencil, Plus, ShoppingBag, Trash2 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
 interface Crop {
@@ -18,13 +18,32 @@ interface Product {
   price: number;
   unit: string;
   status: string;
+  farmer_id: string;
 }
+
+interface PurchaseRequest {
+  id: number;
+  product_title: string;
+  buyer_email: string | null;
+  requested_quantity: number;
+  message: string | null;
+  status: 'pending' | 'confirmed' | 'ready' | 'rejected';
+  created_at: string;
+}
+
+const requestStatusLabels: Record<PurchaseRequest['status'], string> = {
+  pending: 'Σε αναμονή',
+  confirmed: 'Επιβεβαιώθηκε',
+  ready: 'Έτοιμο για παραλαβή',
+  rejected: 'Απορρίφθηκε',
+};
 
 export default function FarmerDashboard() {
   const router = useRouter();
   const supabase = createClient();
   const [loading, setLoading] = useState(true);
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
   
   // Καλλιέργειες
   const [crops, setCrops] = useState<Crop[]>([]);
@@ -34,6 +53,8 @@ export default function FarmerDashboard() {
 
   // Προϊόντα προς Πώληση
   const [products, setProducts] = useState<Product[]>([]);
+  const [requests, setRequests] = useState<PurchaseRequest[]>([]);
+  const [updatingRequestId, setUpdatingRequestId] = useState<number | null>(null);
   const [prodTitle, setProdTitle] = useState('');
   const [prodQuantity, setProdQuantity] = useState('');
   const [prodPrice, setProdPrice] = useState('');
@@ -52,12 +73,26 @@ export default function FarmerDashboard() {
     }
   }, [supabase]);
 
-  const fetchProducts = useCallback(async () => {
-    const { data, error } = await supabase.from('products').select('*');
+  const fetchProducts = useCallback(async (farmerId: string) => {
+    const { data, error } = await supabase.from('products').select('*').eq('farmer_id', farmerId);
     if (error) {
       console.error('Error fetching products:', error.message);
     } else if (data) {
-      setProducts(data);
+      setProducts(data as Product[]);
+    }
+  }, [supabase]);
+
+  const fetchRequests = useCallback(async (farmerId: string) => {
+    const { data, error } = await supabase
+      .from('purchase_requests')
+      .select('id, product_title, buyer_email, requested_quantity, message, status, created_at')
+      .eq('farmer_id', farmerId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching purchase requests:', error.message);
+    } else if (data) {
+      setRequests(data as PurchaseRequest[]);
     }
   }, [supabase]);
 
@@ -71,12 +106,13 @@ export default function FarmerDashboard() {
       }
       
       setUserEmail(session.user.email ?? 'Πωλητής');
-      await Promise.all([fetchCrops(), fetchProducts()]);
+      setUserId(session.user.id);
+      await Promise.all([fetchCrops(), fetchProducts(session.user.id), fetchRequests(session.user.id)]);
       setLoading(false);
     };
 
     void checkUserAndFetchData();
-  }, [router, supabase, fetchCrops, fetchProducts]);
+  }, [router, supabase, fetchCrops, fetchProducts, fetchRequests]);
 
   const handleAddCrop = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,7 +133,7 @@ export default function FarmerDashboard() {
 
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!prodTitle || !prodQuantity || !prodPrice) return;
+    if (!prodTitle || !prodQuantity || !prodPrice || !userId) return;
 
     setSubmittingProd(true);
     const { error } = await supabase.from('products').insert([
@@ -106,7 +142,8 @@ export default function FarmerDashboard() {
         quantity: parseFloat(prodQuantity), 
         price: parseFloat(prodPrice), 
         unit: prodUnit,
-        status: '🟢 Ενεργό / Δημοσιευμένο'
+        status: '🟢 Ενεργό / Δημοσιευμένο',
+        farmer_id: userId,
       }
     ]);
 
@@ -114,7 +151,7 @@ export default function FarmerDashboard() {
       setProdTitle('');
       setProdQuantity('');
       setProdPrice('');
-      await fetchProducts();
+      await fetchProducts(userId);
     } else {
       alert('Σφάλμα: ' + error.message);
     }
@@ -126,10 +163,11 @@ export default function FarmerDashboard() {
     const confirmDelete = window.confirm('Είστε σίγουρος ότι θέλετε να διαγράψετε αυτό το προϊόν;');
     if (!confirmDelete) return;
 
-    const { error } = await supabase.from('products').delete().eq('id', id);
+    if (!userId) return;
+    const { error } = await supabase.from('products').delete().eq('id', id).eq('farmer_id', userId);
 
     if (!error) {
-      await fetchProducts(); // Ανανέωση της λίστας
+      await fetchProducts(userId);
     } else {
       alert('Σφάλμα διαγραφής: ' + error.message);
     }
@@ -141,6 +179,7 @@ export default function FarmerDashboard() {
   };
 
   const handleSavePriceEdit = async (id: number) => {
+    if (!userId) return;
     const parsedPrice = Number(priceDraft);
     if (!Number.isFinite(parsedPrice) || parsedPrice < 0) {
       alert('Παρακαλώ εισάγετε μια έγκυρη τιμή.');
@@ -153,17 +192,36 @@ export default function FarmerDashboard() {
       .update({
         price: parsedPrice,
       })
-      .eq('id', id);
+      .eq('id', id)
+      .eq('farmer_id', userId);
 
     if (!error) {
       setEditingPriceId(null);
       setPriceDraft('');
-      await fetchProducts();
+      await fetchProducts(userId);
     } else {
       alert('Σφάλμα ενημέρωσης τιμής: ' + error.message);
     }
 
     setUpdatingPrice(false);
+  };
+
+  const handleRequestStatus = async (requestId: number, status: PurchaseRequest['status']) => {
+    if (!userId) return;
+
+    setUpdatingRequestId(requestId);
+    const { error } = await supabase
+      .from('purchase_requests')
+      .update({ status })
+      .eq('id', requestId)
+      .eq('farmer_id', userId);
+
+    if (error) {
+      alert(`Σφάλμα ενημέρωσης αιτήματος: ${error.message}`);
+    } else {
+      await fetchRequests(userId);
+    }
+    setUpdatingRequestId(null);
   };
 
   const handleLogout = async () => {
@@ -209,6 +267,9 @@ export default function FarmerDashboard() {
           </a>
           <a href="#products" className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-stone-600 hover:bg-stone-100 hover:text-stone-900">
             <Package className="h-4 w-4" /> Προϊόντα
+          </a>
+          <a href="#requests" className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-stone-600 hover:bg-stone-100 hover:text-stone-900">
+            <ClipboardList className="h-4 w-4" /> Αιτήματα πελατών
           </a>
         </nav>
       </aside>
@@ -393,6 +454,41 @@ export default function FarmerDashboard() {
               )}
             </div>
           </div>
+
+          <section id="requests" className="rounded-lg border border-stone-200 bg-white p-6 shadow-sm">
+            <div className="mb-5 flex items-center justify-between gap-4">
+              <div>
+                <h3 className="flex items-center gap-2 text-lg font-bold text-stone-900"><ClipboardList className="h-5 w-5 text-emerald-700" />Αιτήματα πελατών</h3>
+                <p className="mt-1 text-sm text-stone-500">Επιβεβαιώστε τη διαθεσιμότητα και ενημερώστε τον καταναλωτή.</p>
+              </div>
+              <span className="rounded-full bg-amber-50 px-3 py-1 text-sm font-semibold text-amber-800">{requests.filter((request) => request.status === 'pending').length} νέα</span>
+            </div>
+            {requests.length === 0 ? (
+              <p className="text-sm text-stone-500">Δεν υπάρχουν αιτήματα ακόμη.</p>
+            ) : (
+              <ul className="divide-y divide-stone-200">
+                {requests.map((request) => (
+                  <li key={request.id} className="py-4">
+                    <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                      <div>
+                        <p className="font-semibold text-stone-900">{request.product_title}</p>
+                        <p className="mt-1 text-sm text-stone-600">Ποσότητα: {request.requested_quantity} · Αγοραστής: {request.buyer_email ?? 'Δεν υπάρχει email'}</p>
+                        {request.message && <p className="mt-2 rounded-md bg-stone-50 p-2 text-sm text-stone-600">{request.message}</p>}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="mr-1 text-sm font-medium text-emerald-800">{requestStatusLabels[request.status]}</span>
+                        {request.status === 'pending' && <>
+                          <button type="button" disabled={updatingRequestId === request.id} onClick={() => void handleRequestStatus(request.id, 'confirmed')} className="rounded-md bg-emerald-700 px-3 py-1.5 text-xs font-semibold text-white disabled:bg-emerald-400">Επιβεβαίωση</button>
+                          <button type="button" disabled={updatingRequestId === request.id} onClick={() => void handleRequestStatus(request.id, 'rejected')} className="rounded-md border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-50">Απόρριψη</button>
+                        </>}
+                        {request.status === 'confirmed' && <button type="button" disabled={updatingRequestId === request.id} onClick={() => void handleRequestStatus(request.id, 'ready')} className="rounded-md bg-sky-700 px-3 py-1.5 text-xs font-semibold text-white disabled:bg-sky-400">Έτοιμο για παραλαβή</button>}
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
 
         </main>
       </div>
