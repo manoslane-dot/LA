@@ -215,7 +215,7 @@ export default function ConsumerDashboard() {
           <p className="hidden lg:block text-sm text-stone-500">Πίνακας ελέγχου καταναλωτή</p>
           <div className="flex items-center gap-2">
             <a
-              href="/#products"
+              href="/"
               className="inline-flex items-center gap-2 border border-stone-300 hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 text-stone-700 px-3 py-2 rounded-md text-sm font-medium transition-colors"
             >
               <Home className="h-4 w-4" /><span className="hidden sm:inline">Αρχική σελίδα</span>

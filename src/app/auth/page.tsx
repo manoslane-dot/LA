@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { saveLoginPreference } from '@/lib/auth/sessionPersistence';
@@ -20,6 +20,7 @@ function validateEmailDomain(email: string): boolean {
 function AuthForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [checkingSession, setCheckingSession] = useState(true);
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -29,6 +30,44 @@ function AuthForm() {
   const [rememberMe, setRememberMe] = useState(true);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const supabase = createClient();
+
+  useEffect(() => {
+    const redirectIfLoggedIn = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (session) {
+        const redirectUrl = searchParams.get('redirectUrl');
+        const safeRedirectUrl = redirectUrl && redirectUrl.startsWith('/') && !redirectUrl.startsWith('//')
+          ? redirectUrl
+          : '/consumer/dashboard';
+        router.replace(safeRedirectUrl);
+        return;
+      }
+
+      setCheckingSession(false);
+    };
+
+    void redirectIfLoggedIn();
+  }, [router, searchParams, supabase]);
+
+  if (checkingSession) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
+        <div className="w-full max-w-sm rounded-xl border border-gray-200 bg-white px-8 py-10 text-center shadow-sm">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100 text-green-700">
+            <span className="text-lg font-bold">A</span>
+          </div>
+          <h2 className="text-lg font-semibold text-gray-800">AgroApp</h2>
+          <p className="mt-1 text-sm text-gray-500">Έλεγχος σύνδεσης...</p>
+          <div className="mt-5 flex justify-center" aria-hidden="true">
+            <span className="h-6 w-6 animate-spin rounded-full border-2 border-green-600 border-t-transparent" />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
