@@ -66,8 +66,7 @@ function AuthForm() {
       if (error) {
         setErrorMsg(error.message);
       } else {
-        alert('Η εγγραφή ολοκληρώθηκε! Παρακαλώ συνδεθείτε.');
-        setIsLogin(true);
+        setSuccessMsg('Η εγγραφή ολοκληρώθηκε! Παρακαλώ ελέγξτε το email σας για τον σύνδεσμο επιβεβαίωσης.');
       }
     }
     setLoading(false);
