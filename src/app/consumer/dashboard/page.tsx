@@ -26,6 +26,8 @@ interface PurchaseRequest {
   id: number;
   product_id: number | null;
   product_title: string;
+  buyer_email: string | null;
+  buyer_phone: string | null;
   requested_quantity: number;
   status: 'pending' | 'confirmed' | 'ready' | 'rejected';
   unit_at_request: string;
@@ -65,6 +67,7 @@ export default function ConsumerDashboard() {
   const [errorMsg, setErrorMsg] = useState('');
   const [buyerId, setBuyerId] = useState<string | null>(null);
   const [buyerEmail, setBuyerEmail] = useState<string | null>(null);
+  const [buyerPhone, setBuyerPhone] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [requestedQuantity, setRequestedQuantity] = useState('1');
   const [message, setMessage] = useState('');
@@ -95,7 +98,7 @@ export default function ConsumerDashboard() {
   const fetchRequests = useCallback(async (userId: string) => {
     const { data, error } = await supabase
       .from('purchase_requests')
-      .select('id, product_id, product_title, requested_quantity, status, unit_at_request, unit_price_at_request, products(unit,price)')
+      .select('id, product_id, product_title, buyer_email, buyer_phone, requested_quantity, status, unit_at_request, unit_price_at_request, products(unit,price)')
       .eq('buyer_id', userId)
       .order('created_at', { ascending: false });
 
@@ -142,6 +145,7 @@ export default function ConsumerDashboard() {
       setLoading(true);
       setBuyerId(session.user.id);
       setBuyerEmail(session.user.email ?? null);
+      setBuyerPhone((session.user.user_metadata?.phone as string | undefined) ?? '');
       await Promise.all([fetchProducts(), fetchRequests(session.user.id)]);
       setLoading(false);
     };
@@ -165,6 +169,12 @@ export default function ConsumerDashboard() {
     event.preventDefault();
     if (!buyerId || !selectedProduct?.farmer_id) return;
 
+    const sanitizedPhone = buyerPhone.trim();
+    if (sanitizedPhone.length < 7) {
+      setErrorMsg('Συμπληρώστε ένα έγκυρο κινητό τηλέφωνο.');
+      return;
+    }
+
     const quantity = Number(requestedQuantity);
     if (!Number.isFinite(quantity) || quantity <= 0) {
       setErrorMsg('Συμπληρώστε μια έγκυρη ποσότητα.');
@@ -186,6 +196,7 @@ export default function ConsumerDashboard() {
       farmer_id: selectedProduct.farmer_id,
       buyer_id: buyerId,
       buyer_email: buyerEmail,
+      buyer_phone: sanitizedPhone,
       requested_quantity: quantity,
       unit_at_request: selectedProduct.unit,
       unit_price_at_request: selectedProduct.price,
@@ -195,6 +206,14 @@ export default function ConsumerDashboard() {
     if (error) {
       setErrorMsg(`Δεν στάλθηκε το αίτημα: ${error.message}`);
     } else {
+      const { error: metadataError } = await supabase.auth.updateUser({
+        data: { phone: sanitizedPhone },
+      });
+
+      if (metadataError) {
+        console.error('Σφάλμα αποθήκευσης τηλεφώνου στο προφίλ:', metadataError.message);
+      }
+
       setSelectedProduct(null);
       setSuccessMsg(
         `Το αίτημα για ${selectedProduct.title} στάλθηκε: ${quantity} ${getUnitLabel(selectedProduct.unit, quantity)} με εκτιμώμενο κόστος ${formatCurrency(totalCost)}.`,
@@ -316,12 +335,20 @@ export default function ConsumerDashboard() {
                   const unit = productDetails.unit;
                   const unitPrice = productDetails.price;
                   const totalCost = request.requested_quantity * unitPrice;
+                  const isContactVisible = request.status === 'confirmed' || request.status === 'ready';
                   return (
                     <li key={request.id} className="flex flex-wrap items-center justify-between gap-2 p-3 text-sm">
                       <div className="flex-grow">
                         <strong className="text-stone-900">{request.product_title}</strong>
                         <span className="text-stone-500"> · {request.requested_quantity} {getUnitLabel(unit, request.requested_quantity)}</span>
                         <p className="mt-1 text-sm text-stone-600">Εκτιμώμενο κόστος: <strong className="text-base font-bold text-emerald-700">{formatCurrency(totalCost)}</strong> <span className="text-xs">({formatCurrency(unitPrice)} / {unit || 'μονάδα'})</span></p>
+                        {isContactVisible ? (
+                          <p className="mt-1 text-xs text-emerald-700">
+                            Στοιχεία επικοινωνίας που κοινοποιήθηκαν: {request.buyer_email ?? buyerEmail ?? 'χωρίς email'} · {(request.buyer_phone ?? buyerPhone) || 'χωρίς κινητό'}
+                          </p>
+                        ) : (
+                          <p className="mt-1 text-xs text-stone-500">Τα στοιχεία επικοινωνίας παραμένουν κρυφά μέχρι την έγκριση από τον παραγωγό.</p>
+                        )}
                       </div>
                       <span className="shrink-0 font-medium text-emerald-800">{requestStatusLabels[request.status]}</span>
                     </li>
@@ -338,6 +365,16 @@ export default function ConsumerDashboard() {
           <form onSubmit={handleRequest} className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
             <div className="mb-5 flex items-start justify-between gap-4"><div><h2 id="request-title" className="text-lg font-bold text-stone-900">Αίτημα για {selectedProduct.title}</h2><p className="mt-1 text-sm text-stone-500">Ο παραγωγός θα απαντήσει στη διαθεσιμότητα.</p></div><button type="button" onClick={() => setSelectedProduct(null)} className="text-sm text-stone-500 hover:text-stone-900">Κλείσιμο</button></div>
             {errorMsg && <div className="mb-4 rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{errorMsg}</div>}
+            <label className="mb-4 block text-sm font-medium text-stone-700">Κινητό τηλέφωνο επικοινωνίας
+              <input
+                type="tel"
+                required
+                value={buyerPhone}
+                onChange={(event) => setBuyerPhone(event.target.value)}
+                placeholder="π.χ. 69XXXXXXXX"
+                className="mt-1 w-full rounded-md border border-stone-300 px-3 py-2"
+              />
+            </label>
             <label className="mb-4 block text-sm font-medium text-stone-700">Ποσότητα ({selectedProduct.unit})<input type="number" min="0.01" step="any" max={selectedProduct.quantity} required value={requestedQuantity} onChange={(event) => setRequestedQuantity(event.target.value)} className="mt-1 w-full rounded-md border border-stone-300 px-3 py-2" /></label>
             <div className="mb-4 rounded-md border border-stone-200 bg-stone-50 px-3 py-2 text-sm text-stone-700">
               Εκτιμώμενο κόστος: {

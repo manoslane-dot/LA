@@ -33,6 +33,7 @@ interface PurchaseRequest {
   product_id: number | null;
   product_title: string;
   buyer_email: string | null;
+  buyer_phone: string | null;
   requested_quantity: number;
   message: string | null;
   status: 'pending' | 'confirmed' | 'ready' | 'rejected';
@@ -111,7 +112,7 @@ export default function FarmerDashboard() {
   const fetchRequests = useCallback(async (farmerId: string) => {
     const { data, error } = await supabase
       .from('purchase_requests')
-      .select('id, product_id, product_title, buyer_email, requested_quantity, message, status, created_at, unit_at_request, unit_price_at_request, products(unit,price)')
+      .select('id, product_id, product_title, buyer_email, buyer_phone, requested_quantity, message, status, created_at, unit_at_request, unit_price_at_request, products(unit,price)')
       .eq('farmer_id', farmerId)
       .order('created_at', { ascending: false });
 
@@ -572,11 +573,18 @@ export default function FarmerDashboard() {
                             <>
                               <p className="font-semibold text-stone-900">{request.product_title}</p>
                               <p className="mt-1 text-sm text-stone-600">
-                                Ποσότητα: {request.requested_quantity} {getUnitLabel(unit, request.requested_quantity)} · Αγοραστής: {request.buyer_email ?? 'Δεν υπάρχει email'}
+                                Ποσότητα: {request.requested_quantity} {getUnitLabel(unit, request.requested_quantity)}
                               </p>
                               <p className="mt-1 text-sm text-stone-600">
                                 Ενδεικτικό κόστος: {formatCurrency(totalCost)} ({formatCurrency(unitPrice)} / {unit || 'μονάδα'})
                               </p>
+                              {request.status === 'confirmed' || request.status === 'ready' ? (
+                                <p className="mt-1 text-xs text-emerald-700">
+                                  Στοιχεία αγοραστή: {request.buyer_email ?? 'χωρίς email'} · {request.buyer_phone ?? 'χωρίς κινητό'}
+                                </p>
+                              ) : (
+                                <p className="mt-1 text-xs text-stone-500">Τα στοιχεία επικοινωνίας του αγοραστή εμφανίζονται μετά την επιβεβαίωση.</p>
+                              )}
                               {request.message && <p className="mt-2 rounded-md bg-stone-50 p-2 text-sm text-stone-600">{request.message}</p>}
                             </>
                           );
