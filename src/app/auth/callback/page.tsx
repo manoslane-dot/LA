@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { resolvePostLoginRedirect, resolveRoleFromIntent } from '@/lib/auth/roleRouting';
 import { saveLoginPreference } from '@/lib/auth/sessionPersistence';
+import { buildCompleteProfileRedirect, hasRequiredContactInfo } from '@/lib/auth/contactInfo';
 
 function AuthCallbackContent() {
   const router = useRouter();
@@ -28,6 +29,7 @@ function AuthCallbackContent() {
         const redirectUrl = searchParams.get('redirectUrl');
         const intendedRole = resolveRoleFromIntent(searchParams.get('role'), redirectUrl);
         let resolvedRole = session.user.user_metadata?.role;
+        let resolvedUser = session.user;
 
         if (intendedRole && resolvedRole !== intendedRole) {
           const { data: updateData, error: updateError } = await supabase.auth.updateUser({
@@ -37,6 +39,7 @@ function AuthCallbackContent() {
           if (updateError) {
             console.error('Auth callback role update error', updateError);
           } else {
+            resolvedUser = updateData.user ?? resolvedUser;
             resolvedRole = updateData.user?.user_metadata?.role;
           }
         }
@@ -46,6 +49,12 @@ function AuthCallbackContent() {
           requestedRedirectUrl: redirectUrl,
           userRole: resolvedRole ?? intendedRole,
         });
+
+        if (!hasRequiredContactInfo(resolvedUser)) {
+          saveLoginPreference(remember);
+          router.replace(buildCompleteProfileRedirect(safeRedirectUrl));
+          return;
+        }
 
         saveLoginPreference(remember);
         router.replace(safeRedirectUrl);

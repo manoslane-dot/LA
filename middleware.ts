@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { getDashboardForRole, normalizeUserRole } from './src/lib/auth/roleRouting';
+import { buildCompleteProfileRedirect, hasRequiredContactInfo } from './src/lib/auth/contactInfo';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -38,6 +39,10 @@ export async function middleware(request: NextRequest) {
 
   if (!user) {
     return buildAuthRedirect(request);
+  }
+
+  if (!hasRequiredContactInfo(user)) {
+    return NextResponse.redirect(new URL(buildCompleteProfileRedirect(`${request.nextUrl.pathname}${request.nextUrl.search}`), request.url));
   }
 
   const path = request.nextUrl.pathname;

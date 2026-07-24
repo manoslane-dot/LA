@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { saveLoginPreference } from '@/lib/auth/sessionPersistence';
 import { resolvePostLoginRedirect, resolveRoleFromIntent } from '@/lib/auth/roleRouting';
+import { buildCompleteProfileRedirect, hasRequiredContactInfo } from '@/lib/auth/contactInfo';
 import Link from 'next/link';
 import GoogleSignInButton from './GoogleSignInButton';
 
@@ -39,6 +40,7 @@ function AuthForm() {
       } = await supabase.auth.getSession();
 
       if (session) {
+        let resolvedUser = session.user;
         const intendedRole = resolveRoleFromIntent(
           searchParams.get('role'),
           searchParams.get('redirectUrl'),
@@ -53,8 +55,14 @@ function AuthForm() {
           if (roleUpdateError) {
             console.error('Σφάλμα αλλαγής ρόλου:', roleUpdateError.message);
           } else {
+            resolvedUser = updateData.user ?? resolvedUser;
             resolvedRole = updateData.user?.user_metadata?.role;
           }
+        }
+
+        if (!hasRequiredContactInfo(resolvedUser)) {
+          router.replace(buildCompleteProfileRedirect(searchParams.get('redirectUrl')));
+          return;
         }
 
         const nextUrl = resolvePostLoginRedirect({
@@ -106,26 +114,37 @@ function AuthForm() {
         setErrorMsg(error.message);
         setShowForgotPassword(true);
       } else {
+        let resolvedUser = data.user;
         const intendedRole = resolveRoleFromIntent(
           searchParams.get('role'),
           searchParams.get('redirectUrl'),
         );
 
         if (intendedRole) {
-          const { error: roleUpdateError } = await supabase.auth.updateUser({
+          const { data: updateData, error: roleUpdateError } = await supabase.auth.updateUser({
             data: { role: intendedRole },
           });
 
           if (roleUpdateError) {
             console.error('Σφάλμα ενημέρωσης ρόλου:', roleUpdateError.message);
+          } else {
+            resolvedUser = updateData.user ?? resolvedUser;
           }
         }
 
         saveLoginPreference(rememberMe);
+        const requestedRedirect = searchParams.get('redirectUrl');
         const nextUrl = resolvePostLoginRedirect({
-          requestedRedirectUrl: searchParams.get('redirectUrl'),
-          userRole: intendedRole ?? data.user?.user_metadata?.role,
+          requestedRedirectUrl: requestedRedirect,
+          userRole: intendedRole ?? resolvedUser?.user_metadata?.role,
         });
+
+        if (!hasRequiredContactInfo(resolvedUser ?? {})) {
+          router.push(buildCompleteProfileRedirect(nextUrl));
+          setLoading(false);
+          return;
+        }
+
         router.push(nextUrl);
       }
     } else {
