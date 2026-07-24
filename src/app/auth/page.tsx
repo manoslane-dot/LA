@@ -46,9 +46,9 @@ function AuthForm() {
         setErrorMsg(error.message);
         setShowForgotPassword(true);
       } else {
-        // Αν συνδεθεί επιτυχώς, τον πηγαίνουμε στο dashboard του αγρότη/πωλητή
         const redirectUrl = searchParams.get('redirectUrl');
-        router.push(redirectUrl || '/farmer/dashboard');
+        // Ανακατεύθυνση στο consumer dashboard by default, εκτός αν ορίζεται αλλιώς.
+        router.push(redirectUrl || '/consumer/dashboard');
       }
     } else {
       // Εγγραφή
@@ -189,10 +189,10 @@ function AuthForm() {
 
         <div className="mt-6 border-t pt-4 text-center">
           <Link
-            href="/consumer/dashboard"
+            href="/"
             className="text-xs text-gray-500 hover:text-gray-700"
           >
-            ← Επιστροφή στην αγορά καταναλωτή
+            ← Επιστροφή στην αρχική σελίδα
           </Link>
         </div>
 

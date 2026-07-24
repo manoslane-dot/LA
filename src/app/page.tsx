@@ -38,7 +38,7 @@ export default function Home() {
             <a href="#contact" className="transition hover:text-[#ffd47d]">Επικοινωνία</a>
           </div>
           <Link
-            href="/auth"
+            href="/auth?redirectUrl=/farmer/dashboard"
             className="hidden rounded-md border border-white/40 px-4 py-2 text-sm font-semibold transition hover:bg-white hover:text-[#173b2a] sm:block"
           >
             Σύνδεση
@@ -46,7 +46,7 @@ export default function Home() {
           <div className="flex items-center gap-3 text-xs font-semibold sm:gap-4 md:hidden">
             <a href="#products" className="transition hover:text-[#ffd47d]">Προϊόντα</a>
             <a href="#about" className="transition hover:text-[#ffd47d]">Σχετικά</a>
-            <Link href="/auth" className="rounded-md border border-white/40 px-2.5 py-1.5 transition hover:bg-white hover:text-[#173b2a]">Σύνδεση</Link>
+            <Link href="/auth?redirectUrl=/farmer/dashboard" className="rounded-md border border-white/40 px-2.5 py-1.5 transition hover:bg-white hover:text-[#173b2a]">Σύνδεση</Link>
           </div>
         </nav>
 
@@ -64,7 +64,7 @@ export default function Home() {
             </p>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
               <Link
-                href="/auth"
+                href="/auth?redirectUrl=/consumer/dashboard"
                 className="inline-flex items-center justify-center gap-2 rounded-md bg-[#e9a83a] px-6 py-4 font-bold text-[#173b2a] transition hover:bg-[#f5bd5c]"
               >
                 <ShoppingBasket size={19} />
@@ -72,7 +72,7 @@ export default function Home() {
                 <ArrowRight size={18} />
               </Link>
               <Link
-                href="/auth"
+                href="/auth?redirectUrl=/farmer/dashboard"
                 className="inline-flex items-center justify-center gap-2 rounded-md border border-white/50 bg-white/10 px-6 py-4 font-bold text-white backdrop-blur-sm transition hover:bg-white hover:text-[#173b2a]"
               >
                 <Tractor size={20} />
@@ -140,7 +140,7 @@ export default function Home() {
             <p className="text-sm font-bold uppercase tracking-[0.12em] text-[#587b44]">Για ανθρώπους της γης και της πόλης</p>
             <h2 className="mt-3 text-3xl font-bold leading-tight text-[#173b2a] sm:text-4xl">Η καλή τροφή αξίζει μια καθαρή διαδρομή.</h2>
             <p className="mt-5 leading-8 text-[#496554]">Το AgroDirect φέρνει σε άμεση επαφή παραγωγούς και καταναλωτές. Χτίζουμε μια αγορά όπου η ποιότητα, η εμπιστοσύνη και ο σεβασμός στην εργασία της γης έχουν τον πρώτο λόγο.</p>
-            <Link href="/auth" className="mt-7 inline-flex items-center gap-2 font-bold text-[#285437] transition hover:text-[#6b8d40]">
+            <Link href="/auth?redirectUrl=/farmer/dashboard" className="mt-7 inline-flex items-center gap-2 font-bold text-[#285437] transition hover:text-[#6b8d40]">
               Γίνετε συνεργάτης <ArrowRight size={18} />
             </Link>
           </div>
@@ -175,12 +175,12 @@ export default function Home() {
       <section id="contact" className="bg-[#173b2a] py-14 text-white">
         <div className="mx-auto flex max-w-7xl flex-col gap-7 px-5 sm:px-8 md:flex-row md:items-center md:justify-between lg:px-10">
           <div><h2 className="text-3xl font-bold">Η επόμενη καλή αγορά ξεκινά εδώ.</h2><p className="mt-2 text-white/75">Μπείτε στην κοινότητα του AgroDirect σήμερα.</p></div>
-          <Link href="/auth" className="inline-flex w-fit items-center gap-2 rounded-md bg-[#e9a83a] px-5 py-3.5 font-bold text-[#173b2a] transition hover:bg-[#f5bd5c]">Δείτε τα προϊόντα <ArrowRight size={18} /></Link>
+          <Link href="/auth?redirectUrl=/consumer/dashboard" className="inline-flex w-fit items-center gap-2 rounded-md bg-[#e9a83a] px-5 py-3.5 font-bold text-[#173b2a] transition hover:bg-[#f5bd5c]">Δείτε τα προϊόντα <ArrowRight size={18} /></Link>
         </div>
       </section>
 
       <footer className="bg-[#102d20] py-6 text-sm text-white/60">
-        <div className="mx-auto flex max-w-7xl flex-col gap-2 px-5 sm:flex-row sm:justify-between sm:px-8 lg:px-10"><p>AgroDirect © 2026. Ελληνική γη, άμεση αξία.</p><Link href="/auth" className="transition hover:text-white">Σύνδεση συνεργάτη</Link></div>
+        <div className="mx-auto flex max-w-7xl flex-col gap-2 px-5 sm:flex-row sm:justify-between sm:px-8 lg:px-10"><p>AgroDirect © 2026. Ελληνική γη, άμεση αξία.</p><Link href="/auth?redirectUrl=/farmer/dashboard" className="transition hover:text-white">Σύνδεση συνεργάτη</Link></div>
       </footer>
     </main>
   );
