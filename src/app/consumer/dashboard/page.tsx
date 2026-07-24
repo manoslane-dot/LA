@@ -1,8 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ShoppingBag, ClipboardList, LogOut, Leaf, Home } from 'lucide-react';
+import { ShoppingBag, ClipboardList, LogOut, Leaf } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import {
   clearLoginPreference,
@@ -184,13 +185,13 @@ export default function ConsumerDashboard() {
       {/* Sidebar */}
       <aside className="w-64 shrink-0 border-r border-stone-200 bg-white hidden lg:block">
         <div className="p-6 border-b border-stone-100">
-          <div className="flex items-center gap-3">
+          <Link href="/" className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-700 text-white"><Leaf className="h-5 w-5" /></div>
             <div>
               <h1 className="text-lg font-bold text-emerald-900">AgroDirect</h1>
               <p className="text-xs text-stone-500">Χώρος καταναλωτή</p>
             </div>
-          </div>
+          </Link>
         </div>
         <nav className="mt-5 px-3 space-y-1" aria-label="Κύρια πλοήγηση">
           <a href="#products" className="flex items-center gap-3 rounded-md bg-emerald-50 px-3 py-2.5 text-sm font-semibold text-emerald-800">
@@ -200,33 +201,20 @@ export default function ConsumerDashboard() {
             <ClipboardList className="h-4 w-4" /> Τα Αιτήματά μου
           </a>
         </nav>
-        <div className="absolute bottom-0 w-full p-3">
-          <a href="/" className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-stone-600 hover:bg-stone-100 hover:text-stone-900">
-            <Home className="h-4 w-4" /> Επιστροφή στην Αρχική
-          </a>
-        </div>
       </aside>
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
         {/* Top Header */}
         <header className="bg-white border-b border-stone-200 h-16 flex items-center justify-between px-4 sm:px-8">
-          <div className="flex items-center gap-2 lg:hidden"><Leaf className="h-5 w-5 text-emerald-700" /><span className="font-bold text-emerald-900">AgroDirect</span></div>
+          <Link href="/" className="flex items-center gap-2 lg:hidden"><Leaf className="h-5 w-5 text-emerald-700" /><span className="font-bold text-emerald-900">AgroDirect</span></Link>
           <p className="hidden lg:block text-sm text-stone-500">Πίνακας ελέγχου καταναλωτή</p>
-          <div className="flex items-center gap-2">
-            <a
-              href="/"
-              className="inline-flex items-center gap-2 border border-stone-300 hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 text-stone-700 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-            >
-              <Home className="h-4 w-4" /><span className="hidden sm:inline">Αρχική σελίδα</span>
-            </a>
-            <button
-              onClick={handleLogout}
-              className="inline-flex items-center gap-2 border border-stone-300 hover:border-red-200 hover:bg-red-50 hover:text-red-700 text-stone-700 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-            >
-              <LogOut className="h-4 w-4" /><span className="hidden sm:inline">Αποσύνδεση</span>
-            </button>
-          </div>
+          <button
+            onClick={handleLogout}
+            className="inline-flex items-center gap-2 border border-stone-300 hover:border-red-200 hover:bg-red-50 hover:text-red-700 text-stone-700 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+          >
+            <LogOut className="h-4 w-4" /><span className="hidden sm:inline">Αποσύνδεση</span>
+          </button>
         </header>
 
         {/* Dashboard Body */}
