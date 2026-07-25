@@ -2,6 +2,7 @@
 
 import { FormEvent, Suspense, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { Leaf, Phone, UserRoundCheck } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import {
   hasRequiredContactInfo,
@@ -108,12 +109,12 @@ function CompleteProfileForm() {
 
   if (checkingSession) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
-        <div className="w-full max-w-sm rounded-xl border border-gray-200 bg-white px-8 py-10 text-center shadow-sm">
-          <h2 className="text-lg font-semibold text-gray-800">Έλεγχος στοιχείων</h2>
-          <p className="mt-1 text-sm text-gray-500">Φορτώνουμε τον λογαριασμό σας...</p>
+      <div className="flex min-h-screen items-center justify-center px-4 py-8">
+        <div className="auth-fade-in w-full max-w-sm rounded-2xl border border-emerald-100 bg-white/95 px-8 py-10 text-center shadow-[0_16px_50px_-28px_rgba(22,50,39,0.4)] backdrop-blur">
+          <h2 className="text-lg font-bold text-emerald-950">Έλεγχος στοιχείων</h2>
+          <p className="mt-1 text-sm text-slate-600">Φορτώνουμε τον λογαριασμό σας...</p>
           <div className="mt-5 flex justify-center" aria-hidden="true">
-            <span className="h-6 w-6 animate-spin rounded-full border-2 border-green-600 border-t-transparent" />
+            <span className="h-6 w-6 animate-spin rounded-full border-2 border-emerald-600 border-t-transparent" />
           </div>
         </div>
       </div>
@@ -121,40 +122,58 @@ function CompleteProfileForm() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
-      <div className="w-full max-w-md rounded-lg border border-gray-200 bg-white p-8 shadow-sm">
-        <h1 className="text-2xl font-bold text-green-700">Ολοκλήρωση προφίλ</h1>
-        <p className="mt-2 text-sm text-gray-600">
+    <div className="relative isolate flex min-h-screen items-center justify-center px-4">
+      <div className="absolute left-0 top-0 -z-10 h-56 w-56 rounded-full bg-amber-300/20 blur-3xl" aria-hidden="true" />
+      <div className="absolute bottom-0 right-0 -z-10 h-64 w-64 rounded-full bg-emerald-400/20 blur-3xl" aria-hidden="true" />
+
+      <div className="auth-fade-in w-full max-w-md rounded-2xl border border-emerald-100 bg-white/95 p-8 shadow-[0_16px_50px_-28px_rgba(22,50,39,0.4)] backdrop-blur">
+        <div className="mb-5 flex items-center gap-3">
+          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+            <Leaf className="h-5 w-5" />
+          </span>
+          <div>
+            <h1 className="text-2xl font-extrabold tracking-tight text-emerald-950">Ολοκλήρωση προφίλ</h1>
+            <p className="mt-0.5 text-sm text-slate-600">Συμπληρώστε τα στοιχεία επικοινωνίας σας.</p>
+          </div>
+        </div>
+
+        <p className="text-sm leading-6 text-slate-600">
           Για να συνεχίσετε, χρειάζονται υποχρεωτικά τα στοιχεία επικοινωνίας σας.
         </p>
 
         {errorMsg && (
-          <div className="mt-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">
             {errorMsg}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-          <label className="block text-sm font-medium text-gray-700">
-            Email επικοινωνίας
+          <label className="block text-sm font-semibold text-slate-700">
+            <span className="inline-flex items-center gap-2">
+              <UserRoundCheck className="h-4 w-4 text-emerald-700" />
+              Email επικοινωνίας
+            </span>
             <input
               type="email"
               required
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
               placeholder="name@example.com"
             />
           </label>
 
-          <label className="block text-sm font-medium text-gray-700">
-            Κινητό τηλέφωνο
+          <label className="block text-sm font-semibold text-slate-700">
+            <span className="inline-flex items-center gap-2">
+              <Phone className="h-4 w-4 text-emerald-700" />
+              Κινητό τηλέφωνο
+            </span>
             <input
               type="tel"
               required
               value={phone}
               onChange={(event) => setPhone(event.target.value)}
-              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
               placeholder="π.χ. 69XXXXXXXX"
             />
           </label>
@@ -162,7 +181,7 @@ function CompleteProfileForm() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-70"
+            className="w-full rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-70"
           >
             {loading ? 'Αποθήκευση...' : 'Συνέχεια'}
           </button>
@@ -174,7 +193,7 @@ function CompleteProfileForm() {
 
 export default function CompleteProfilePage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-gray-100" />}>
+    <Suspense fallback={<div className="min-h-screen" />}>
       <CompleteProfileForm />
     </Suspense>
   );

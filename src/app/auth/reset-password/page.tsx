@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { KeyRound, Leaf } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
 export default function ResetPasswordPage() {
@@ -43,44 +44,54 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
-      <div className="w-full max-w-md rounded-lg border border-gray-200 bg-white p-8 shadow-sm">
-        <h1 className="text-2xl font-bold text-green-700">Επαναφορά κωδικού</h1>
-        <p className="mt-2 text-sm text-gray-500">Δώσε τον νέο κωδικό πρόσβασης για το λογαριασμό σου.</p>
+    <div className="relative isolate flex min-h-screen items-center justify-center px-4">
+      <div className="absolute left-0 top-0 -z-10 h-56 w-56 rounded-full bg-amber-300/20 blur-3xl" aria-hidden="true" />
+      <div className="absolute bottom-0 right-0 -z-10 h-64 w-64 rounded-full bg-emerald-400/20 blur-3xl" aria-hidden="true" />
+
+      <div className="auth-fade-in w-full max-w-md rounded-2xl border border-emerald-100 bg-white/95 p-8 shadow-[0_16px_50px_-28px_rgba(22,50,39,0.4)] backdrop-blur">
+        <div className="mb-5 flex items-center gap-3">
+          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+            <Leaf className="h-5 w-5" />
+          </span>
+          <div>
+            <h1 className="text-2xl font-extrabold tracking-tight text-emerald-950">Επαναφορά κωδικού</h1>
+            <p className="mt-0.5 text-sm text-slate-600">Ορίστε έναν νέο, ασφαλή κωδικό πρόσβασης.</p>
+          </div>
+        </div>
 
         {errorMsg && (
-          <div className="mt-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">
             {errorMsg}
           </div>
         )}
 
         {successMsg && (
-          <div className="mt-4 rounded-md border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">
+          <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
             {successMsg}
           </div>
         )}
 
         <form onSubmit={handleResetPassword} className="mt-6 space-y-4">
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Νέος κωδικός</label>
+            <label className="mb-1.5 block text-sm font-semibold text-slate-700">Νέος κωδικός</label>
             <input
               type="password"
               required
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
               placeholder="••••••••"
             />
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Επιβεβαίωση κωδικού</label>
+            <label className="mb-1.5 block text-sm font-semibold text-slate-700">Επιβεβαίωση κωδικού</label>
             <input
               type="password"
               required
               value={confirmPassword}
               onChange={(event) => setConfirmPassword(event.target.value)}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
               placeholder="••••••••"
             />
           </div>
@@ -88,8 +99,9 @@ export default function ResetPasswordPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-green-400"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-70"
           >
+            <KeyRound className="h-4 w-4" />
             {loading ? 'Επεξεργασία...' : 'Αλλαγή κωδικού'}
           </button>
         </form>

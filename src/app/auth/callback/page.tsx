@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { Leaf } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { resolvePostLoginRedirect, resolveRoleFromIntent } from '@/lib/auth/roleRouting';
 import { saveLoginPreference } from '@/lib/auth/sessionPersistence';
@@ -67,10 +68,16 @@ function AuthCallbackContent() {
   }, [router, searchParams, supabase]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
-      <div className="w-full max-w-md rounded-lg border border-gray-200 bg-white p-8 text-center shadow-sm">
-        <h1 className="text-xl font-semibold text-gray-800">Finalizing sign-in...</h1>
-        <p className="mt-2 text-sm text-gray-500">You’ll be redirected shortly.</p>
+    <div className="relative isolate flex min-h-screen items-center justify-center px-4">
+      <div className="absolute left-0 top-0 -z-10 h-56 w-56 rounded-full bg-amber-300/20 blur-3xl" aria-hidden="true" />
+      <div className="absolute bottom-0 right-0 -z-10 h-64 w-64 rounded-full bg-emerald-400/20 blur-3xl" aria-hidden="true" />
+
+      <div className="auth-fade-in w-full max-w-md rounded-2xl border border-emerald-100 bg-white/95 p-8 text-center shadow-[0_16px_50px_-28px_rgba(22,50,39,0.4)] backdrop-blur">
+        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+          <Leaf className="h-6 w-6" />
+        </div>
+        <h1 className="text-xl font-bold text-emerald-950">Ολοκλήρωση σύνδεσης...</h1>
+        <p className="mt-2 text-sm text-slate-600">Θα μεταφερθείτε αυτόματα σε λίγα δευτερόλεπτα.</p>
       </div>
     </div>
   );
@@ -78,7 +85,7 @@ function AuthCallbackContent() {
 
 export default function AuthCallbackPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-gray-100" />}>
+    <Suspense fallback={<div className="min-h-screen" />}>
       <AuthCallbackContent />
     </Suspense>
   );

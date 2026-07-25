@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { Leaf, ShieldCheck, Sparkles } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { saveLoginPreference } from '@/lib/auth/sessionPersistence';
 import { resolvePostLoginRedirect, resolveRoleFromIntent } from '@/lib/auth/roleRouting';
@@ -17,8 +18,6 @@ function validateEmailDomain(email: string): boolean {
   return allowedDomains.includes(domain);
 }
 
-// Μετονομάσαμε το component σε AuthForm για να το τυλίξουμε σε Suspense.
-// Αυτό είναι απαραίτητο επειδή χρησιμοποιεί το useSearchParams.
 function AuthForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -81,15 +80,15 @@ function AuthForm() {
 
   if (checkingSession) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
-        <div className="w-full max-w-sm rounded-xl border border-gray-200 bg-white px-8 py-10 text-center shadow-sm">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100 text-green-700">
-            <span className="text-lg font-bold">A</span>
+      <div className="flex min-h-screen items-center justify-center px-4 py-8">
+        <div className="auth-fade-in w-full max-w-sm rounded-2xl border border-emerald-100 bg-white/95 px-8 py-10 text-center shadow-[0_16px_50px_-28px_rgba(22,50,39,0.4)] backdrop-blur">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+            <Leaf className="h-6 w-6" />
           </div>
-          <h2 className="text-lg font-semibold text-gray-800">AgroApp</h2>
-          <p className="mt-1 text-sm text-gray-500">Έλεγχος σύνδεσης...</p>
+          <h2 className="text-lg font-extrabold tracking-tight text-emerald-950">AgroDirect</h2>
+          <p className="mt-1 text-sm text-emerald-800/70">Έλεγχος σύνδεσης...</p>
           <div className="mt-5 flex justify-center" aria-hidden="true">
-            <span className="h-6 w-6 animate-spin rounded-full border-2 border-green-600 border-t-transparent" />
+            <span className="h-6 w-6 animate-spin rounded-full border-2 border-emerald-600 border-t-transparent" />
           </div>
         </div>
       </div>
@@ -193,132 +192,163 @@ function AuthForm() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col justify-center items-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full bg-white p-8 rounded-lg shadow-sm border border-gray-200">
-        
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-green-700">AgroApp</h1>
-          <h2 className="text-xl font-semibold text-gray-800 mt-2">
-            {isLogin ? 'Σύνδεση στον λογαριασμό σας' : 'Δημιουργία νέου λογαριασμού'}
-          </h2>
-          <p className="text-sm text-gray-500 mt-1">
-            {isLogin ? 'Εισάγετε τα στοιχεία σας για πρόσβαση' : 'Εγγραφείτε για να αγοράσετε ή να πουλήσετε προϊόντα'}
-          </p>
-        </div>
+    <div className="relative isolate flex min-h-screen items-center justify-center overflow-hidden px-4 py-10 sm:px-6 lg:px-8">
+      <div className="absolute -left-16 -top-20 h-60 w-60 rounded-full bg-amber-300/20 blur-3xl" aria-hidden="true" />
+      <div className="absolute -bottom-16 -right-10 h-72 w-72 rounded-full bg-emerald-400/20 blur-3xl" aria-hidden="true" />
 
-        {errorMsg && (
-          <div className="mb-4 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md text-sm">
-            {errorMsg}
-          </div>
-        )}
-
-        {successMsg && (
-          <div className="mb-4 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md text-sm">
-            {successMsg}
-          </div>
-        )}
-
-        <form onSubmit={handleAuth} className="space-y-4">
+      <div className="auth-fade-in relative grid w-full max-w-5xl overflow-hidden rounded-3xl border border-emerald-100/80 bg-white/90 shadow-[0_24px_70px_-35px_rgba(22,50,39,0.45)] backdrop-blur lg:grid-cols-[1.05fr_1fr]">
+        <aside className="relative hidden overflow-hidden bg-gradient-to-br from-emerald-900 via-emerald-800 to-emerald-700 p-8 text-white lg:flex lg:flex-col lg:justify-between">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-              placeholder="name@example.com"
-            />
+            <p className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-emerald-100">
+              <Sparkles className="h-3.5 w-3.5" />
+              Αγροτική Αγορά
+            </p>
+            <h2 className="mt-5 text-3xl font-extrabold leading-tight tracking-tight">
+              Καλώς ήρθες στο AgroDirect
+            </h2>
+            <p className="mt-4 text-sm leading-7 text-emerald-100/90">
+              Ένα καθαρό και ασφαλές περιβάλλον για να συνδέεις παραγωγούς και καταναλωτές με διαφάνεια.
+            </p>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Κωδικός πρόσβασης</label>
-            <input
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-              placeholder="••••••••"
-            />
+          <ul className="space-y-4">
+            {[
+              'Ασφαλής πρόσβαση με email ή Google',
+              'Γρήγορη είσοδος με διατήρηση συνεδρίας',
+              'Ροή προσαρμοσμένη στον ρόλο σας',
+            ].map((item) => (
+              <li key={item} className="flex items-start gap-3 text-sm text-emerald-50/95">
+                <span className="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-white/20">
+                  <ShieldCheck className="h-3.5 w-3.5" />
+                </span>
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </aside>
+
+        <div className="p-6 sm:p-8 lg:p-10">
+          <div className="mb-8 text-center lg:text-left">
+            <div className="mx-auto mb-4 flex h-11 w-11 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 lg:mx-0">
+              <Leaf className="h-5 w-5" />
+            </div>
+            <h1 className="text-3xl font-extrabold tracking-tight text-emerald-950">AgroDirect</h1>
+            <h2 className="mt-2 text-xl font-bold text-slate-900">
+              {isLogin ? 'Σύνδεση στον λογαριασμό σας' : 'Δημιουργία νέου λογαριασμού'}
+            </h2>
+            <p className="mt-1.5 text-sm leading-6 text-slate-600">
+              {isLogin ? 'Συνδεθείτε για πρόσβαση στην πλατφόρμα σας.' : 'Εγγραφείτε για να αγοράσετε ή να διαθέσετε προϊόντα.'}
+            </p>
           </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-md text-sm font-medium transition-colors"
-          >
-            {loading ? 'Επεξεργασία...' : isLogin ? 'Σύνδεση' : 'Εγγραφή'}
-          </button>
+          {errorMsg && (
+            <div className="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">
+              {errorMsg}
+            </div>
+          )}
 
-          {isLogin && (
-            <label className="flex items-center gap-2 text-sm text-gray-600">
+          {successMsg && (
+            <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+              {successMsg}
+            </div>
+          )}
+
+          <form onSubmit={handleAuth} className="space-y-4">
+            <div>
+              <label className="mb-1.5 block text-sm font-semibold text-slate-700">Email</label>
               <input
-                type="checkbox"
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-                className="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
+                placeholder="name@example.com"
               />
-              Να με θυμάσαι
-            </label>
-          )}
+            </div>
 
-          {isLogin && showForgotPassword && (
+            <div>
+              <label className="mb-1.5 block text-sm font-semibold text-slate-700">Κωδικός πρόσβασης</label>
+              <input
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
+                placeholder="••••••••"
+              />
+            </div>
+
             <button
-              type="button"
-              onClick={handleForgotPassword}
+              type="submit"
               disabled={loading}
-              className="w-full text-sm text-green-700 hover:underline font-medium text-left"
+              className="w-full rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-70"
             >
-              Ξέχασα τον κωδικό μου
+              {loading ? 'Επεξεργασία...' : isLogin ? 'Σύνδεση' : 'Εγγραφή'}
             </button>
-          )}
 
-          <div className="relative my-4">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300" />
+            {isLogin && (
+              <label className="inline-flex items-center gap-2 text-sm text-slate-600">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                />
+                Να με θυμάσαι
+              </label>
+            )}
+
+            {isLogin && showForgotPassword && (
+              <button
+                type="button"
+                onClick={handleForgotPassword}
+                disabled={loading}
+                className="w-full text-left text-sm font-medium text-emerald-800 transition hover:text-emerald-900 hover:underline"
+              >
+                Ξέχασα τον κωδικό μου
+              </button>
+            )}
+
+            <div className="relative my-5">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-slate-200" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase tracking-[0.2em]">
+                <span className="bg-white px-3 text-slate-400">ή</span>
+              </div>
             </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="bg-white px-2 text-gray-500">ή</span>
-            </div>
+
+            <GoogleSignInButton
+              redirectUrl={searchParams.get('redirectUrl') ?? '/consumer/dashboard'}
+              rememberMe={rememberMe}
+              role={searchParams.get('role') ?? undefined}
+            />
+          </form>
+
+          <div className="mt-6 text-center">
+            <button
+              onClick={() => setIsLogin(!isLogin)}
+              className="text-sm font-semibold text-emerald-700 transition hover:text-emerald-800 hover:underline"
+            >
+              {isLogin ? 'Δεν έχετε λογαριασμό; Εγγραφείτε' : 'Έχετε ήδη λογαριασμό; Συνδεθείτε'}
+            </button>
           </div>
 
-          <GoogleSignInButton
-            redirectUrl={searchParams.get('redirectUrl') ?? '/consumer/dashboard'}
-            rememberMe={rememberMe}
-            role={searchParams.get('role') ?? undefined}
-          />
-        </form>
-
-        <div className="mt-6 text-center">
-          <button
-            onClick={() => setIsLogin(!isLogin)}
-            className="text-sm text-green-600 hover:underline font-medium"
-          >
-            {isLogin ? 'Δεν έχετε λογαριασμό; Εγγραφείτε' : 'Έχετε ήδη λογαριασμό; Συνδεθείτε'}
-          </button>
+          <div className="mt-6 border-t border-slate-200 pt-4 text-center">
+            <Link href="/" className="text-xs font-medium text-slate-500 transition hover:text-slate-700">
+              ← Επιστροφή στην αρχική σελίδα
+            </Link>
+          </div>
         </div>
-
-        <div className="mt-6 border-t pt-4 text-center">
-          <Link
-            href="/"
-            className="text-xs text-gray-500 hover:text-gray-700"
-          >
-            ← Επιστροφή στην αρχική σελίδα
-          </Link>
-        </div>
-
       </div>
     </div>
   );
 }
 
 export default function AuthPage() {
-  // Το Suspense boundary είναι απαραίτητο για τη χρήση του useSearchParams() σε μια σελίδα
-  // που γίνεται pre-render. Επιτρέπει στο Next.js να αποδώσει ένα fallback στον server
-  // και να φορτώσει το δυναμικό component (AuthForm) στον client.
   return (
-    // Χρησιμοποιούμε ένα απλό div για fallback για να αποφύγουμε το τρεμόπαιγμα του περιεχομένου.
-    <Suspense fallback={<div className="min-h-screen bg-gray-100" />}><AuthForm /></Suspense>
+    <Suspense fallback={<div className="min-h-screen" />}>
+      <AuthForm />
+    </Suspense>
   );
 }
