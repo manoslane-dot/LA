@@ -72,6 +72,11 @@ function AuthForm() {
           } else {
             resolvedUser = updateData.user ?? resolvedUser;
             resolvedRole = updateData.user?.user_metadata?.role;
+            // Refresh session to update JWT token
+            const { error: refreshError } = await supabase.auth.refreshSession();
+            if (refreshError) {
+              console.error('Σφάλμα ανανέωσης session:', refreshError.message);
+            }
           }
         }
 
@@ -144,6 +149,11 @@ function AuthForm() {
             console.error('Σφάλμα ενημέρωσης ρόλου:', roleUpdateError.message);
           } else {
             resolvedUser = updateData.user ?? resolvedUser;
+            // Refresh session to update JWT token
+            const { error: refreshError } = await supabase.auth.refreshSession();
+            if (refreshError) {
+              console.error('Σφάλμα ανανέωσης session:', refreshError.message);
+            }
           }
         }
 

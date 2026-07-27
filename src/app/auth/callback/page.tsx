@@ -42,6 +42,11 @@ function AuthCallbackContent() {
           } else {
             resolvedUser = updateData.user ?? resolvedUser;
             resolvedRole = updateData.user?.user_metadata?.role;
+            // Refresh session to update JWT token
+            const { error: refreshError } = await supabase.auth.refreshSession();
+            if (refreshError) {
+              console.error('Auth callback refresh session error', refreshError);
+            }
           }
         }
 
