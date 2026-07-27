@@ -36,7 +36,7 @@ interface PurchaseRequest {
   created_at: string;
   unit_at_request: string;
   unit_price_at_request: number;
-  profit?: number;
+  profit: number;
   products?: { unit: string; price: number } | { unit: string; price: number }[] | null;
 }
 
@@ -110,7 +110,7 @@ export default function FarmerDashboard() {
   const fetchRequests = useCallback(async (farmerId: string) => {
     const { data, error } = await supabase
       .from('purchase_requests')
-      .select('id, product_id, product_title, farmer_id, buyer_email, buyer_phone, requested_quantity, message, status, created_at, unit_at_request, unit_price_at_request')
+      .select('id, product_id, product_title, farmer_id, buyer_email, buyer_phone, requested_quantity, message, status, created_at, unit_at_request, unit_price_at_request, profit')
       .eq('farmer_id', farmerId)
       .order('created_at', { ascending: false });
 
@@ -295,7 +295,7 @@ export default function FarmerDashboard() {
     }
 
     try {
-      // If changing status to 'ready', just update status (profit tracking will be added after migration is applied)
+      // Update status
       const { error } = await supabase
         .from('purchase_requests')
         .update({ status })
@@ -308,9 +308,7 @@ export default function FarmerDashboard() {
         return;
       }
 
-      // TODO: After profit column is added to purchase_requests in Supabase,
-      // uncomment the code below to calculate profit and decrease product quantity
-      /*
+      // When changing status to 'ready', calculate profit and decrease product quantity
       if (status === 'ready') {
         const profit = request.requested_quantity * request.unit_price_at_request;
         
@@ -338,7 +336,6 @@ export default function FarmerDashboard() {
           }
         }
       }
-      */
 
       await fetchRequests(userId);
     } catch (err) {
