@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ShoppingBag, ClipboardList, LogOut, Leaf, Phone, Search, ChevronDown, User, Mail } from 'lucide-react';
+import { ShoppingBag, ClipboardList, LogOut, Leaf, Phone, Search, ChevronDown, User, Mail, MapPin } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { sanitizePhoneForTel } from '@/lib/serviceAreas';
 import {
@@ -12,6 +12,14 @@ import {
   shouldLogoutOnAppClose,
 } from '@/lib/auth/sessionPersistence';
 import { getDashboardForRole, normalizeUserRole } from '@/lib/auth/roleRouting';
+import { usePermissions } from '@/lib/permissions';
+import {
+  getUserLocation,
+  sortProductsByDistance,
+  formatDistance,
+  hasUserLocationCached,
+  type UserLocation,
+} from '@/lib/geolocation';
 
 interface Product {
   id: number;
@@ -62,9 +70,14 @@ const getUnitLabel = (unit: string, quantity: number): string => {
 export default function ConsumerDashboard() {
   const router = useRouter();
   const supabase = createClient();
+  const { request: requestPermission } = usePermissions();
   const [products, setProducts] = useState<Product[]>([]);
   const [requests, setRequests] = useState<PurchaseRequest[]>([]);
   const [farmerProfiles, setFarmerProfiles] = useState<Record<string, { contact_phone: string | null; full_name: string | null }>>({});
+  const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
+  const [farmerServiceAreas, setFarmerServiceAreas] = useState<Record<string, string[]>>({});
+  const [loadingLocation, setLoadingLocation] = useState(false);
+  const [useDistance, setUseDistance] = useState(hasUserLocationCached());
   const [loading, setLoading] = useState(true);
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
@@ -139,6 +152,55 @@ export default function ConsumerDashboard() {
     }
   }, [supabase]);
 
+  const fetchFarmerServiceAreas = useCallback(async () => {
+    const farmerIds = [...new Set(products.map((p) => p.farmer_id).filter(Boolean) as string[])];
+    if (farmerIds.length === 0) return;
+
+    const { data, error } = await supabase
+      .from('farmer_profiles')
+      .select('user_id, service_areas')
+      .in('user_id', farmerIds);
+
+    if (error) {
+      console.error('Σφάλμα κατά τη φόρτωση περιοχών:', error.message);
+      return;
+    }
+
+    const map: Record<string, string[]> = {};
+    if (data) {
+      for (const profile of data) {
+        const areas = Array.isArray(profile.service_areas)
+          ? (profile.service_areas as string[])
+          : [];
+        map[profile.user_id as string] = areas;
+      }
+    }
+    setFarmerServiceAreas(map);
+  }, [supabase, products]);
+
+  const handleRequestLocation = async () => {
+    setLoadingLocation(true);
+    try {
+      const location = await requestPermission(
+        'geolocation',
+        'Για να σας δείξουμε τα πλησιέστερα προϊόντα και αγρότες'
+      );
+
+      if (location) {
+        const userLoc = await getUserLocation();
+        if (userLoc) {
+          setUserLocation(userLoc);
+          setUseDistance(true);
+          await fetchFarmerServiceAreas();
+        }
+      }
+    } catch (error) {
+      console.error('Σφάλμα αιτήματος τοποθεσίας:', error);
+    } finally {
+      setLoadingLocation(false);
+    }
+  };
+
   useEffect(() => {
     const loadDashboard = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -187,6 +249,13 @@ export default function ConsumerDashboard() {
 
     void loadDashboard();
   }, [fetchProducts, fetchRequests, supabase, router]);
+
+  // Φόρτωση service areas όταν αλλάξουν τα products
+  useEffect(() => {
+    if (products.length > 0) {
+      void fetchFarmerServiceAreas();
+    }
+  }, [products, fetchFarmerServiceAreas]);
 
   const openRequestForm = (product: Product) => {
     if (!product.farmer_id) {
@@ -305,9 +374,19 @@ export default function ConsumerDashboard() {
       filtered = filtered.filter((p) => p.title.toLowerCase().includes(lowerSearch));
     }
 
-    // Ταξινόμηση
+    // Ταξινόμηση ανά απόσταση (αν έχουμε τοποθεσία) ή ανά τιμή
     const sorted = [...filtered];
-    if (sortType === 'price_low') {
+    
+    if (useDistance && userLocation) {
+      // Ταξινόμηση κατά απόσταση από χρήστη
+      const productsWithDistance = sortProductsByDistance(
+        sorted,
+        userLocation.latitude,
+        userLocation.longitude,
+        farmerServiceAreas
+      );
+      return productsWithDistance as Product[];
+    } else if (sortType === 'price_low') {
       sorted.sort((a, b) => a.price - b.price);
     } else if (sortType === 'price_high') {
       sorted.sort((a, b) => b.price - a.price);
@@ -401,11 +480,27 @@ export default function ConsumerDashboard() {
                   className="w-full rounded-lg border border-stone-300 bg-white pl-10 pr-3 py-2.5 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
                 />
               </div>
+              
+              {/* Location Button */}
+              <button
+                onClick={handleRequestLocation}
+                disabled={loadingLocation}
+                className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold text-sm transition-colors ${
+                  useDistance
+                    ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 hover:bg-emerald-200'
+                    : 'bg-white text-stone-700 border border-stone-300 hover:bg-stone-50'
+                }`}
+              >
+                <MapPin className="h-4 w-4" />
+                {loadingLocation ? 'Φόρτωση...' : useDistance ? '📍 Ταξινόμηση κατά απόσταση' : '📍 Εύρεση κοντά'}
+              </button>
+
               <div className="relative">
                 <select
                   value={sortType}
                   onChange={(e) => setSortType(e.target.value as typeof sortType)}
-                  className="appearance-none rounded-lg border border-stone-300 bg-white pl-3 pr-10 py-2.5 text-sm text-stone-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 cursor-pointer"
+                  disabled={useDistance}
+                  className="appearance-none rounded-lg border border-stone-300 bg-white pl-3 pr-10 py-2.5 text-sm text-stone-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 cursor-pointer disabled:opacity-60"
                 >
                   <option value="newest">Φίλτρο</option>
                   <option value="price_low">Χαμηλότερη τιμή</option>
@@ -417,17 +512,36 @@ export default function ConsumerDashboard() {
 
             {filteredAndSortedProducts.length === 0 ? <p className="text-sm text-stone-500">{searchTerm ? 'Δεν βρέθηκαν προϊόντα με αυτό το όνομα.' : 'Δεν υπάρχουν διαθέσιμα προίόντα αυτή τη στιγμή.'}</p> : (
               <>
-                <p className="mb-3 text-xs text-stone-500">Εμφανίζονται {filteredAndSortedProducts.length} προϊόντα</p>
+                <p className="mb-3 text-xs text-stone-500">
+                  Εμφανίζονται {filteredAndSortedProducts.length} προϊόντα
+                  {useDistance && userLocation ? ' (ταξινομημένα κατά απόσταση)' : ''}
+                </p>
                 <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                {filteredAndSortedProducts.map((item) => (
-                  <article key={item.id} className="rounded-lg border border-emerald-200 bg-white p-4 flex flex-col">
-                    <div className="mb-2 flex items-start justify-between gap-3"><h3 className="text-base font-bold text-stone-900">{item.title}</h3><span className="rounded-full bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-800">{item.status}</span></div>
-                    <p className="mb-4 text-sm text-stone-600">Τιμή: <strong className="text-emerald-700">{item.price} EUR / {item.unit}</strong><br />Διαθέσιμη ποσότητα: <strong>{item.quantity} {getUnitLabel(item.unit, item.quantity)}</strong></p>
-                    <div className="mt-auto">
-                      <button type="button" onClick={() => openRequestForm(item)} className="w-full rounded-md bg-emerald-700 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-emerald-800">Αποστολή αιτήματος</button>
-                    </div>
-                  </article>
-                ))}
+                {filteredAndSortedProducts.map((item) => {
+                  const itemDistance = (item as any).distance_km;
+                  return (
+                    <article key={item.id} className="rounded-lg border border-emerald-200 bg-white p-4 flex flex-col">
+                      <div className="mb-2 flex items-start justify-between gap-3">
+                        <h3 className="text-base font-bold text-stone-900">{item.title}</h3>
+                        <span className="rounded-full bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-800">{item.status}</span>
+                      </div>
+                      {useDistance && itemDistance !== null && (
+                        <p className="mb-2 text-xs text-emerald-700 font-semibold flex items-center gap-1">
+                          <MapPin className="h-3 w-3" />
+                          {formatDistance(itemDistance)}
+                        </p>
+                      )}
+                      <p className="mb-4 text-sm text-stone-600">
+                        Τιμή: <strong className="text-emerald-700">{item.price} EUR / {item.unit}</strong>
+                        <br />
+                        Διαθέσιμη ποσότητα: <strong>{item.quantity} {getUnitLabel(item.unit, item.quantity)}</strong>
+                      </p>
+                      <div className="mt-auto">
+                        <button type="button" onClick={() => openRequestForm(item)} className="w-full rounded-md bg-emerald-700 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-emerald-800">Αποστολή αιτήματος</button>
+                      </div>
+                    </article>
+                  );
+                })}
                 </div>
               </>
             )}

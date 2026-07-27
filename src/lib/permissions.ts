@@ -56,6 +56,11 @@ export async function requestPermissionWithContext(
   type: PermissionType,
   reason?: string
 ): Promise<boolean> {
+  // Ελέγχουμε ότι είμαστε στο browser
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
   // Εμφάνιση ανακοίνωσης με σαφή επεξήγηση
   const context = PERMISSION_CONTEXTS[type];
   const explanation = reason || context.description;
@@ -173,6 +178,10 @@ async function requestMicrophone(): Promise<boolean> {
  * (Χρησιμοποιούμε την Permissions API όπου διατίθεται)
  */
 export async function checkPermissionStatus(type: PermissionType): Promise<'granted' | 'denied' | 'unknown'> {
+  if (typeof window === 'undefined') {
+    return 'unknown';
+  }
+
   if (!('permissions' in navigator)) {
     return 'unknown';
   }
