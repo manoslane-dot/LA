@@ -77,7 +77,7 @@ export default function ConsumerDashboard() {
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [farmerServiceAreas, setFarmerServiceAreas] = useState<Record<string, string[]>>({});
   const [loadingLocation, setLoadingLocation] = useState(false);
-  const [useDistance, setUseDistance] = useState(hasUserLocationCached());
+  const [useDistance, setUseDistance] = useState(false);
   const [loading, setLoading] = useState(true);
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
@@ -256,6 +256,13 @@ export default function ConsumerDashboard() {
       void fetchFarmerServiceAreas();
     }
   }, [products, fetchFarmerServiceAreas]);
+
+  // Ελέγχουμε για αποθηκευμένη τοποθεσία μετά τη σύνδεση
+  useEffect(() => {
+    if (typeof window !== 'undefined' && hasUserLocationCached()) {
+      setUseDistance(true);
+    }
+  }, []);
 
   const openRequestForm = (product: Product) => {
     if (!product.farmer_id) {
