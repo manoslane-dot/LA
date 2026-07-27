@@ -27,6 +27,7 @@ interface PurchaseRequest {
   id: number;
   product_id: number | null;
   product_title: string;
+  farmer_id: string;
   buyer_email: string | null;
   buyer_phone: string | null;
   requested_quantity: number;
@@ -35,7 +36,8 @@ interface PurchaseRequest {
   created_at: string;
   unit_at_request: string;
   unit_price_at_request: number;
-  products: { unit: string; price: number } | { unit: string; price: number }[] | null;
+  profit: number;
+  products?: { unit: string; price: number } | { unit: string; price: number }[] | null;
 }
 
 const requestStatusLabels: Record<PurchaseRequest['status'], string> = {
@@ -108,14 +110,14 @@ export default function FarmerDashboard() {
   const fetchRequests = useCallback(async (farmerId: string) => {
     const { data, error } = await supabase
       .from('purchase_requests')
-      .select('id, product_id, product_title, buyer_email, buyer_phone, requested_quantity, message, status, created_at, unit_at_request, unit_price_at_request')
+      .select('id, product_id, product_title, farmer_id, buyer_email, buyer_phone, requested_quantity, message, status, created_at, unit_at_request, unit_price_at_request, profit')
       .eq('farmer_id', farmerId)
       .order('created_at', { ascending: false });
 
     if (error) {
       console.error('Error fetching purchase requests:', error.message);
     } else if (data) {
-      setRequests(data as PurchaseRequest[]);
+      setRequests(data as unknown as PurchaseRequest[]);
     }
   }, [supabase]);
 
@@ -283,17 +285,67 @@ export default function FarmerDashboard() {
     if (!userId) return;
 
     setUpdatingRequestId(requestId);
-    const { error } = await supabase
-      .from('purchase_requests')
-      .update({ status })
-      .eq('id', requestId)
-      .eq('farmer_id', userId);
-
-    if (error) {
-      alert(`Σφάλμα ενημέρωσης αιτήματος: ${error.message}`);
-    } else {
-      await fetchRequests(userId);
+    
+    // Find the request to get product_id and quantities
+    const request = requests.find(r => r.id === requestId);
+    if (!request) {
+      alert('Αίτημα δεν βρέθηκε');
+      setUpdatingRequestId(null);
+      return;
     }
+
+    try {
+      // If changing status to 'ready', update product quantity and set profit
+      if (status === 'ready') {
+        const profit = request.requested_quantity * request.unit_price_at_request;
+        
+        // Update purchase_request with profit
+        const { error: updateError } = await supabase
+          .from('purchase_requests')
+          .update({ status, profit })
+          .eq('id', requestId)
+          .eq('farmer_id', userId);
+
+        if (updateError) {
+          alert(`Σφάλμα ενημέρωσης αιτήματος: ${updateError.message}`);
+          setUpdatingRequestId(null);
+          return;
+        }
+
+        // Decrease product quantity
+        if (request.product_id) {
+          const { error: quantityError } = await supabase
+            .rpc('decrease_product_quantity', {
+              product_id_param: request.product_id,
+              quantity_to_decrease: request.requested_quantity,
+            });
+
+          if (quantityError) {
+            console.error('Σφάλμα μείωσης ποσότητας:', quantityError.message);
+            // Don't fail the whole operation if quantity decrease fails
+          }
+        }
+      } else {
+        // For other status changes, just update the status
+        const { error } = await supabase
+          .from('purchase_requests')
+          .update({ status })
+          .eq('id', requestId)
+          .eq('farmer_id', userId);
+
+        if (error) {
+          alert(`Σφάλμα ενημέρωσης αιτήματος: ${error.message}`);
+          setUpdatingRequestId(null);
+          return;
+        }
+      }
+
+      await fetchRequests(userId);
+    } catch (err) {
+      console.error('Exception in handleRequestStatus:', err);
+      alert('Σφάλμα κατά την ενημέρωση του αιτήματος');
+    }
+    
     setUpdatingRequestId(null);
   };
 
@@ -365,9 +417,10 @@ export default function FarmerDashboard() {
     status: 'pending' | 'confirmed' | 'ready' | 'rejected';
     unit_at_request: string;
     unit_price_at_request: number;
+    profit: number;
     created_at?: string;
     message?: string | null;
-    products: { unit: string; price: number } | { unit: string; price: number }[] | null;
+    products?: { unit: string; price: number } | { unit: string; price: number }[] | null;
   }
 
   const activeProducts = products.filter((product) => product.status.toLowerCase().includes('ενεργ')).length;
@@ -671,7 +724,7 @@ export default function FarmerDashboard() {
                                   {request.status === 'ready' && (
                                     <div className="mt-2 rounded-md bg-emerald-50 border border-emerald-200 p-2 w-full">
                                       <p className="text-xs font-semibold text-emerald-700">Συνολικό κέρδος:</p>
-                                      <p className="text-sm font-bold text-emerald-800">{formatCurrency(request.requested_quantity * request.unit_price_at_request)}</p>
+                                      <p className="text-sm font-bold text-emerald-800">{formatCurrency(request.profit || (request.requested_quantity * request.unit_price_at_request))}</p>
                                     </div>
                                   )}
                                 </div>

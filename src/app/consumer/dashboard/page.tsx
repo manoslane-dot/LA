@@ -42,7 +42,8 @@ interface PurchaseRequest {
   status: 'pending' | 'confirmed' | 'ready' | 'rejected';
   unit_at_request: string;
   unit_price_at_request: number;
-  products: { unit: string; price: number } | { unit: string; price: number }[] | null;
+  profit: number;
+  products?: { unit: string; price: number } | { unit: string; price: number }[] | null;
 }
 
 const requestStatusLabels: Record<PurchaseRequest['status'], string> = {
@@ -133,7 +134,7 @@ export default function ConsumerDashboard() {
     try {
       const { data, error } = await supabase
         .from('purchase_requests')
-        .select('id, product_id, product_title, farmer_id, buyer_email, buyer_phone, requested_quantity, status, unit_at_request, unit_price_at_request')
+        .select('id, product_id, product_title, farmer_id, buyer_email, buyer_phone, requested_quantity, status, unit_at_request, unit_price_at_request, profit')
         .eq('buyer_id', userId)
         .order('created_at', { ascending: false });
 
