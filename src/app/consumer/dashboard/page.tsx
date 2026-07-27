@@ -647,19 +647,34 @@ export default function ConsumerDashboard() {
 
           <section id="profile" className={`rounded-lg border border-stone-200 bg-white p-6 shadow-sm${activeTab !== 'profile' ? ' hidden' : ''}`}>
             <h2 className="mb-5 text-xl font-semibold text-stone-800">Το Προφίλ μου</h2>
-            {!editingProfile ? (
+            {loading ? (
+              <div className="space-y-4">
+                <div className="rounded-lg border border-stone-200 bg-stone-50 p-4 animate-pulse">
+                  <p className="text-xs font-semibold text-stone-600 mb-1">Ονοματεπώνυμο</p>
+                  <div className="h-6 bg-stone-200 rounded"></div>
+                </div>
+                <div className="rounded-lg border border-stone-200 bg-stone-50 p-4 animate-pulse">
+                  <p className="text-xs font-semibold text-stone-600 mb-1">Email</p>
+                  <div className="h-6 bg-stone-200 rounded"></div>
+                </div>
+                <div className="rounded-lg border border-stone-200 bg-stone-50 p-4 animate-pulse">
+                  <p className="text-xs font-semibold text-stone-600 mb-1">Κινητό τηλέφωνο</p>
+                  <div className="h-6 bg-stone-200 rounded"></div>
+                </div>
+              </div>
+            ) : !editingProfile ? (
               <div className="space-y-4">
                 <div className="rounded-lg border border-stone-200 bg-stone-50 p-4">
                   <p className="text-xs font-semibold text-stone-600 mb-1">Ονοματεπώνυμο</p>
-                  <p className="text-base text-stone-900">{userName || 'Επανόθηση απαιτείται'}</p>
+                  <p className="text-base text-stone-900">{userName || '—'}</p>
                 </div>
                 <div className="rounded-lg border border-stone-200 bg-stone-50 p-4">
                   <p className="text-xs font-semibold text-stone-600 mb-1">Email</p>
-                  <p className="text-base text-stone-900">{buyerEmail || 'Επανόθηση απαιτείται'}</p>
+                  <p className="text-base text-stone-900">{buyerEmail || '—'}</p>
                 </div>
                 <div className="rounded-lg border border-stone-200 bg-stone-50 p-4">
                   <p className="text-xs font-semibold text-stone-600 mb-1">Κινητό τηλέφωνο</p>
-                  <p className="text-base text-stone-900">{buyerPhone || 'Επανόθηση απαιτείται'}</p>
+                  <p className="text-base text-stone-900">{buyerPhone || '—'}</p>
                 </div>
                 <button
                   type="button"
