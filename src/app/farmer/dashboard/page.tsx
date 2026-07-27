@@ -37,7 +37,7 @@ interface PurchaseRequest {
   buyer_phone: string | null;
   requested_quantity: number;
   message: string | null;
-  status: 'pending' | 'confirmed' | 'ready' | 'rejected';
+  status: 'pending' | 'confirmed' | 'completed' | 'rejected';
   created_at: string;
   unit_at_request: string;
   unit_price_at_request: number;
@@ -47,7 +47,7 @@ interface PurchaseRequest {
 const requestStatusLabels: Record<PurchaseRequest['status'], string> = {
   pending: 'Σε αναμονή',
   confirmed: 'Επιβεβαιώθηκε',
-  ready: 'Έτοιμο για παραλαβή',
+  completed: 'Ολοκληρώθηκε',
   rejected: 'Απορρίφθηκε',
 };
 
@@ -102,6 +102,9 @@ export default function FarmerDashboard() {
   const [chatRequestId, setChatRequestId] = useState<number | null>(null);
   const [chatMessage, setChatMessage] = useState('');
   const [sendingChat, setSendingChat] = useState(false);
+  
+  // Confirmation dialog for request confirmation
+  const [confirmingRequestId, setConfirmingRequestId] = useState<number | null>(null);
 
   const fetchCrops = useCallback(async () => {
     const { data, error } = await supabase.from('crops').select('*');
@@ -301,12 +304,23 @@ export default function FarmerDashboard() {
       alert(`Σφάλμα ενημέρωσης αιτήματος: ${error.message}`);
     } else {
       await fetchRequests(userId);
-      // Open chat if confirming
-      if (status === 'confirmed') {
-        setChatRequestId(requestId);
-      }
     }
     setUpdatingRequestId(null);
+  };
+
+  const handleConfirmRequest = (requestId: number) => {
+    setConfirmingRequestId(requestId);
+  };
+
+  const handleConfirmRequestDialog = async (requestId: number) => {
+    await handleRequestStatus(requestId, 'confirmed');
+    setConfirmingRequestId(null);
+    // Open chat after confirming
+    setChatRequestId(requestId);
+  };
+
+  const handleCancelConfirm = () => {
+    setConfirmingRequestId(null);
   };
 
   const handleLogout = async () => {
@@ -630,7 +644,7 @@ export default function FarmerDashboard() {
                               <p className="mt-1 text-sm text-stone-600">
                                 Ενδεικτικό κόστος: {formatCurrency(totalCost)} ({formatCurrency(unitPrice)} / {unit || 'μονάδα'})
                               </p>
-                              {request.status === 'confirmed' || request.status === 'ready' ? (
+                              {request.status === 'confirmed' || request.status === 'completed' ? (
                                 <div className="mt-1 flex flex-wrap items-center gap-2">
                                   <p className="text-xs text-emerald-700">
                                     Στοιχεία αγοραστή: {request.buyer_email ?? 'χωρίς email'} · {request.buyer_phone ?? 'χωρίς κινητό'}
@@ -642,6 +656,12 @@ export default function FarmerDashboard() {
                                     >
                                       <Phone className="h-3 w-3" /> Κλήση
                                     </a>
+                                  )}
+                                  {request.status === 'completed' && (
+                                    <div className="mt-2 rounded-md bg-emerald-50 border border-emerald-200 p-2 w-full">
+                                      <p className="text-xs font-semibold text-emerald-700">Συνολικό κέρδος:</p>
+                                      <p className="text-sm font-bold text-emerald-800">{formatCurrency(request.requested_quantity * request.unit_price_at_request)}</p>
+                                    </div>
                                   )}
                                 </div>
                               ) : (
@@ -655,10 +675,10 @@ export default function FarmerDashboard() {
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="mr-1 text-sm font-medium text-emerald-800">{requestStatusLabels[request.status]}</span>
                         {request.status === 'pending' && <>
-                          <button type="button" disabled={updatingRequestId === request.id} onClick={() => void handleRequestStatus(request.id, 'confirmed')} className="rounded-md bg-emerald-700 px-3 py-1.5 text-xs font-semibold text-white disabled:bg-emerald-400">Επιβεβαίωση</button>
+                          <button type="button" disabled={updatingRequestId === request.id} onClick={() => handleConfirmRequest(request.id)} className="rounded-md bg-emerald-700 px-3 py-1.5 text-xs font-semibold text-white disabled:bg-emerald-400">Επιβεβαίωση</button>
                           <button type="button" disabled={updatingRequestId === request.id} onClick={() => void handleRequestStatus(request.id, 'rejected')} className="rounded-md border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-50">Απόρριψη</button>
                         </>}
-                        {request.status === 'confirmed' && <button type="button" disabled={updatingRequestId === request.id} onClick={() => void handleRequestStatus(request.id, 'ready')} className="rounded-md bg-sky-700 px-3 py-1.5 text-xs font-semibold text-white disabled:bg-sky-400">Έτοιμο για παραλαβή</button>}
+                        {request.status === 'confirmed' && <button type="button" disabled={updatingRequestId === request.id} onClick={() => void handleRequestStatus(request.id, 'completed')} className="rounded-md bg-sky-700 px-3 py-1.5 text-xs font-semibold text-white disabled:bg-sky-400">Ολοκληρώθηκε</button>}
                       </div>
                     </div>
                   </li>
@@ -785,6 +805,72 @@ export default function FarmerDashboard() {
 
         </main>
       </div>
+
+      {/* Confirmation Dialog for Request Confirmation */}
+      {confirmingRequestId !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-stone-950/40 p-4" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+          {(() => {
+            const confirmRequest = requests.find((r) => r.id === confirmingRequestId);
+            if (!confirmRequest) return null;
+            const productDetails = getRequestProductDetails(confirmRequest);
+            const unit = productDetails.unit;
+            const unitPrice = productDetails.price;
+            const totalCost = confirmRequest.requested_quantity * unitPrice;
+            return (
+              <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+                <div className="mb-4">
+                  <h2 id="confirm-title" className="text-lg font-bold text-stone-900">
+                    Επιβεβαίωση Αιτήματος
+                  </h2>
+                  <p className="mt-1 text-sm text-stone-500">
+                    Επιβεβαιώστε αν θέλετε να αποδεχτείτε αυτό το αίτημα
+                  </p>
+                </div>
+
+                <div className="mb-4 space-y-3 rounded-lg bg-stone-50 p-4">
+                  <div>
+                    <p className="text-xs font-semibold text-stone-600">Προϊόν</p>
+                    <p className="text-base font-semibold text-stone-900">{confirmRequest.product_title}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-stone-600">Ποσότητα</p>
+                    <p className="text-base text-stone-900">{confirmRequest.requested_quantity} {getUnitLabel(unit, confirmRequest.requested_quantity)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-stone-600">Τιμή</p>
+                    <p className="text-base text-stone-900">{formatCurrency(totalCost)} ({formatCurrency(unitPrice)} / {unit || 'μονάδα'})</p>
+                  </div>
+                  {confirmRequest.message && (
+                    <div>
+                      <p className="text-xs font-semibold text-stone-600">Μήνυμα αγοραστή</p>
+                      <p className="text-sm text-stone-700 italic">{confirmRequest.message}</p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => handleConfirmRequestDialog(confirmingRequestId)}
+                    disabled={updatingRequestId === confirmingRequestId}
+                    className="flex-1 rounded-lg bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:bg-emerald-400"
+                  >
+                    {updatingRequestId === confirmingRequestId ? 'Αποθήκευση...' : 'Επιβεβαίωση'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCancelConfirm}
+                    disabled={updatingRequestId === confirmingRequestId}
+                    className="flex-1 rounded-lg border border-stone-300 px-4 py-2.5 text-sm font-semibold text-stone-700 transition hover:bg-stone-100 disabled:border-stone-200"
+                  >
+                    Αργότερα
+                  </button>
+                </div>
+              </div>
+            );
+          })()}
+        </div>
+      )}
 
       {/* Chat Modal for Confirmed Requests */}
       {chatRequestId !== null && (
