@@ -31,7 +31,7 @@ interface PurchaseRequest {
   buyer_phone: string | null;
   requested_quantity: number;
   message: string | null;
-  status: 'pending' | 'confirmed' | 'completed' | 'rejected';
+  status: 'pending' | 'confirmed' | 'ready' | 'rejected';
   created_at: string;
   unit_at_request: string;
   unit_price_at_request: number;
@@ -41,7 +41,7 @@ interface PurchaseRequest {
 const requestStatusLabels: Record<PurchaseRequest['status'], string> = {
   pending: 'Σε αναμονή',
   confirmed: 'Επιβεβαιώθηκε',
-  completed: 'Ολοκληρώθηκε',
+  ready: 'Έτοιμο για παραλαβή',
   rejected: 'Απορρίφθηκε',
 };
 
@@ -354,6 +354,22 @@ export default function FarmerDashboard() {
     return { unit: '', price: 0 };
   };
 
+  interface PurchaseRequest {
+    id: number;
+    product_id: number | null;
+    product_title: string;
+    farmer_id: string;
+    buyer_email: string | null;
+    buyer_phone: string | null;
+    requested_quantity: number;
+    status: 'pending' | 'confirmed' | 'ready' | 'rejected';
+    unit_at_request: string;
+    unit_price_at_request: number;
+    created_at?: string;
+    message?: string | null;
+    products: { unit: string; price: number } | { unit: string; price: number }[] | null;
+  }
+
   const activeProducts = products.filter((product) => product.status.toLowerCase().includes('ενεργ')).length;
   const estimatedInventoryValue = products.reduce(
     (total, product) => total + product.price * product.quantity,
@@ -639,7 +655,7 @@ export default function FarmerDashboard() {
                               <p className="mt-1 text-sm text-stone-600">
                                 Ενδεικτικό κόστος: {formatCurrency(totalCost)} ({formatCurrency(unitPrice)} / {unit || 'μονάδα'})
                               </p>
-                              {request.status === 'confirmed' || request.status === 'completed' ? (
+                              {request.status === 'confirmed' || request.status === 'ready' ? (
                                 <div className="mt-1 flex flex-wrap items-center gap-2">
                                   <p className="text-xs text-emerald-700">
                                     Στοιχεία αγοραστή: {request.buyer_email ?? 'χωρίς email'} · {request.buyer_phone ?? 'χωρίς κινητό'}
@@ -652,7 +668,7 @@ export default function FarmerDashboard() {
                                       <Phone className="h-3 w-3" /> Κλήση
                                     </a>
                                   )}
-                                  {request.status === 'completed' && (
+                                  {request.status === 'ready' && (
                                     <div className="mt-2 rounded-md bg-emerald-50 border border-emerald-200 p-2 w-full">
                                       <p className="text-xs font-semibold text-emerald-700">Συνολικό κέρδος:</p>
                                       <p className="text-sm font-bold text-emerald-800">{formatCurrency(request.requested_quantity * request.unit_price_at_request)}</p>
@@ -673,7 +689,7 @@ export default function FarmerDashboard() {
                           <button type="button" disabled={updatingRequestId === request.id} onClick={() => handleConfirmRequest(request.id)} className="rounded-md bg-emerald-700 px-3 py-1.5 text-xs font-semibold text-white disabled:bg-emerald-400">Επιβεβαίωση</button>
                           <button type="button" disabled={updatingRequestId === request.id} onClick={() => void handleRequestStatus(request.id, 'rejected')} className="rounded-md border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-50">Απόρριψη</button>
                         </>}
-                        {request.status === 'confirmed' && <button type="button" disabled={updatingRequestId === request.id} onClick={() => void handleRequestStatus(request.id, 'completed')} className="rounded-md bg-sky-700 px-3 py-1.5 text-xs font-semibold text-white disabled:bg-sky-400">Ολοκληρώθηκε</button>}
+                        {request.status === 'confirmed' && <button type="button" disabled={updatingRequestId === request.id} onClick={() => void handleRequestStatus(request.id, 'ready')} className="rounded-md bg-sky-700 px-3 py-1.5 text-xs font-semibold text-white disabled:bg-sky-400">Ολοκληρώθηκε</button>}
                       </div>
                     </div>
                   </li>
