@@ -13,12 +13,6 @@ import {
 } from '@/lib/auth/sessionPersistence';
 import { getDashboardForRole, normalizeUserRole } from '@/lib/auth/roleRouting';
 
-interface Crop {
-  id: string;
-  name: string;
-  area: string;
-}
-
 interface Product {
   id: number;
   title: string;
@@ -81,12 +75,6 @@ export default function FarmerDashboard() {
   const [emailConfirmedAt, setEmailConfirmedAt] = useState<string | null>(null);
   const [showEmailVerificationWarning, setShowEmailVerificationWarning] = useState(false);
   
-  // Καλλιέργειες
-  const [crops, setCrops] = useState<Crop[]>([]);
-  const [cropName, setCropName] = useState('');
-  const [cropArea, setCropArea] = useState('');
-  const [submittingCrop, setSubmittingCrop] = useState(false);
-
   // Προϊόντα προς Πώληση
   const [products, setProducts] = useState<Product[]>([]);
   const [requests, setRequests] = useState<PurchaseRequest[]>([]);
@@ -108,15 +96,6 @@ export default function FarmerDashboard() {
   // Confirmation dialog for request confirmation
   const [confirmingRequestId, setConfirmingRequestId] = useState<number | null>(null);
 
-  const fetchCrops = useCallback(async () => {
-    const { data, error } = await supabase.from('crops').select('*');
-    if (error) {
-      console.error('Error fetching crops:', error.message);
-    } else if (data) {
-      setCrops(data);
-    }
-  }, [supabase]);
-
   const fetchProducts = useCallback(async (farmerId: string) => {
     const { data, error } = await supabase.from('products').select('*').eq('farmer_id', farmerId);
     if (error) {
@@ -129,7 +108,7 @@ export default function FarmerDashboard() {
   const fetchRequests = useCallback(async (farmerId: string) => {
     const { data, error } = await supabase
       .from('purchase_requests')
-      .select('id, product_id, product_title, buyer_email, buyer_phone, requested_quantity, message, status, created_at, unit_at_request, unit_price_at_request, products(unit,price)')
+      .select('id, product_id, product_title, buyer_email, buyer_phone, requested_quantity, message, status, created_at, unit_at_request, unit_price_at_request')
       .eq('farmer_id', farmerId)
       .order('created_at', { ascending: false });
 
@@ -194,36 +173,12 @@ export default function FarmerDashboard() {
         setUserPhone(profileData.contact_phone);
       }
       
-      await Promise.all([fetchCrops(), fetchProducts(session.user.id), fetchRequests(session.user.id)]);
+      await Promise.all([fetchProducts(session.user.id), fetchRequests(session.user.id)]);
       setLoading(false);
     };
 
     void checkUserAndFetchData();
-  }, [router, supabase, fetchCrops, fetchProducts, fetchRequests]);
-
-  const handleAddCrop = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Check if email is verified
-    if (!emailConfirmedAt) {
-      setShowEmailVerificationWarning(true);
-      return;
-    }
-
-    if (!cropName || !cropArea) return;
-
-    setSubmittingCrop(true);
-    const { error } = await supabase.from('crops').insert([
-      { name: cropName, area: cropArea }
-    ]);
-
-    if (!error) {
-      setCropName('');
-      setCropArea('');
-      await fetchCrops();
-    }
-    setSubmittingCrop(false);
-  };
+  }, [router, supabase, fetchProducts, fetchRequests]);
 
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();

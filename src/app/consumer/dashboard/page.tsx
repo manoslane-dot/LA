@@ -133,7 +133,7 @@ export default function ConsumerDashboard() {
     try {
       const { data, error } = await supabase
         .from('purchase_requests')
-        .select('id, product_id, product_title, farmer_id, buyer_email, buyer_phone, requested_quantity, status, unit_at_request, unit_price_at_request, products(unit,price)')
+        .select('id, product_id, product_title, farmer_id, buyer_email, buyer_phone, requested_quantity, status, unit_at_request, unit_price_at_request')
         .eq('buyer_id', userId)
         .order('created_at', { ascending: false });
 
