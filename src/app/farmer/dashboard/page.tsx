@@ -73,7 +73,7 @@ export default function FarmerDashboard() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'requests'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'requests'>('overview');  // Profile info shown in overview header
   
   // Καλλιέργειες
   const [crops, setCrops] = useState<Crop[]>([]);

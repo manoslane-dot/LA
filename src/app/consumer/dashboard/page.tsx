@@ -89,7 +89,7 @@ export default function ConsumerDashboard() {
   const [requestedQuantity, setRequestedQuantity] = useState('1');
   const [message, setMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [activeTab, setActiveTab] = useState<'products' | 'requests' | 'profile'>('products');
+  const [activeTab, setActiveTab] = useState<'products' | 'requests' | 'profile'>('profile');
   const [searchTerm, setSearchTerm] = useState('');
   const [sortType, setSortType] = useState<'newest' | 'price_low' | 'price_high'>('newest');
   const [editingProfile, setEditingProfile] = useState(false);
@@ -410,6 +410,9 @@ export default function ConsumerDashboard() {
           </Link>
         </div>
         <nav className="mt-5 px-3 space-y-1" aria-label="Κύρια πλοήγηση">
+          <button type="button" onClick={() => setActiveTab('profile')} className={`w-full flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-colors ${activeTab === 'profile' ? 'bg-emerald-50 font-semibold text-emerald-800' : 'font-medium text-stone-600 hover:bg-stone-100 hover:text-stone-900'}`}>
+            <User className="h-4 w-4" /> Προφίλ μου
+          </button>
           <button type="button" onClick={() => setActiveTab('products')} className={`w-full flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-colors ${activeTab === 'products' ? 'bg-emerald-50 font-semibold text-emerald-800' : 'font-medium text-stone-600 hover:bg-stone-100 hover:text-stone-900'}`}>
             <ShoppingBag className="h-4 w-4" /> Διαθέσιμα Προϊόντα
           </button>
@@ -418,9 +421,6 @@ export default function ConsumerDashboard() {
             {requests.filter((r) => r.status === 'pending' || r.status === 'confirmed').length > 0 && (
               <span className="ml-auto rounded-full bg-amber-100 px-1.5 py-0.5 text-xs font-semibold text-amber-800">{requests.filter((r) => r.status === 'pending' || r.status === 'confirmed').length}</span>
             )}
-          </button>
-          <button type="button" onClick={() => setActiveTab('profile')} className={`w-full flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-colors ${activeTab === 'profile' ? 'bg-emerald-50 font-semibold text-emerald-800' : 'font-medium text-stone-600 hover:bg-stone-100 hover:text-stone-900'}`}>
-            <User className="h-4 w-4" /> Προφίλ μου
           </button>
         </nav>
       </aside>
@@ -443,6 +443,9 @@ export default function ConsumerDashboard() {
         <main className="p-4 sm:p-8 flex-1 space-y-8 max-w-7xl w-full mx-auto">
           {/* Καρτέλες πλοήγησης */}
           <div className="flex border-b border-stone-200 -mt-4 sm:-mt-8 -mx-4 sm:-mx-8 px-4 sm:px-8">
+            <button type="button" onClick={() => setActiveTab('profile')} className={`px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors flex items-center gap-2 ${activeTab === 'profile' ? 'border-emerald-700 text-emerald-800' : 'border-transparent text-stone-500 hover:text-stone-900'}`}>
+              <User className="h-4 w-4" /> Προφίλ μου
+            </button>
             <button type="button" onClick={() => setActiveTab('products')} className={`px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors ${activeTab === 'products' ? 'border-emerald-700 text-emerald-800' : 'border-transparent text-stone-500 hover:text-stone-900'}`}>
               Διαθέσιμα Προϊόντα
             </button>
@@ -451,9 +454,6 @@ export default function ConsumerDashboard() {
               {requests.length > 0 && (
                 <span className="rounded-full bg-stone-100 px-1.5 py-0.5 text-xs font-semibold text-stone-700">{requests.length}</span>
               )}
-            </button>
-            <button type="button" onClick={() => setActiveTab('profile')} className={`px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors flex items-center gap-2 ${activeTab === 'profile' ? 'border-emerald-700 text-emerald-800' : 'border-transparent text-stone-500 hover:text-stone-900'}`}>
-              <User className="h-4 w-4" /> Προφίλ μου
             </button>
           </div>
           <section id="overview" className="border-b border-stone-200 pb-7">
