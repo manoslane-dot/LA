@@ -353,7 +353,8 @@ export default function ConsumerDashboard() {
 
     setSubmitting(true);
     setErrorMsg('');
-    const { error } = await supabase.from('purchase_requests').insert({
+    
+    const insertData = {
       product_id: selectedProduct.id,
       product_title: selectedProduct.title,
       farmer_id: selectedProduct.farmer_id,
@@ -364,7 +365,11 @@ export default function ConsumerDashboard() {
       unit_at_request: selectedProduct.unit,
       unit_price_at_request: selectedProduct.price,
       message: message.trim() || null,
-    });
+    };
+    
+    console.log('Attempting to insert purchase request:', insertData);
+    
+    const { error } = await supabase.from('purchase_requests').insert(insertData);
 
     if (error) {
       console.error('Purchase request insert error:', {
