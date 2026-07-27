@@ -185,7 +185,7 @@ export default function FarmerDashboard() {
         .from('farmer_profiles')
         .select('contact_phone')
         .eq('user_id', session.user.id)
-        .single();
+        .maybeSingle();
       
       if (profileData?.contact_phone) {
         setUserPhone(profileData.contact_phone);
