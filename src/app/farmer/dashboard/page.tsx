@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { CircleDollarSign, ClipboardList, LayoutDashboard, Leaf, LogOut, Package, Pencil, Phone, Plus, ShoppingBag, Trash2 } from 'lucide-react';
+import { CircleDollarSign, ClipboardList, LayoutDashboard, Leaf, LogOut, Mail, Package, Pencil, Phone, Plus, ShoppingBag, Trash2, User } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { sanitizePhoneForTel } from '@/lib/serviceAreas';
 import {
@@ -73,7 +73,11 @@ export default function FarmerDashboard() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'requests'>('overview');  // Profile info shown in overview header
+  const [activeTab, setActiveTab] = useState<'overview' | 'requests' | 'profile'>('overview');  // Profile info shown in overview header
+  const [editingProfile, setEditingProfile] = useState(false);
+  const [profileForm, setProfileForm] = useState({ fullName: '', email: '', phone: '' });
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [userPhone, setUserPhone] = useState('');
   
   // Καλλιέργειες
   const [crops, setCrops] = useState<Crop[]>([]);
@@ -167,6 +171,18 @@ export default function FarmerDashboard() {
       setUserName((session.user.user_metadata?.full_name as string | undefined)?.trim() || session.user.email || 'Παραγωγός');
       setUserEmail(session.user.email ?? 'Πωλητής');
       setUserId(session.user.id);
+      
+      // Fetch farmer profile for phone
+      const { data: profileData } = await supabase
+        .from('farmer_profiles')
+        .select('contact_phone')
+        .eq('user_id', session.user.id)
+        .single();
+      
+      if (profileData?.contact_phone) {
+        setUserPhone(profileData.contact_phone);
+      }
+      
       await Promise.all([fetchCrops(), fetchProducts(session.user.id), fetchRequests(session.user.id)]);
       setLoading(false);
     };
@@ -361,6 +377,9 @@ export default function FarmerDashboard() {
           </Link>
         </div>
         <nav className="mt-5 px-3 space-y-1" aria-label="Κύρια πλοήγηση">
+          <button type="button" onClick={() => setActiveTab('profile')} className={`w-full flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-colors ${activeTab === 'profile' ? 'bg-emerald-50 font-semibold text-emerald-800' : 'font-medium text-stone-600 hover:bg-stone-100 hover:text-stone-900'}`}>
+            <User className="h-4 w-4" /> Το Προφίλ μου
+          </button>
           <button type="button" onClick={() => setActiveTab('overview')} className={`w-full flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-colors ${activeTab === 'overview' ? 'bg-emerald-50 font-semibold text-emerald-800' : 'font-medium text-stone-600 hover:bg-stone-100 hover:text-stone-900'}`}>
             <LayoutDashboard className="h-4 w-4" /> Επισκόπηση &amp; Προϊόντα
           </button>
@@ -391,6 +410,9 @@ export default function FarmerDashboard() {
         <main className="p-4 sm:p-8 flex-1 space-y-8 max-w-7xl w-full mx-auto">
           {/* Καρτέλες πλοήγησης */}
           <div className="flex border-b border-stone-200 -mt-4 sm:-mt-8 -mx-4 sm:-mx-8 px-4 sm:px-8">
+            <button type="button" onClick={() => setActiveTab('profile')} className={`px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors flex items-center gap-2 ${activeTab === 'profile' ? 'border-emerald-700 text-emerald-800' : 'border-transparent text-stone-500 hover:text-stone-900'}`}>
+              <User className="h-4 w-4" /> Το Προφίλ μου
+            </button>
             <button type="button" onClick={() => setActiveTab('overview')} className={`px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors ${activeTab === 'overview' ? 'border-emerald-700 text-emerald-800' : 'border-transparent text-stone-500 hover:text-stone-900'}`}>
               Επισκόπηση &amp; Προϊόντα
             </button>
@@ -633,6 +655,122 @@ export default function FarmerDashboard() {
                   </li>
                 ))}
               </ul>
+            )}
+          </section>
+
+          <section id="profile" className={`rounded-lg border border-stone-200 bg-white p-6 shadow-sm${activeTab !== 'profile' ? ' hidden' : ''}`}>
+            <h2 className="mb-5 text-xl font-semibold text-stone-800">Το Προφίλ μου</h2>
+            {!editingProfile ? (
+              <div className="space-y-4">
+                <div className="rounded-lg border border-stone-200 bg-stone-50 p-4">
+                  <p className="text-xs font-semibold text-stone-600 mb-1">Ονοματεπώνυμο</p>
+                  <p className="text-base text-stone-900">{userName || 'Επανόθηση απαιτείται'}</p>
+                </div>
+                <div className="rounded-lg border border-stone-200 bg-stone-50 p-4">
+                  <p className="text-xs font-semibold text-stone-600 mb-1">Email</p>
+                  <p className="text-base text-stone-900">{userEmail || 'Επανόθηση απαιτείται'}</p>
+                </div>
+                <div className="rounded-lg border border-stone-200 bg-stone-50 p-4">
+                  <p className="text-xs font-semibold text-stone-600 mb-1">Κινητό τηλέφωνο</p>
+                  <p className="text-base text-stone-900">{userPhone || 'Επανόθηση απαιτείται'}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setProfileForm({ fullName: userName || '', email: userEmail || '', phone: userPhone || '' });
+                    setEditingProfile(true);
+                  }}
+                  className="w-full rounded-lg bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-800"
+                >
+                  Επεξεργασία Προφίλ
+                </button>
+              </div>
+            ) : (
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  setSavingProfile(true);
+                  const { error } = await supabase.auth.updateUser({
+                    data: {
+                      full_name: profileForm.fullName.trim(),
+                      phone: profileForm.phone.trim(),
+                    },
+                  });
+                  
+                  if (!error && userId) {
+                    // Update farmer_profiles table as well
+                    await supabase.from('farmer_profiles').upsert({
+                      user_id: userId,
+                      contact_phone: profileForm.phone.trim(),
+                    });
+                  }
+                  
+                  if (error) {
+                    alert('Σφάλμα αποθήκευσης: ' + error.message);
+                  } else {
+                    setUserName(profileForm.fullName.trim());
+                    setUserPhone(profileForm.phone.trim());
+                    setEditingProfile(false);
+                  }
+                  setSavingProfile(false);
+                }}
+                className="space-y-4"
+              >
+                <label className="block text-sm font-semibold text-stone-700">
+                  <span className="inline-flex items-center gap-2 mb-1.5">
+                    <User className="h-4 w-4 text-emerald-700" /> Ονοματεπώνυμο
+                  </span>
+                  <input
+                    type="text"
+                    required
+                    value={profileForm.fullName}
+                    onChange={(e) => setProfileForm({ ...profileForm, fullName: e.target.value })}
+                    className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                    placeholder="π.χ. Γιάννης Παπαδόπουλος"
+                  />
+                </label>
+                <label className="block text-sm font-semibold text-stone-700">
+                  <span className="inline-flex items-center gap-2 mb-1.5">
+                    <Mail className="h-4 w-4 text-emerald-700" /> Email
+                  </span>
+                  <input
+                    type="email"
+                    disabled
+                    value={profileForm.email}
+                    className="w-full rounded-lg border border-stone-300 bg-stone-100 px-3 py-2.5 text-sm text-stone-600 cursor-not-allowed"
+                  />
+                  <p className="mt-1 text-xs text-stone-500">Το email δεν μπορεί να αλλάξει</p>
+                </label>
+                <label className="block text-sm font-semibold text-stone-700">
+                  <span className="inline-flex items-center gap-2 mb-1.5">
+                    <Phone className="h-4 w-4 text-emerald-700" /> Κινητό τηλέφωνο
+                  </span>
+                  <input
+                    type="tel"
+                    required
+                    value={profileForm.phone}
+                    onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
+                    className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                    placeholder="π.χ. 69XXXXXXXX"
+                  />
+                </label>
+                <div className="flex gap-3">
+                  <button
+                    type="submit"
+                    disabled={savingProfile}
+                    className="flex-1 rounded-lg bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:bg-emerald-400"
+                  >
+                    {savingProfile ? 'Αποθήκευση...' : 'Αποθήκευση'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditingProfile(false)}
+                    className="flex-1 rounded-lg border border-stone-300 px-4 py-2.5 text-sm font-semibold text-stone-700 transition hover:bg-stone-100"
+                  >
+                    Ακύρωση
+                  </button>
+                </div>
+              </form>
             )}
           </section>
 
