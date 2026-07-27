@@ -49,6 +49,12 @@ function AuthForm() {
   };
 
   useEffect(() => {
+    // Check for message from callback (e.g., email not confirmed)
+    const messageParam = searchParams.get('message');
+    if (messageParam) {
+      setErrorMsg(decodeURIComponent(messageParam));
+    }
+
     const redirectIfLoggedIn = async () => {
       const {
         data: { session },
@@ -197,6 +203,7 @@ function AuthForm() {
         email,
         password,
         options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback?redirectUrl=${encodeURIComponent(searchParams.get('redirectUrl') ?? '/consumer/dashboard')}`,
           data: {
             role: intendedRole ?? 'consumer',
             full_name: trimmedName,
@@ -209,7 +216,7 @@ function AuthForm() {
       if (error) {
         setErrorMsg(error.message);
       } else {
-        setSuccessMsg('Η εγγραφή ολοκληρώθηκε! Παρακαλώ ελέγξτε το email σας για τον σύνδεσμο επιβεβαίωσης.');
+        setSuccessMsg('Η εγγραφή ολοκληρώθηκε! Παρακαλώ ελέγξτε το email σας για τον σύνδεσμο επιβεβαίωσης. Πρέπει να επιβεβαιώσετε το email σας για να συνεχίσετε.');
       }
     }
     setLoading(false);
