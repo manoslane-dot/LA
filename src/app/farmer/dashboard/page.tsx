@@ -76,6 +76,7 @@ export default function FarmerDashboard() {
   const [userPhone, setUserPhone] = useState('');
   const [emailConfirmedAt, setEmailConfirmedAt] = useState<string | null>(null);
   const [showEmailVerificationWarning, setShowEmailVerificationWarning] = useState(false);
+  const [totalRevenue, setTotalRevenue] = useState(0);
   
   // Προϊόντα προς Πώληση
   const [products, setProducts] = useState<Product[]>([]);
@@ -164,15 +165,18 @@ export default function FarmerDashboard() {
       setUserId(session.user.id);
       setEmailConfirmedAt(session.user.email_confirmed_at ?? null);
       
-      // Fetch farmer profile for phone
+      // Fetch farmer profile for phone and revenue
       const { data: profileData } = await supabase
         .from('farmer_profiles')
-        .select('contact_phone')
+        .select('contact_phone, total_revenue')
         .eq('user_id', session.user.id)
         .maybeSingle();
       
       if (profileData?.contact_phone) {
         setUserPhone(profileData.contact_phone);
+      }
+      if (profileData?.total_revenue !== undefined && profileData?.total_revenue !== null) {
+        setTotalRevenue(profileData.total_revenue);
       }
       
       await Promise.all([fetchProducts(session.user.id), fetchRequests(session.user.id)]);
@@ -334,6 +338,19 @@ export default function FarmerDashboard() {
           if (quantityError) {
             console.error('Σφάλμα μείωσης ποσότητας:', quantityError.message);
           }
+        }
+
+        // Add profit to farmer's total revenue
+        const newRevenue = totalRevenue + profit;
+        const { error: revenueError } = await supabase
+          .from('farmer_profiles')
+          .update({ total_revenue: newRevenue })
+          .eq('user_id', userId);
+
+        if (revenueError) {
+          console.error('Σφάλμα ενημέρωσης εισπράξεων:', revenueError.message);
+        } else {
+          setTotalRevenue(newRevenue);
         }
       }
 
@@ -516,7 +533,7 @@ export default function FarmerDashboard() {
             <a href="#new-product" className="inline-flex items-center justify-center gap-2 rounded-md bg-emerald-700 hover:bg-emerald-800 text-white px-4 py-2.5 text-sm font-semibold transition-colors"><Plus className="h-4 w-4" />Νέο προϊόν</a>
           </section>
 
-          <section className={`grid grid-cols-1 sm:grid-cols-4 gap-4${activeTab !== 'overview' ? ' hidden' : ''}`} aria-label="Στατιστικά προϊόντων">
+          <section className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4${activeTab !== 'overview' ? ' hidden' : ''}`} aria-label="Στατιστικά προϊόντων">
             <article className="border border-stone-200 bg-white p-5">
               <div className="flex justify-between"><div><p className="text-sm font-medium text-stone-500">Συνολικά προϊόντα</p><p className="mt-2 text-3xl font-bold">{products.length}</p></div><Package className="h-5 w-5 text-emerald-700" /></div>
             </article>
@@ -527,7 +544,10 @@ export default function FarmerDashboard() {
               <div className="flex justify-between"><div><p className="text-sm font-medium text-stone-500">Αξία αποθέματος</p><p className="mt-2 text-2xl font-bold">{formatCurrency(estimatedInventoryValue)}</p></div><CircleDollarSign className="h-5 w-5 text-sky-700" /></div>
             </article>
             <article className="border border-stone-200 bg-white p-5">
-              <div className="flex justify-between"><div><p className="text-sm font-medium text-stone-500">Εκτιμώμενο κέρδος από ανοιχτά αιτήματα</p><p className="mt-2 text-2xl font-bold">{formatCurrency(estimatedOpenRequestsRevenue)}</p></div><CircleDollarSign className="h-5 w-5 text-emerald-700" /></div>
+              <div className="flex justify-between"><div><p className="text-sm font-medium text-stone-500">Εκτιμώμενο κέρδος</p><p className="mt-2 text-2xl font-bold">{formatCurrency(estimatedOpenRequestsRevenue)}</p></div><CircleDollarSign className="h-5 w-5 text-emerald-700" /></div>
+            </article>
+            <article className="border border-stone-200 bg-white p-5 lg:col-span-1">
+              <div className="flex justify-between"><div><p className="text-sm font-medium text-stone-500">Συνολικές εισπράξεις</p><p className="mt-2 text-2xl font-bold">{formatCurrency(totalRevenue)}</p></div><CircleDollarSign className="h-5 w-5 text-green-600" /></div>
             </article>
           </section>
           
