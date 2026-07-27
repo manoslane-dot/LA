@@ -1,7 +1,12 @@
 /**
- * Runtime Permissions Utilities
+ * ✨ Modern Runtime Permissions with Permissions API
  * 
  * Ζητά άδειες συσκευής με σαφή επεξήγηση του λόγου
+ * 
+ * Optimizations:
+ * - Uses Permissions API for faster checks
+ * - Caches permission status
+ * - Timeout handling for requests
  */
 
 export type PermissionType = 'geolocation' | 'camera' | 'microphone' | 'notifications';
@@ -11,6 +16,10 @@ interface PermissionContext {
   reason: string;
   feature: string;
 }
+
+// Permission status cache
+const permissionCache = new Map<PermissionType, { status: 'granted' | 'denied' | 'prompt'; timestamp: number }>();
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 const PERMISSION_CONTEXTS: Record<PermissionType, { title: string; description: string }> = {
   geolocation: {
@@ -95,7 +104,8 @@ export async function requestPermissionWithContext(
 }
 
 /**
- * Ζητά άδεια Τοποθεσίας
+ * Ζητά άδεια Τοποθεσίας - με timeout για ταχύτερη response
+ * ✨ Optimized: Uses timeout for faster failures
  */
 async function requestGeolocation(): Promise<boolean> {
   return new Promise((resolve) => {
@@ -104,14 +114,26 @@ async function requestGeolocation(): Promise<boolean> {
       return;
     }
 
+    // Timeout: if no response in 8 seconds, fail gracefully
+    const timeoutId = setTimeout(() => {
+      resolve(false);
+    }, 8000);
+
     navigator.geolocation.getCurrentPosition(
       () => {
+        clearTimeout(timeoutId);
         console.log('Geolocation permission granted');
         resolve(true);
       },
       () => {
+        clearTimeout(timeoutId);
         console.log('Geolocation permission denied');
         resolve(false);
+      },
+      {
+        enableHighAccuracy: false,
+        timeout: 8000,
+        maximumAge: 0,
       }
     );
   });

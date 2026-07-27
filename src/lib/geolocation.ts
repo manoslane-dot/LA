@@ -1,8 +1,14 @@
 /**
- * Geolocation & Distance Calculation Utilities
+ * Geolocation & Distance Calculation Utilities - Optimized & Modern
  * 
  * Χρησιμοποιείται για να υπολογίσουμε τις αποστάσεις μεταξύ του χρήστη 
  * και των περιοχών εξυπηρέτησης των παραγωγών
+ * 
+ * ✨ Optimizations:
+ * - Faster permission checks with Permissions API
+ * - Dual-layer caching (sessionStorage + localStorage)
+ * - Timeout handling for geolocation requests
+ * - Memoized distance calculations
  */
 
 import { SERVICE_AREA_OPTIONS } from './serviceAreas';
@@ -22,6 +28,18 @@ const ZIP_COORDINATES: Record<string, { lat: number; lng: number }> = {
   '58250': { lat: 40.8333, lng: 22.1667 }, // Άρνισσα
   '58400': { lat: 40.5500, lng: 21.8167 }, // Σκύδρα
   '58500': { lat: 40.8000, lng: 22.2000 }, // Άρνισσα (ευρύτερη περιοχή)
+};
+
+// Memoization cache για distance calculations
+const DISTANCE_CACHE = new Map<string, number>();
+const CACHE_KEYS = {
+  USER_LOCATION: 'agro_user_location',
+  SESSION_LOCATION: 'agro_session_location',
+  PERMISSION_GRANTED: 'agro_geo_permission',
+};
+const CACHE_DURATIONS = {
+  SESSION: 30 * 60 * 1000, // 30 λεπτά για sessionStorage
+  LOCAL: 60 * 60 * 1000,   // 1 ώρα για localStorage
 };
 
 export interface UserLocation {
@@ -60,67 +78,196 @@ function toRadians(degrees: number): number {
 }
 
 /**
- * Λαμβάνει τη τοποθεσία του χρήστη από geolocation API
- * Αποθηκεύει στο localStorage με timestamp
+ * Ελέγχει τη δικαίωση τοποθεσίας χωρίς να ζητάει ξανά άδεια
+ * ✨ Modern: Uses Permissions API
  */
-export async function getUserLocation(): Promise<UserLocation | null> {
-  // Ελέγχουμε ότι είμαστε στο browser
+export async function checkGeolocationPermission(): Promise<'granted' | 'denied' | 'prompt'> {
+  if (typeof window === 'undefined' || !navigator.permissions) {
+    return 'prompt';
+  }
+
+  try {
+    const result = await navigator.permissions.query({ name: 'geolocation' });
+    return result.state as 'granted' | 'denied' | 'prompt';
+  } catch (error) {
+    return 'prompt';
+  }
+}
+
+/**
+ * Λαμβάνει τη τοποθεσία του χρήστη - ταχυτερη με timeout & dual caching
+ * 
+ * ✨ Optimizations:
+ * - Checks both sessionStorage (fast) and localStorage (persistent)
+ * - 10-second timeout for geolocation request
+ * - Caches in both storage layers
+ */
+export async function getUserLocation(timeoutMs: number = 10000): Promise<UserLocation | null> {
   if (typeof window === 'undefined') {
     return null;
   }
 
-  // Πρώτα ελέγχουμε αν υπάρχει αποθηκευμένη τοποθεσία (όχι παλιότερη από 1 ώρα)
-  const cached = localStorage.getItem('userLocation');
-  if (cached) {
-    const location = JSON.parse(cached) as UserLocation;
-    const oneHourAgo = Date.now() - 60 * 60 * 1000;
-    if (location.timestamp > oneHourAgo) {
-      return location;
-    }
+  // 1️⃣ Check sessionStorage FIRST (fastest - same session)
+  const sessionCached = getLocationFromSession();
+  if (sessionCached) {
+    return sessionCached;
   }
 
-  // Αν δεν υπάρχει cached ή είναι παλιά, ζητάμε νέα
+  // 2️⃣ Check localStorage (persistent - 1 hour)
+  const localCached = getLocationFromLocal();
+  if (localCached) {
+    return localCached;
+  }
+
+  // 3️⃣ Request fresh location with timeout
   if (!navigator.geolocation) {
     console.warn('Geolocation API not available');
     return null;
   }
 
   return new Promise((resolve) => {
+    let timeoutId: NodeJS.Timeout | null = null;
+    let resolved = false;
+
+    const cleanup = () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      resolved = true;
+    };
+
+    // Timeout handler
+    timeoutId = setTimeout(() => {
+      if (!resolved) {
+        console.warn('Geolocation request timeout');
+        resolved = true;
+        resolve(null);
+      }
+    }, timeoutMs);
+
     navigator.geolocation.getCurrentPosition(
       (position) => {
+        if (resolved) return;
+        cleanup();
+
         const location: UserLocation = {
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
           accuracy: position.coords.accuracy,
           timestamp: Date.now(),
         };
-        // Αποθηκεύουμε για μελλοντική χρήση
-        localStorage.setItem('userLocation', JSON.stringify(location));
+
+        // Cache in both layers for redundancy
+        try {
+          sessionStorage.setItem(CACHE_KEYS.SESSION_LOCATION, JSON.stringify(location));
+          localStorage.setItem(CACHE_KEYS.USER_LOCATION, JSON.stringify(location));
+        } catch (e) {
+          console.warn('Failed to cache location:', e);
+        }
+
         resolve(location);
       },
       (error) => {
-        console.error('Geolocation error:', error);
+        if (resolved) return;
+        cleanup();
+        console.warn('Geolocation error:', error.message);
         resolve(null);
+      },
+      {
+        enableHighAccuracy: false, // Faster (don't need GPS-level accuracy for distance)
+        timeout: timeoutMs,
+        maximumAge: 5 * 60 * 1000, // Accept location up to 5 min old from device
       }
     );
   });
 }
 
 /**
- * Υπολογίζει την απόσταση από ένα ZIP code
+ * Παίρνει την τοποθεσία από sessionStorage (ταχύτατο)
+ */
+function getLocationFromSession(): UserLocation | null {
+  if (typeof window === 'undefined') return null;
+
+  try {
+    const cached = sessionStorage.getItem(CACHE_KEYS.SESSION_LOCATION);
+    if (!cached) return null;
+
+    const location = JSON.parse(cached) as UserLocation;
+    const sessionAgeMs = Date.now() - location.timestamp;
+
+    if (sessionAgeMs < CACHE_DURATIONS.SESSION) {
+      return location;
+    }
+
+    sessionStorage.removeItem(CACHE_KEYS.SESSION_LOCATION);
+  } catch (e) {
+    console.warn('Session location parse error:', e);
+  }
+
+  return null;
+}
+
+/**
+ * Παίρνει την τοποθεσία από localStorage (1 ώρα)
+ */
+function getLocationFromLocal(): UserLocation | null {
+  if (typeof window === 'undefined') return null;
+
+  try {
+    const cached = localStorage.getItem(CACHE_KEYS.USER_LOCATION);
+    if (!cached) return null;
+
+    const location = JSON.parse(cached) as UserLocation;
+    const cacheAgeMs = Date.now() - location.timestamp;
+
+    if (cacheAgeMs < CACHE_DURATIONS.LOCAL) {
+      // Refresh in sessionStorage for fast access next time
+      try {
+        sessionStorage.setItem(CACHE_KEYS.SESSION_LOCATION, JSON.stringify(location));
+      } catch (e) {
+        // Ignore session storage errors
+      }
+      return location;
+    }
+
+    localStorage.removeItem(CACHE_KEYS.USER_LOCATION);
+  } catch (e) {
+    console.warn('Local location parse error:', e);
+  }
+
+  return null;
+}
+
+/**
+ * Υπολογίζει την απόσταση από ένα ZIP code (με memoization)
+ * ✨ Optimized: Caches results to avoid redundant calculations
  */
 export function getDistanceToZip(
   userLat: number,
   userLng: number,
   zipCode: string
 ): number | null {
+  const cacheKey = `${userLat.toFixed(4)}_${userLng.toFixed(4)}_${zipCode}`;
+
+  // Check cache first
+  if (DISTANCE_CACHE.has(cacheKey)) {
+    return DISTANCE_CACHE.get(cacheKey) ?? null;
+  }
+
   const coords = ZIP_COORDINATES[zipCode];
   if (!coords) {
     console.warn(`No coordinates found for ZIP code: ${zipCode}`);
     return null;
   }
 
-  return calculateDistance(userLat, userLng, coords.lat, coords.lng);
+  const distance = calculateDistance(userLat, userLng, coords.lat, coords.lng);
+  DISTANCE_CACHE.set(cacheKey, distance);
+
+  // Prevent cache from growing unboundedly
+  if (DISTANCE_CACHE.size > 1000) {
+    const firstKey = DISTANCE_CACHE.keys().next().value;
+    if (firstKey) DISTANCE_CACHE.delete(firstKey);
+  }
+
+  return distance;
 }
 
 /**
@@ -215,23 +362,53 @@ export function formatDistance(distanceKm: number | null): string {
 }
 
 /**
- * Ελέγχει αν υπάρχει αποθηκευμένη τοποθεσία
+ * Ελέγχει αν υπάρχει αποθηκευμένη τοποθεσία (γρήγορα)
+ * ✨ Optimized: Checks sessionStorage first (fastest)
  */
 export function hasUserLocationCached(): boolean {
   if (typeof window === 'undefined') return false;
-  
-  const cached = localStorage.getItem('userLocation');
-  if (!cached) return false;
 
-  const location = JSON.parse(cached) as UserLocation;
-  const oneHourAgo = Date.now() - 60 * 60 * 1000;
-  return location.timestamp > oneHourAgo;
+  // Check sessionStorage first (fastest)
+  try {
+    const sessionCached = sessionStorage.getItem(CACHE_KEYS.SESSION_LOCATION);
+    if (sessionCached) {
+      const location = JSON.parse(sessionCached) as UserLocation;
+      const sessionAgeMs = Date.now() - location.timestamp;
+      if (sessionAgeMs < CACHE_DURATIONS.SESSION) {
+        return true;
+      }
+      sessionStorage.removeItem(CACHE_KEYS.SESSION_LOCATION);
+    }
+  } catch (e) {
+    // Continue to localStorage check
+  }
+
+  // Fall back to localStorage
+  try {
+    const cached = localStorage.getItem(CACHE_KEYS.USER_LOCATION);
+    if (cached) {
+      const location = JSON.parse(cached) as UserLocation;
+      const cacheAgeMs = Date.now() - location.timestamp;
+      return cacheAgeMs < CACHE_DURATIONS.LOCAL;
+    }
+  } catch (e) {
+    // Ignore
+  }
+
+  return false;
 }
 
 /**
- * Καθαρίζει τη αποθηκευμένη τοποθεσία
+ * Καθαρίζει τη αποθηκευμένη τοποθεσία (και από τα δύο layers)
  */
 export function clearUserLocation(): void {
   if (typeof window === 'undefined') return;
-  localStorage.removeItem('userLocation');
+
+  try {
+    sessionStorage.removeItem(CACHE_KEYS.SESSION_LOCATION);
+    localStorage.removeItem(CACHE_KEYS.USER_LOCATION);
+    DISTANCE_CACHE.clear();
+  } catch (e) {
+    console.warn('Failed to clear location cache:', e);
+  }
 }
