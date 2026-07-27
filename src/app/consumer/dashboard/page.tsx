@@ -3,8 +3,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ShoppingBag, ClipboardList, LogOut, Leaf } from 'lucide-react';
+import { ShoppingBag, ClipboardList, LogOut, Leaf, Phone } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { sanitizePhoneForTel } from '@/lib/serviceAreas';
 import {
   clearLoginPreference,
   ensureLoginPreferenceInitialized,
@@ -26,6 +27,7 @@ interface PurchaseRequest {
   id: number;
   product_id: number | null;
   product_title: string;
+  farmer_id: string;
   buyer_email: string | null;
   buyer_phone: string | null;
   requested_quantity: number;
@@ -62,16 +64,19 @@ export default function ConsumerDashboard() {
   const supabase = createClient();
   const [products, setProducts] = useState<Product[]>([]);
   const [requests, setRequests] = useState<PurchaseRequest[]>([]);
+  const [farmerProfiles, setFarmerProfiles] = useState<Record<string, { contact_phone: string | null; full_name: string | null }>>({});
   const [loading, setLoading] = useState(true);
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [buyerId, setBuyerId] = useState<string | null>(null);
   const [buyerEmail, setBuyerEmail] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string | null>(null);
   const [buyerPhone, setBuyerPhone] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [requestedQuantity, setRequestedQuantity] = useState('1');
   const [message, setMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [activeTab, setActiveTab] = useState<'products' | 'requests'>('products');
 
   const formatCurrency = (value: number) => new Intl.NumberFormat('el-GR', {
     style: 'currency',
@@ -98,7 +103,7 @@ export default function ConsumerDashboard() {
   const fetchRequests = useCallback(async (userId: string) => {
     const { data, error } = await supabase
       .from('purchase_requests')
-      .select('id, product_id, product_title, buyer_email, buyer_phone, requested_quantity, status, unit_at_request, unit_price_at_request, products(unit,price)')
+      .select('id, product_id, product_title, farmer_id, buyer_email, buyer_phone, requested_quantity, status, unit_at_request, unit_price_at_request, products(unit,price)')
       .eq('buyer_id', userId)
       .order('created_at', { ascending: false });
 
@@ -108,6 +113,25 @@ export default function ConsumerDashboard() {
     }
 
     setRequests((data ?? []) as PurchaseRequest[]);
+
+    // Φόρτωση στοιχείων παραγωγών
+    const farmerIds = [...new Set((data ?? []).map((r) => r.farmer_id).filter(Boolean) as string[])];
+    if (farmerIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from('farmer_profiles')
+        .select('user_id, contact_phone, full_name')
+        .in('user_id', farmerIds);
+      if (profiles) {
+        const map: Record<string, { contact_phone: string | null; full_name: string | null }> = {};
+        for (const p of profiles) {
+          map[p.user_id as string] = {
+            contact_phone: p.contact_phone as string | null,
+            full_name: p.full_name as string | null,
+          };
+        }
+        setFarmerProfiles(map);
+      }
+    }
   }, [supabase]);
 
   useEffect(() => {
@@ -150,6 +174,7 @@ export default function ConsumerDashboard() {
       setLoading(true);
       setBuyerId(session.user.id);
       setBuyerEmail(session.user.email ?? null);
+      setUserName((session.user.user_metadata?.full_name as string | undefined)?.trim() || session.user.email || 'Καταναλωτής');
       setBuyerPhone((session.user.user_metadata?.phone as string | undefined) ?? '');
       await Promise.all([fetchProducts(), fetchRequests(session.user.id)]);
       setLoading(false);
@@ -280,12 +305,15 @@ export default function ConsumerDashboard() {
           </Link>
         </div>
         <nav className="mt-5 px-3 space-y-1" aria-label="Κύρια πλοήγηση">
-          <a href="#products" className="flex items-center gap-3 rounded-md bg-emerald-50 px-3 py-2.5 text-sm font-semibold text-emerald-800">
+          <button type="button" onClick={() => setActiveTab('products')} className={`w-full flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-colors ${activeTab === 'products' ? 'bg-emerald-50 font-semibold text-emerald-800' : 'font-medium text-stone-600 hover:bg-stone-100 hover:text-stone-900'}`}>
             <ShoppingBag className="h-4 w-4" /> Διαθέσιμα Προϊόντα
-          </a>
-          <a href="#requests" className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-stone-600 hover:bg-stone-100 hover:text-stone-900">
+          </button>
+          <button type="button" onClick={() => setActiveTab('requests')} className={`w-full flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-colors ${activeTab === 'requests' ? 'bg-emerald-50 font-semibold text-emerald-800' : 'font-medium text-stone-600 hover:bg-stone-100 hover:text-stone-900'}`}>
             <ClipboardList className="h-4 w-4" /> Τα Αιτήματά μου
-          </a>
+            {requests.filter((r) => r.status === 'pending' || r.status === 'confirmed').length > 0 && (
+              <span className="ml-auto rounded-full bg-amber-100 px-1.5 py-0.5 text-xs font-semibold text-amber-800">{requests.filter((r) => r.status === 'pending' || r.status === 'confirmed').length}</span>
+            )}
+          </button>
         </nav>
       </aside>
 
@@ -305,16 +333,28 @@ export default function ConsumerDashboard() {
 
         {/* Dashboard Body */}
         <main className="p-4 sm:p-8 flex-1 space-y-8 max-w-7xl w-full mx-auto">
+          {/* Καρτέλες πλοήγησης */}
+          <div className="flex border-b border-stone-200 -mt-4 sm:-mt-8 -mx-4 sm:-mx-8 px-4 sm:px-8">
+            <button type="button" onClick={() => setActiveTab('products')} className={`px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors ${activeTab === 'products' ? 'border-emerald-700 text-emerald-800' : 'border-transparent text-stone-500 hover:text-stone-900'}`}>
+              Διαθέσιμα Προϊόντα
+            </button>
+            <button type="button" onClick={() => setActiveTab('requests')} className={`px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors flex items-center gap-2 ${activeTab === 'requests' ? 'border-emerald-700 text-emerald-800' : 'border-transparent text-stone-500 hover:text-stone-900'}`}>
+              Τα αιτήματά μου
+              {requests.length > 0 && (
+                <span className="rounded-full bg-stone-100 px-1.5 py-0.5 text-xs font-semibold text-stone-700">{requests.length}</span>
+              )}
+            </button>
+          </div>
           <section id="overview" className="border-b border-stone-200 pb-7">
             <p className="text-xs font-bold tracking-wide text-emerald-700">ΠΙΝΑΚΑΣ ΕΛΕΓΧΟΥ</p>
-            <h2 className="mt-2 text-3xl font-bold text-stone-900">Καλώς ήρθες, {buyerEmail}</h2>
+            <h2 className="mt-2 text-3xl font-bold text-stone-900">Καλώς ήρθες, {userName ?? buyerEmail}</h2>
             <p className="mt-2 text-sm text-stone-600">Ανακάλυψε φρέσκα προϊόντα και δες την κατάσταση των αιτημάτων σου.</p>
           </section>
 
           {successMsg && <div className="rounded-md border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">{successMsg}</div>}
           {errorMsg && !selectedProduct && <div className="rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{errorMsg}</div>}
 
-          <section id="products">
+          <section id="products" className={activeTab !== 'products' ? 'hidden' : ''}>
             <h2 className="mb-4 text-xl font-semibold text-stone-800">Διαθέσιμα προϊόντα</h2>
             {products.length === 0 ? <p className="text-sm text-stone-500">Δεν υπάρχουν διαθέσιμα προϊόντα αυτή τη στιγμή.</p> : (
               <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -331,7 +371,7 @@ export default function ConsumerDashboard() {
             )}
           </section>
 
-          <section id="requests" className="rounded-lg border border-stone-200 bg-white p-6 shadow-sm">
+          <section id="requests" className={`rounded-lg border border-stone-200 bg-white p-6 shadow-sm${activeTab !== 'requests' ? ' hidden' : ''}`}>
             <h2 className="mb-3 text-xl font-semibold text-stone-800">Τα αιτήματά μου</h2>
             {requests.length === 0 ? <p className="text-sm text-stone-500">Δεν έχετε στείλει ακόμη αίτημα σε παραγωγό.</p> : (
               <ul className="divide-y divide-stone-200">
@@ -348,9 +388,26 @@ export default function ConsumerDashboard() {
                         <span className="text-stone-500"> · {request.requested_quantity} {getUnitLabel(unit, request.requested_quantity)}</span>
                         <p className="mt-1 text-sm text-stone-600">Εκτιμώμενο κόστος: <strong className="text-base font-bold text-emerald-700">{formatCurrency(totalCost)}</strong> <span className="text-xs">({formatCurrency(unitPrice)} / {unit || 'μονάδα'})</span></p>
                         {isContactVisible ? (
-                          <p className="mt-1 text-xs text-emerald-700">
-                            Στοιχεία επικοινωνίας που κοινοποιήθηκαν: {request.buyer_email ?? buyerEmail ?? 'χωρίς email'} · {(request.buyer_phone ?? buyerPhone) || 'χωρίς κινητό'}
-                          </p>
+                          <>
+                            <p className="mt-1 text-xs text-emerald-700">
+                              Στοιχεία επικοινωνίας που κοινοποιήθηκαν: {request.buyer_email ?? buyerEmail ?? 'χωρίς email'} · {(request.buyer_phone ?? buyerPhone) || 'χωρίς κινητό'}
+                            </p>
+                            {farmerProfiles[request.farmer_id] && (
+                              <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                                <p className="text-xs text-stone-700">
+                                  Παραγωγός: {farmerProfiles[request.farmer_id]?.full_name ?? 'Παραγωγός'}{farmerProfiles[request.farmer_id]?.contact_phone ? ` · ${farmerProfiles[request.farmer_id].contact_phone}` : ''}
+                                </p>
+                                {farmerProfiles[request.farmer_id]?.contact_phone && (
+                                  <a
+                                    href={`tel:${sanitizePhoneForTel(farmerProfiles[request.farmer_id]?.contact_phone ?? '')}`}
+                                    className="inline-flex items-center gap-1 rounded-md bg-emerald-700 px-2.5 py-1 text-xs font-semibold text-white hover:bg-emerald-800"
+                                  >
+                                    <Phone className="h-3 w-3" /> Κλήση παραγωγού
+                                  </a>
+                                )}
+                              </div>
+                            )}
+                          </>
                         ) : (
                           <p className="mt-1 text-xs text-stone-500">Τα στοιχεία επικοινωνίας παραμένουν κρυφά μέχρι την έγκριση από τον παραγωγό.</p>
                         )}

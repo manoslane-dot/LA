@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client';
 import { saveLoginPreference } from '@/lib/auth/sessionPersistence';
 import { resolvePostLoginRedirect, resolveRoleFromIntent } from '@/lib/auth/roleRouting';
 import { buildCompleteProfileRedirect, hasRequiredContactInfo } from '@/lib/auth/contactInfo';
+import { SERVICE_AREA_OPTIONS } from '@/lib/serviceAreas';
 import Link from 'next/link';
 import GoogleSignInButton from './GoogleSignInButton';
 
@@ -23,14 +24,29 @@ function AuthForm() {
   const searchParams = useSearchParams();
   const [checkingSession, setCheckingSession] = useState(true);
   const [isLogin, setIsLogin] = useState(true);
+  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [serviceAreas, setServiceAreas] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [rememberMe, setRememberMe] = useState(true);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const supabase = createClient();
+  const intendedRole = resolveRoleFromIntent(
+    searchParams.get('role'),
+    searchParams.get('redirectUrl'),
+  );
+  const isFarmerFlow = intendedRole === 'farmer';
+
+  const toggleServiceArea = (value: string) => {
+    setServiceAreas((prev) =>
+      prev.includes(value)
+        ? prev.filter((item) => item !== value)
+        : [...prev, value],
+    );
+  };
 
   useEffect(() => {
     const redirectIfLoggedIn = async () => {
@@ -148,8 +164,21 @@ function AuthForm() {
       }
     } else {
       // Εγγραφή
+      const trimmedName = fullName.trim();
       if (!validateEmailDomain(email)) {
         setErrorMsg('Παρακαλώ χρησιμοποιήστε ένα έγκυρο email (π.χ. Gmail, Outlook, Yahoo, iCloud, Proton).');
+        setLoading(false);
+        return;
+      }
+
+      if (trimmedName.length < 2) {
+        setErrorMsg('Συμπληρώστε το ονοματεπώνυμό σας.');
+        setLoading(false);
+        return;
+      }
+
+      if (isFarmerFlow && serviceAreas.length === 0) {
+        setErrorMsg('Επιλέξτε τουλάχιστον μία περιοχή εξυπηρέτησης (ΤΚ / Πόλη).');
         setLoading(false);
         return;
       }
@@ -157,6 +186,14 @@ function AuthForm() {
       const { error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: {
+            role: intendedRole ?? 'consumer',
+            full_name: trimmedName,
+            contact_email: email.trim().toLowerCase(),
+            service_areas: isFarmerFlow ? serviceAreas : [],
+          },
+        },
       });
 
       if (error) {
@@ -254,6 +291,20 @@ function AuthForm() {
           )}
 
           <form onSubmit={handleAuth} className="space-y-4">
+            {!isLogin && (
+              <div>
+                <label className="mb-1.5 block text-sm font-semibold text-slate-700">Ονοματεπώνυμο</label>
+                <input
+                  type="text"
+                  required
+                  value={fullName}
+                  onChange={(event) => setFullName(event.target.value)}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
+                  placeholder="π.χ. Γιάννης Παπαδόπουλος"
+                />
+              </div>
+            )}
+
             <div>
               <label className="mb-1.5 block text-sm font-semibold text-slate-700">Email</label>
               <input
@@ -277,6 +328,34 @@ function AuthForm() {
                 placeholder="••••••••"
               />
             </div>
+
+            {!isLogin && isFarmerFlow && (
+              <div className="rounded-xl border border-amber-100 bg-amber-50/70 p-4">
+                <p className="text-sm font-semibold text-amber-900">Περιοχές εξυπηρέτησης (ΤΚ / Πόλη)</p>
+                <p className="mt-1 text-xs leading-5 text-amber-800/90">
+                  Επίλεξε μία ή περισσότερες περιοχές για να βλέπει άμεσα ο καταναλωτής αν τον εξυπηρετείς.
+                </p>
+                <div className="mt-3 grid max-h-44 grid-cols-1 gap-2 overflow-y-auto pr-1 sm:grid-cols-2">
+                  {SERVICE_AREA_OPTIONS.map((option) => {
+                    const checked = serviceAreas.includes(option.label);
+                    return (
+                      <label
+                        key={option.label}
+                        className="flex cursor-pointer items-start gap-2 rounded-lg border border-amber-200 bg-white px-3 py-2 text-xs text-slate-700"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => toggleServiceArea(option.label)}
+                          className="mt-0.5 h-3.5 w-3.5 rounded border-amber-300 text-emerald-600 focus:ring-emerald-500"
+                        />
+                        <span>{option.label}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             <button
               type="submit"

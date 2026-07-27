@@ -2,7 +2,7 @@
 
 import { FormEvent, Suspense, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Leaf, Phone, UserRoundCheck } from 'lucide-react';
+import { Leaf, Phone, User, UserRoundCheck } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import {
   hasRequiredContactInfo,
@@ -11,6 +11,7 @@ import {
   normalizePhone,
 } from '@/lib/auth/contactInfo';
 import { resolvePostLoginRedirect } from '@/lib/auth/roleRouting';
+import { normalizeServiceAreas, SERVICE_AREA_OPTIONS } from '@/lib/serviceAreas';
 
 function CompleteProfileForm() {
   const router = useRouter();
@@ -20,8 +21,10 @@ function CompleteProfileForm() {
   const [checkingSession, setCheckingSession] = useState(true);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [serviceAreas, setServiceAreas] = useState<string[]>([]);
   const [userRole, setUserRole] = useState<unknown>(null);
 
   const requestedRedirect = searchParams.get('redirectUrl');
@@ -34,6 +37,15 @@ function CompleteProfileForm() {
       }),
     [requestedRedirect, userRole],
   );
+  const isFarmer = userRole === 'farmer';
+
+  const toggleServiceArea = (value: string) => {
+    setServiceAreas((prev) =>
+      prev.includes(value)
+        ? prev.filter((item) => item !== value)
+        : [...prev, value],
+    );
+  };
 
   useEffect(() => {
     const loadUser = async () => {
@@ -50,14 +62,21 @@ function CompleteProfileForm() {
         normalizeContactEmail(session.user.user_metadata?.contact_email) ??
         normalizeContactEmail(session.user.email) ??
         '';
+      const resolvedName =
+        typeof session.user.user_metadata?.full_name === 'string'
+          ? session.user.user_metadata.full_name.trim()
+          : '';
       const resolvedPhone = normalizePhone(session.user.user_metadata?.phone) ?? '';
+      const resolvedServiceAreas = normalizeServiceAreas(session.user.user_metadata?.service_areas);
       const resolvedNextUrl = resolvePostLoginRedirect({
         requestedRedirectUrl: requestedRedirect,
         userRole: session.user.user_metadata?.role,
       });
 
+      setFullName(resolvedName);
       setEmail(resolvedEmail);
       setPhone(resolvedPhone);
+      setServiceAreas(resolvedServiceAreas);
       setUserRole(session.user.user_metadata?.role);
 
       if (hasRequiredContactInfo(session.user)) {
@@ -78,9 +97,16 @@ function CompleteProfileForm() {
 
     const normalizedEmail = normalizeContactEmail(email);
     const normalizedPhone = normalizePhone(phone);
+    const trimmedName = fullName.trim();
 
     if (!normalizedEmail) {
       setErrorMsg('Συμπληρώστε έγκυρο email επικοινωνίας.');
+      setLoading(false);
+      return;
+    }
+
+    if (trimmedName.length < 2) {
+      setErrorMsg('Συμπληρώστε το ονοματεπώνυμό σας.');
       setLoading(false);
       return;
     }
@@ -91,10 +117,18 @@ function CompleteProfileForm() {
       return;
     }
 
+    if (isFarmer && serviceAreas.length === 0) {
+      setErrorMsg('Επιλέξτε τουλάχιστον μία περιοχή εξυπηρέτησης (ΤΚ / Πόλη).');
+      setLoading(false);
+      return;
+    }
+
     const { error } = await supabase.auth.updateUser({
       data: {
+        full_name: trimmedName,
         contact_email: normalizedEmail,
         phone: normalizedPhone,
+        service_areas: isFarmer ? serviceAreas : [],
       },
     });
 
@@ -150,6 +184,21 @@ function CompleteProfileForm() {
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <label className="block text-sm font-semibold text-slate-700">
             <span className="inline-flex items-center gap-2">
+              <User className="h-4 w-4 text-emerald-700" />
+              Ονοματεπώνυμο
+            </span>
+            <input
+              type="text"
+              required
+              value={fullName}
+              onChange={(event) => setFullName(event.target.value)}
+              className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
+              placeholder="π.χ. Γιώργης Παπαδόπουλος"
+            />
+          </label>
+
+          <label className="block text-sm font-semibold text-slate-700">
+            <span className="inline-flex items-center gap-2">
               <UserRoundCheck className="h-4 w-4 text-emerald-700" />
               Email επικοινωνίας
             </span>
@@ -177,6 +226,27 @@ function CompleteProfileForm() {
               placeholder="π.χ. 69XXXXXXXX"
             />
           </label>
+
+          {isFarmer && (
+            <div>
+              <p className="text-sm font-semibold text-slate-700 mb-2">
+                Περιοχές εξυπηρέτησης (ΤΚ / Πόλη)
+              </p>
+              <div className="max-h-48 overflow-y-auto rounded-xl border border-slate-200 p-3 grid grid-cols-1 gap-1.5">
+                {SERVICE_AREA_OPTIONS.map((area) => (
+                  <label key={area.zip} className="flex cursor-pointer items-center gap-2 text-sm text-slate-700 hover:text-emerald-800">
+                    <input
+                      type="checkbox"
+                      checked={serviceAreas.includes(area.zip)}
+                      onChange={() => toggleServiceArea(area.zip)}
+                      className="h-4 w-4 rounded border-slate-300 accent-emerald-700"
+                    />
+                    {area.label}
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
 
           <button
             type="submit"

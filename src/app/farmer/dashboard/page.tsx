@@ -3,8 +3,9 @@
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { CircleDollarSign, ClipboardList, LayoutDashboard, Leaf, LogOut, Package, Pencil, Plus, ShoppingBag, Trash2 } from 'lucide-react';
+import { CircleDollarSign, ClipboardList, LayoutDashboard, Leaf, LogOut, Package, Pencil, Phone, Plus, ShoppingBag, Trash2 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { sanitizePhoneForTel } from '@/lib/serviceAreas';
 import {
   clearLoginPreference,
   ensureLoginPreferenceInitialized,
@@ -70,7 +71,9 @@ export default function FarmerDashboard() {
   const supabase = createClient();
   const [loading, setLoading] = useState(true);
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'overview' | 'requests'>('overview');
   
   // Καλλιέργειες
   const [crops, setCrops] = useState<Crop[]>([]);
@@ -161,6 +164,7 @@ export default function FarmerDashboard() {
         }
       }
       
+      setUserName((session.user.user_metadata?.full_name as string | undefined)?.trim() || session.user.email || 'Παραγωγός');
       setUserEmail(session.user.email ?? 'Πωλητής');
       setUserId(session.user.id);
       await Promise.all([fetchCrops(), fetchProducts(session.user.id), fetchRequests(session.user.id)]);
@@ -357,15 +361,15 @@ export default function FarmerDashboard() {
           </Link>
         </div>
         <nav className="mt-5 px-3 space-y-1" aria-label="Κύρια πλοήγηση">
-          <a href="#overview" className="flex items-center gap-3 rounded-md bg-emerald-50 px-3 py-2.5 text-sm font-semibold text-emerald-800">
-            <LayoutDashboard className="h-4 w-4" /> Επισκόπηση
-          </a>
-          <a href="#products" className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-stone-600 hover:bg-stone-100 hover:text-stone-900">
-            <Package className="h-4 w-4" /> Προϊόντα
-          </a>
-          <a href="#requests" className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-stone-600 hover:bg-stone-100 hover:text-stone-900">
+          <button type="button" onClick={() => setActiveTab('overview')} className={`w-full flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-colors ${activeTab === 'overview' ? 'bg-emerald-50 font-semibold text-emerald-800' : 'font-medium text-stone-600 hover:bg-stone-100 hover:text-stone-900'}`}>
+            <LayoutDashboard className="h-4 w-4" /> Επισκόπηση &amp; Προϊόντα
+          </button>
+          <button type="button" onClick={() => setActiveTab('requests')} className={`w-full flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-colors ${activeTab === 'requests' ? 'bg-emerald-50 font-semibold text-emerald-800' : 'font-medium text-stone-600 hover:bg-stone-100 hover:text-stone-900'}`}>
             <ClipboardList className="h-4 w-4" /> Αιτήματα πελατών
-          </a>
+            {requests.filter((r) => r.status === 'pending').length > 0 && (
+              <span className="ml-auto rounded-full bg-amber-100 px-1.5 py-0.5 text-xs font-semibold text-amber-800">{requests.filter((r) => r.status === 'pending').length}</span>
+            )}
+          </button>
         </nav>
       </aside>
 
@@ -385,16 +389,28 @@ export default function FarmerDashboard() {
 
         {/* Dashboard Body */}
         <main className="p-4 sm:p-8 flex-1 space-y-8 max-w-7xl w-full mx-auto">
-          <section id="overview" className="border-b border-stone-200 pb-7 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+          {/* Καρτέλες πλοήγησης */}
+          <div className="flex border-b border-stone-200 -mt-4 sm:-mt-8 -mx-4 sm:-mx-8 px-4 sm:px-8">
+            <button type="button" onClick={() => setActiveTab('overview')} className={`px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors ${activeTab === 'overview' ? 'border-emerald-700 text-emerald-800' : 'border-transparent text-stone-500 hover:text-stone-900'}`}>
+              Επισκόπηση &amp; Προϊόντα
+            </button>
+            <button type="button" onClick={() => setActiveTab('requests')} className={`px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors flex items-center gap-2 ${activeTab === 'requests' ? 'border-emerald-700 text-emerald-800' : 'border-transparent text-stone-500 hover:text-stone-900'}`}>
+              Αιτήματα πελατών
+              {requests.filter((r) => r.status === 'pending').length > 0 && (
+                <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-xs font-semibold text-amber-800">{requests.filter((r) => r.status === 'pending').length}</span>
+              )}
+            </button>
+          </div>
+          <section id="overview" className={`border-b border-stone-200 pb-7 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between${activeTab !== 'overview' ? ' hidden' : ''}`}>
             <div>
               <p className="text-xs font-bold tracking-wide text-emerald-700">ΠΙΝΑΚΑΣ ΕΛΕΓΧΟΥ</p>
-              <h2 className="mt-2 text-3xl font-bold text-stone-900">Καλώς ήρθες, {userEmail}</h2>
+              <h2 className="mt-2 text-3xl font-bold text-stone-900">Καλώς ήρθες, {userName ?? userEmail}</h2>
               <p className="mt-2 text-sm text-stone-600">Παρακολούθησε την παραγωγή σου και διαχειρίσου τις καταχωρήσεις σου.</p>
             </div>
             <a href="#new-product" className="inline-flex items-center justify-center gap-2 rounded-md bg-emerald-700 hover:bg-emerald-800 text-white px-4 py-2.5 text-sm font-semibold transition-colors"><Plus className="h-4 w-4" />Νέο προϊόν</a>
           </section>
 
-          <section className="grid grid-cols-1 sm:grid-cols-4 gap-4" aria-label="Στατιστικά προϊόντων">
+          <section className={`grid grid-cols-1 sm:grid-cols-4 gap-4${activeTab !== 'overview' ? ' hidden' : ''}`} aria-label="Στατιστικά προϊόντων">
             <article className="border border-stone-200 bg-white p-5">
               <div className="flex justify-between"><div><p className="text-sm font-medium text-stone-500">Συνολικά προϊόντα</p><p className="mt-2 text-3xl font-bold">{products.length}</p></div><Package className="h-5 w-5 text-emerald-700" /></div>
             </article>
@@ -410,7 +426,7 @@ export default function FarmerDashboard() {
           </section>
           
           {/* Grid για Προϊόντα Προς Πώληση */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className={`grid grid-cols-1 md:grid-cols-2 gap-8${activeTab !== 'overview' ? ' hidden' : ''}`}>
             <div id="new-product" className="bg-white p-6 rounded-lg shadow-sm border border-stone-200">
               <h3 className="flex items-center gap-2 text-lg font-bold text-stone-900 mb-2"><Plus className="h-5 w-5 text-emerald-700" />Καταχώρηση νέου προϊόντος</h3>
               <p className="text-sm text-stone-500 mb-5">Δημοσίευσε ένα προϊόν για τους αγοραστές σου.</p>
@@ -552,7 +568,7 @@ export default function FarmerDashboard() {
             </div>
           </div>
 
-          <section id="requests" className="rounded-lg border border-stone-200 bg-white p-6 shadow-sm">
+          <section id="requests" className={`rounded-lg border border-stone-200 bg-white p-6 shadow-sm${activeTab !== 'requests' ? ' hidden' : ''}`}>
             <div className="mb-5 flex items-center justify-between gap-4">
               <div>
                 <h3 className="flex items-center gap-2 text-lg font-bold text-stone-900"><ClipboardList className="h-5 w-5 text-emerald-700" />Αιτήματα πελατών</h3>
@@ -584,9 +600,19 @@ export default function FarmerDashboard() {
                                 Ενδεικτικό κόστος: {formatCurrency(totalCost)} ({formatCurrency(unitPrice)} / {unit || 'μονάδα'})
                               </p>
                               {request.status === 'confirmed' || request.status === 'ready' ? (
-                                <p className="mt-1 text-xs text-emerald-700">
-                                  Στοιχεία αγοραστή: {request.buyer_email ?? 'χωρίς email'} · {request.buyer_phone ?? 'χωρίς κινητό'}
-                                </p>
+                                <div className="mt-1 flex flex-wrap items-center gap-2">
+                                  <p className="text-xs text-emerald-700">
+                                    Στοιχεία αγοραστή: {request.buyer_email ?? 'χωρίς email'} · {request.buyer_phone ?? 'χωρίς κινητό'}
+                                  </p>
+                                  {request.buyer_phone && (
+                                    <a
+                                      href={`tel:${sanitizePhoneForTel(request.buyer_phone)}`}
+                                      className="inline-flex items-center gap-1 rounded-md bg-emerald-700 px-2.5 py-1 text-xs font-semibold text-white hover:bg-emerald-800"
+                                    >
+                                      <Phone className="h-3 w-3" /> Κλήση
+                                    </a>
+                                  )}
+                                </div>
                               ) : (
                                 <p className="mt-1 text-xs text-stone-500">Τα στοιχεία επικοινωνίας του αγοραστή εμφανίζονται μετά την επιβεβαίωση.</p>
                               )}
