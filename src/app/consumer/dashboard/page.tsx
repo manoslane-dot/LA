@@ -95,6 +95,8 @@ export default function ConsumerDashboard() {
   const [editingProfile, setEditingProfile] = useState(false);
   const [profileForm, setProfileForm] = useState({ fullName: '', email: '', phone: '' });
   const [savingProfile, setSavingProfile] = useState(false);
+  const [emailConfirmedAt, setEmailConfirmedAt] = useState<string | null>(null);
+  const [showEmailVerificationWarning, setShowEmailVerificationWarning] = useState(false);
 
   const formatCurrency = (value: number) => new Intl.NumberFormat('el-GR', {
     style: 'currency',
@@ -285,6 +287,7 @@ export default function ConsumerDashboard() {
       setBuyerEmail(session.user.email ?? null);
       setUserName((session.user.user_metadata?.full_name as string | undefined)?.trim() || session.user.email || 'Καταναλωτής');
       setBuyerPhone((session.user.user_metadata?.phone as string | undefined) ?? '');
+      setEmailConfirmedAt(session.user.email_confirmed_at ?? null);
       await Promise.all([fetchProducts(), fetchRequests(session.user.id)]);
       setLoading(false);
     };
@@ -321,6 +324,12 @@ export default function ConsumerDashboard() {
   const handleRequest = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!buyerId || !selectedProduct?.farmer_id) return;
+
+    // Check if email is verified before allowing request
+    if (!emailConfirmedAt) {
+      setShowEmailVerificationWarning(true);
+      return;
+    }
 
     const sanitizedPhone = buyerPhone.trim();
     if (sanitizedPhone.length < 7) {
@@ -676,6 +685,13 @@ export default function ConsumerDashboard() {
               <form
                 onSubmit={async (e) => {
                   e.preventDefault();
+                  
+                  // Check if email is verified before allowing profile save
+                  if (!emailConfirmedAt) {
+                    setShowEmailVerificationWarning(true);
+                    return;
+                  }
+                  
                   setSavingProfile(true);
                   const { error } = await supabase.auth.updateUser({
                     data: {
@@ -778,6 +794,25 @@ export default function ConsumerDashboard() {
             <label className="mb-5 block text-sm font-medium text-stone-700">Μήνυμα για τον παραγωγό (προαιρετικό)<textarea value={message} onChange={(event) => setMessage(event.target.value)} maxLength={1000} rows={3} className="mt-1 w-full rounded-md border border-stone-300 px-3 py-2" /></label>
             <button type="submit" disabled={submitting} className="w-full rounded-md bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white disabled:bg-emerald-400">{submitting ? 'Αποστολή...' : 'Στείλε αίτημα'}</button>
           </form>
+        </div>
+      )}
+
+      {/* Email Verification Warning Modal */}
+      {showEmailVerificationWarning && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-lg max-w-sm w-full p-6">
+            <h3 className="text-lg font-bold text-stone-900 mb-2">📧 Επιβεβαίωση Email Απαιτείται</h3>
+            <p className="text-stone-600 mb-6">
+              Για να μπορέσεις να δημιουργήσεις αιτήματα, πρέπει πρώτα να επιβεβαιώσεις το email σου. 
+              Ελέγξε το εισερχόμενό σου και κάνε click στο σύνδεσμο επιβεβαίωσης που στάλθηκε κατά την εγγραφή.
+            </p>
+            <button
+              onClick={() => setShowEmailVerificationWarning(false)}
+              className="w-full rounded-md bg-emerald-700 hover:bg-emerald-800 text-white px-4 py-2.5 text-sm font-semibold transition-colors"
+            >
+              Κατανοητό
+            </button>
+          </div>
         </div>
       )}
     </div>

@@ -78,6 +78,8 @@ export default function FarmerDashboard() {
   const [profileForm, setProfileForm] = useState({ fullName: '', email: '', phone: '' });
   const [savingProfile, setSavingProfile] = useState(false);
   const [userPhone, setUserPhone] = useState('');
+  const [emailConfirmedAt, setEmailConfirmedAt] = useState<string | null>(null);
+  const [showEmailVerificationWarning, setShowEmailVerificationWarning] = useState(false);
   
   // Καλλιέργειες
   const [crops, setCrops] = useState<Crop[]>([]);
@@ -179,6 +181,7 @@ export default function FarmerDashboard() {
       setUserName((session.user.user_metadata?.full_name as string | undefined)?.trim() || session.user.email || 'Παραγωγός');
       setUserEmail(session.user.email ?? 'Πωλητής');
       setUserId(session.user.id);
+      setEmailConfirmedAt(session.user.email_confirmed_at ?? null);
       
       // Fetch farmer profile for phone
       const { data: profileData } = await supabase
@@ -200,6 +203,13 @@ export default function FarmerDashboard() {
 
   const handleAddCrop = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Check if email is verified
+    if (!emailConfirmedAt) {
+      setShowEmailVerificationWarning(true);
+      return;
+    }
+
     if (!cropName || !cropArea) return;
 
     setSubmittingCrop(true);
@@ -218,6 +228,12 @@ export default function FarmerDashboard() {
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!prodTitle || !prodQuantity || !prodPrice || !userId) return;
+
+    // Check if email is verified before allowing product creation
+    if (!emailConfirmedAt) {
+      setShowEmailVerificationWarning(true);
+      return;
+    }
 
     setSubmittingProd(true);
     const { error } = await supabase.from('products').insert([
@@ -244,6 +260,12 @@ export default function FarmerDashboard() {
 
   // Νέα συνάρτηση διαγραφής προϊόντος
   const handleDeleteProduct = async (id: number) => {
+    // Check if email is verified
+    if (!emailConfirmedAt) {
+      setShowEmailVerificationWarning(true);
+      return;
+    }
+
     const confirmDelete = window.confirm('Είστε σίγουρος ότι θέλετε να διαγράψετε αυτό το προϊόν;');
     if (!confirmDelete) return;
 
@@ -263,6 +285,12 @@ export default function FarmerDashboard() {
   };
 
   const handleSavePriceEdit = async (id: number) => {
+    // Check if email is verified
+    if (!emailConfirmedAt) {
+      setShowEmailVerificationWarning(true);
+      return;
+    }
+
     if (!userId) return;
     const parsedPrice = Number(priceDraft);
     if (!Number.isFinite(parsedPrice) || parsedPrice < 0) {
@@ -291,6 +319,12 @@ export default function FarmerDashboard() {
   };
 
   const handleRequestStatus = async (requestId: number, status: PurchaseRequest['status']) => {
+    // Check if email is verified
+    if (!emailConfirmedAt) {
+      setShowEmailVerificationWarning(true);
+      return;
+    }
+
     if (!userId) return;
 
     setUpdatingRequestId(requestId);
@@ -309,6 +343,12 @@ export default function FarmerDashboard() {
   };
 
   const handleConfirmRequest = (requestId: number) => {
+    // Check if email is verified
+    if (!emailConfirmedAt) {
+      setShowEmailVerificationWarning(true);
+      return;
+    }
+
     setConfirmingRequestId(requestId);
   };
 
@@ -718,6 +758,13 @@ export default function FarmerDashboard() {
               <form
                 onSubmit={async (e) => {
                   e.preventDefault();
+                  
+                  // Check if email is verified before allowing profile save
+                  if (!emailConfirmedAt) {
+                    setShowEmailVerificationWarning(true);
+                    return;
+                  }
+                  
                   setSavingProfile(true);
                   const { error } = await supabase.auth.updateUser({
                     data: {
@@ -958,6 +1005,25 @@ export default function FarmerDashboard() {
               </div>
             );
           })()}
+        </div>
+      )}
+
+      {/* Email Verification Warning Modal */}
+      {showEmailVerificationWarning && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-lg max-w-sm w-full p-6">
+            <h3 className="text-lg font-bold text-stone-900 mb-2">📧 Επιβεβαίωση Email Απαιτείται</h3>
+            <p className="text-stone-600 mb-6">
+              Για να μπορέσεις να δημοσιεύσεις προϊόντα και να ενεργοποιήσεις λειτουργίες, πρέπει πρώτα να επιβεβαιώσεις το email σου. 
+              Ελέγξε το εισερχόμενό σου και κάνε click στο σύνδεσμο επιβεβαίωσης που στάλθηκε κατά την εγγραφή.
+            </p>
+            <button
+              onClick={() => setShowEmailVerificationWarning(false)}
+              className="w-full rounded-md bg-emerald-700 hover:bg-emerald-800 text-white px-4 py-2.5 text-sm font-semibold transition-colors"
+            >
+              Κατανοητό
+            </button>
+          </div>
         </div>
       )}
     </div>
