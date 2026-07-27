@@ -36,7 +36,7 @@ interface PurchaseRequest {
   created_at: string;
   unit_at_request: string;
   unit_price_at_request: number;
-  profit: number;
+  profit?: number;
   products?: { unit: string; price: number } | { unit: string; price: number }[] | null;
 }
 
@@ -110,7 +110,7 @@ export default function FarmerDashboard() {
   const fetchRequests = useCallback(async (farmerId: string) => {
     const { data, error } = await supabase
       .from('purchase_requests')
-      .select('id, product_id, product_title, farmer_id, buyer_email, buyer_phone, requested_quantity, message, status, created_at, unit_at_request, unit_price_at_request, profit')
+      .select('id, product_id, product_title, farmer_id, buyer_email, buyer_phone, requested_quantity, message, status, created_at, unit_at_request, unit_price_at_request')
       .eq('farmer_id', farmerId)
       .order('created_at', { ascending: false });
 
@@ -295,21 +295,34 @@ export default function FarmerDashboard() {
     }
 
     try {
-      // If changing status to 'ready', update product quantity and set profit
+      // If changing status to 'ready', just update status (profit tracking will be added after migration is applied)
+      const { error } = await supabase
+        .from('purchase_requests')
+        .update({ status })
+        .eq('id', requestId)
+        .eq('farmer_id', userId);
+
+      if (error) {
+        alert(`Σφάλμα ενημέρωσης αιτήματος: ${error.message}`);
+        setUpdatingRequestId(null);
+        return;
+      }
+
+      // TODO: After profit column is added to purchase_requests in Supabase,
+      // uncomment the code below to calculate profit and decrease product quantity
+      /*
       if (status === 'ready') {
         const profit = request.requested_quantity * request.unit_price_at_request;
         
         // Update purchase_request with profit
         const { error: updateError } = await supabase
           .from('purchase_requests')
-          .update({ status, profit })
+          .update({ profit })
           .eq('id', requestId)
           .eq('farmer_id', userId);
 
         if (updateError) {
-          alert(`Σφάλμα ενημέρωσης αιτήματος: ${updateError.message}`);
-          setUpdatingRequestId(null);
-          return;
+          console.error('Σφάλμα αποθήκευσης κέρδους:', updateError.message);
         }
 
         // Decrease product quantity
@@ -322,23 +335,10 @@ export default function FarmerDashboard() {
 
           if (quantityError) {
             console.error('Σφάλμα μείωσης ποσότητας:', quantityError.message);
-            // Don't fail the whole operation if quantity decrease fails
           }
         }
-      } else {
-        // For other status changes, just update the status
-        const { error } = await supabase
-          .from('purchase_requests')
-          .update({ status })
-          .eq('id', requestId)
-          .eq('farmer_id', userId);
-
-        if (error) {
-          alert(`Σφάλμα ενημέρωσης αιτήματος: ${error.message}`);
-          setUpdatingRequestId(null);
-          return;
-        }
       }
+      */
 
       await fetchRequests(userId);
     } catch (err) {
