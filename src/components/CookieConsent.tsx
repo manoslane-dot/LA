@@ -19,6 +19,8 @@ export function CookieConsent() {
   });
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
     const consent = localStorage.getItem('cookieConsent');
     if (!consent) {
       setShowBanner(true);
