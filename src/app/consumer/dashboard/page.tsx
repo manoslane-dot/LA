@@ -103,52 +103,77 @@ export default function ConsumerDashboard() {
   }).format(value);
 
   const fetchProducts = useCallback(async () => {
-    const { data, error } = await supabase
-      .from('products')
-      .select('*')
-      .not('farmer_id', 'is', null)
-      .order('id', { ascending: false });
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .not('farmer_id', 'is', null)
+        .order('id', { ascending: false });
 
-    if (error) {
-      console.error('Σφάλμα κατά τη φόρτωση προϊόντων:', error.message);
-      setErrorMsg('Δεν ήταν δυνατή η φόρτωση των προϊόντων.');
-      return;
+      if (error) {
+        console.error('Σφάλμα κατά τη φόρτωση προϊόντων:', {
+          status: error.code,
+          message: error.message,
+        });
+        setErrorMsg('Δεν ήταν δυνατή η φόρτωση των προϊόντων. Δοκιμάστε αργότερα.');
+        return;
+      }
+
+      setProducts((data ?? []) as Product[]);
+      setErrorMsg('');
+    } catch (err) {
+      console.error('Exception loading products:', err);
+      setErrorMsg('Σφάλμα κατά τη φόρτωση προϊόντων.');
     }
-
-    setProducts((data ?? []) as Product[]);
   }, [supabase]);
 
   const fetchRequests = useCallback(async (userId: string) => {
-    const { data, error } = await supabase
-      .from('purchase_requests')
-      .select('id, product_id, product_title, farmer_id, buyer_email, buyer_phone, requested_quantity, status, unit_at_request, unit_price_at_request, products(unit,price)')
-      .eq('buyer_id', userId)
-      .order('created_at', { ascending: false });
+    try {
+      const { data, error } = await supabase
+        .from('purchase_requests')
+        .select('id, product_id, product_title, farmer_id, buyer_email, buyer_phone, requested_quantity, status, unit_at_request, unit_price_at_request, products(unit,price)')
+        .eq('buyer_id', userId)
+        .order('created_at', { ascending: false });
 
-    if (error) {
-      console.error('Σφάλμα κατά τη φόρτωση αιτημάτων:', error.message);
-      return;
-    }
-
-    setRequests((data ?? []) as PurchaseRequest[]);
-
-    // Φόρτωση στοιχείων παραγωγών
-    const farmerIds = [...new Set((data ?? []).map((r) => r.farmer_id).filter(Boolean) as string[])];
-    if (farmerIds.length > 0) {
-      const { data: profiles } = await supabase
-        .from('farmer_profiles')
-        .select('user_id, contact_phone, full_name')
-        .in('user_id', farmerIds);
-      if (profiles) {
-        const map: Record<string, { contact_phone: string | null; full_name: string | null }> = {};
-        for (const p of profiles) {
-          map[p.user_id as string] = {
-            contact_phone: p.contact_phone as string | null,
-            full_name: p.full_name as string | null,
-          };
-        }
-        setFarmerProfiles(map);
+      if (error) {
+        console.error('Σφάλμα κατά τη φόρτωση αιτημάτων:', {
+          status: error.code,
+          message: error.message,
+        });
+        return;
       }
+
+      setRequests((data ?? []) as PurchaseRequest[]);
+
+      // Φόρτωση στοιχείων παραγωγών
+      const farmerIds = [...new Set((data ?? []).map((r) => r.farmer_id).filter(Boolean) as string[])];
+      if (farmerIds.length > 0) {
+        try {
+          const { data: profiles, error: profileError } = await supabase
+            .from('farmer_profiles')
+            .select('user_id, contact_phone, full_name')
+            .in('user_id', farmerIds);
+
+          if (profileError) {
+            console.warn('Ένδειξη φόρτωσης στοιχείων παραγωγών (non-critical):', profileError.message);
+          }
+
+          if (profiles) {
+            const map: Record<string, { contact_phone: string | null; full_name: string | null }> = {};
+            for (const p of profiles) {
+              map[p.user_id as string] = {
+                contact_phone: p.contact_phone as string | null,
+                full_name: p.full_name as string | null,
+              };
+            }
+            setFarmerProfiles(map);
+          }
+        } catch (err) {
+          console.warn('Exception loading farmer profiles:', err);
+        }
+      }
+    } catch (err) {
+      console.error('Exception loading requests:', err);
     }
   }, [supabase]);
 
@@ -156,26 +181,43 @@ export default function ConsumerDashboard() {
     const farmerIds = [...new Set(products.map((p) => p.farmer_id).filter(Boolean) as string[])];
     if (farmerIds.length === 0) return;
 
-    const { data, error } = await supabase
-      .from('farmer_profiles')
-      .select('user_id, service_areas')
-      .in('user_id', farmerIds);
+    try {
+      // Split into smaller batches if needed to avoid URL length issues
+      const batchSize = 50;
+      const map: Record<string, string[]> = {};
 
-    if (error) {
-      console.error('Σφάλμα κατά τη φόρτωση περιοχών:', error.message);
-      return;
-    }
+      for (let i = 0; i < farmerIds.length; i += batchSize) {
+        const batch = farmerIds.slice(i, i + batchSize);
+        const { data, error } = await supabase
+          .from('farmer_profiles')
+          .select('user_id, service_areas')
+          .in('user_id', batch);
 
-    const map: Record<string, string[]> = {};
-    if (data) {
-      for (const profile of data) {
-        const areas = Array.isArray(profile.service_areas)
-          ? (profile.service_areas as string[])
-          : [];
-        map[profile.user_id as string] = areas;
+        if (error) {
+          console.error('Σφάλμα κατά τη φόρτωση περιοχών (batch):', {
+            status: error.code,
+            message: error.message,
+            details: (error as any).details,
+            hint: (error as any).hint,
+          });
+          // Continue with next batch even if one fails
+          continue;
+        }
+
+        if (data && Array.isArray(data)) {
+          for (const profile of data) {
+            const areas = Array.isArray(profile.service_areas)
+              ? (profile.service_areas as string[])
+              : [];
+            map[profile.user_id as string] = areas;
+          }
+        }
       }
+
+      setFarmerServiceAreas(map);
+    } catch (err) {
+      console.error('Σφάλμα κατά τη φόρτωση περιοχών (exception):', err);
     }
-    setFarmerServiceAreas(map);
   }, [supabase, products]);
 
   const handleRequestLocation = async () => {
