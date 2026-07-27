@@ -241,10 +241,16 @@ function getLocationFromLocal(): UserLocation | null {
  * ✨ Optimized: Caches results to avoid redundant calculations
  */
 export function getDistanceToZip(
-  userLat: number,
-  userLng: number,
+  userLat: number | null | undefined,
+  userLng: number | null | undefined,
   zipCode: string
 ): number | null {
+  // Guard against undefined or non-number values
+  if (typeof userLat !== 'number' || typeof userLng !== 'number') {
+    console.warn('Invalid coordinates for distance calculation:', { userLat, userLng });
+    return null;
+  }
+
   const cacheKey = `${userLat.toFixed(4)}_${userLng.toFixed(4)}_${zipCode}`;
 
   // Check cache first
@@ -275,10 +281,16 @@ export function getDistanceToZip(
  * (π.χ., αν αγρότης εξυπηρετεί πολλές περιοχές)
  */
 export function getClosestDistanceToServiceAreas(
-  userLat: number,
-  userLng: number,
+  userLat: number | null | undefined,
+  userLng: number | null | undefined,
   serviceAreas: string[]
 ): number | null {
+  // Guard against undefined or non-number values
+  if (typeof userLat !== 'number' || typeof userLng !== 'number') {
+    console.warn('Invalid coordinates for service areas calculation:', { userLat, userLng });
+    return null;
+  }
+
   if (!serviceAreas || serviceAreas.length === 0) {
     return null;
   }
@@ -311,10 +323,16 @@ export interface ProductWithDistance {
 
 export function sortProductsByDistance(
   products: any[],
-  userLat: number,
-  userLng: number,
+  userLat: number | null | undefined,
+  userLng: number | null | undefined,
   farmerServiceAreas: Record<string, string[]> = {}
 ): ProductWithDistance[] {
+  // Guard against undefined or non-number values
+  if (typeof userLat !== 'number' || typeof userLng !== 'number') {
+    console.warn('Invalid coordinates for product sorting:', { userLat, userLng });
+    return products; // Return unsorted if coordinates are invalid
+  }
+
   const productsWithDistance = products.map((product) => {
     let distance: number | null = null;
 
@@ -348,8 +366,8 @@ export function sortProductsByDistance(
 /**
  * Μορφοποιεί την απόσταση για εμφάνιση
  */
-export function formatDistance(distanceKm: number | null): string {
-  if (distanceKm === null) {
+export function formatDistance(distanceKm: number | null | undefined): string {
+  if (distanceKm === null || distanceKm === undefined || typeof distanceKm !== 'number') {
     return 'Άγνωστη απόσταση';
   }
 
@@ -358,7 +376,7 @@ export function formatDistance(distanceKm: number | null): string {
     return `${meters} μ`;
   }
 
-  return `${distanceKm.toFixed(1)} km`;
+  return `${(distanceKm ?? 0).toFixed(1)} km`;
 }
 
 /**
