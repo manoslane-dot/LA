@@ -645,36 +645,21 @@ export default function ConsumerDashboard() {
             )}
           </section>
 
-          <section id="profile" className={`rounded-lg border border-stone-200 bg-white p-6 shadow-sm${activeTab !== 'profile' ? ' hidden' : ''}`}>
+          <section id="profile" className={activeTab !== 'profile' ? 'hidden' : 'rounded-lg border border-stone-200 bg-white p-6 shadow-sm'}>
             <h2 className="mb-5 text-xl font-semibold text-stone-800">Το Προφίλ μου</h2>
-            {loading ? (
-              <div className="space-y-4">
-                <div className="rounded-lg border border-stone-200 bg-stone-50 p-4 animate-pulse">
-                  <p className="text-xs font-semibold text-stone-600 mb-1">Ονοματεπώνυμο</p>
-                  <div className="h-6 bg-stone-200 rounded"></div>
-                </div>
-                <div className="rounded-lg border border-stone-200 bg-stone-50 p-4 animate-pulse">
-                  <p className="text-xs font-semibold text-stone-600 mb-1">Email</p>
-                  <div className="h-6 bg-stone-200 rounded"></div>
-                </div>
-                <div className="rounded-lg border border-stone-200 bg-stone-50 p-4 animate-pulse">
-                  <p className="text-xs font-semibold text-stone-600 mb-1">Κινητό τηλέφωνο</p>
-                  <div className="h-6 bg-stone-200 rounded"></div>
-                </div>
-              </div>
-            ) : !editingProfile ? (
+            {!editingProfile ? (
               <div className="space-y-4">
                 <div className="rounded-lg border border-stone-200 bg-stone-50 p-4">
                   <p className="text-xs font-semibold text-stone-600 mb-1">Ονοματεπώνυμο</p>
-                  <p className="text-base text-stone-900">{userName || '—'}</p>
+                  <p className="text-base text-stone-900">{userName || 'Επανόθηση απαιτείται'}</p>
                 </div>
                 <div className="rounded-lg border border-stone-200 bg-stone-50 p-4">
                   <p className="text-xs font-semibold text-stone-600 mb-1">Email</p>
-                  <p className="text-base text-stone-900">{buyerEmail || '—'}</p>
+                  <p className="text-base text-stone-900">{buyerEmail || 'Επανόθηση απαιτείται'}</p>
                 </div>
                 <div className="rounded-lg border border-stone-200 bg-stone-50 p-4">
                   <p className="text-xs font-semibold text-stone-600 mb-1">Κινητό τηλέφωνο</p>
-                  <p className="text-base text-stone-900">{buyerPhone || '—'}</p>
+                  <p className="text-base text-stone-900">{buyerPhone || 'Επανόθηση απαιτείται'}</p>
                 </div>
                 <button
                   type="button"
