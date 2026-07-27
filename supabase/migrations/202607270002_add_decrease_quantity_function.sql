@@ -5,7 +5,6 @@ create or replace function public.decrease_product_quantity(
 )
 returns json
 language plpgsql
-security definer
 as $$
 declare
   current_quantity numeric;
@@ -36,6 +35,3 @@ begin
   );
 end;
 $$;
-
--- Grant execute permission to authenticated users
-grant execute on function public.decrease_product_quantity(integer, numeric) to authenticated;

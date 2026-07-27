@@ -367,7 +367,13 @@ export default function ConsumerDashboard() {
     });
 
     if (error) {
-      setErrorMsg(`Δεν στάλθηκε το αίτημα: ${error.message}`);
+      console.error('Purchase request insert error:', {
+        message: error.message,
+        code: (error as any).code,
+        details: (error as any).details,
+        hint: (error as any).hint,
+      });
+      setErrorMsg(`Δεν στάλθηκε το αίτημα: ${error.message}${(error as any).hint ? '\n' + (error as any).hint : ''}`);
     } else {
       const { error: metadataError } = await supabase.auth.updateUser({
         data: { phone: sanitizedPhone },
