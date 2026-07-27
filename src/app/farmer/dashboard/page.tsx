@@ -97,6 +97,11 @@ export default function FarmerDashboard() {
   const [editingPriceId, setEditingPriceId] = useState<number | null>(null);
   const [priceDraft, setPriceDraft] = useState('');
   const [updatingPrice, setUpdatingPrice] = useState(false);
+  
+  // Chat messaging for confirmed requests
+  const [chatRequestId, setChatRequestId] = useState<number | null>(null);
+  const [chatMessage, setChatMessage] = useState('');
+  const [sendingChat, setSendingChat] = useState(false);
 
   const fetchCrops = useCallback(async () => {
     const { data, error } = await supabase.from('crops').select('*');
@@ -296,6 +301,10 @@ export default function FarmerDashboard() {
       alert(`Σφάλμα ενημέρωσης αιτήματος: ${error.message}`);
     } else {
       await fetchRequests(userId);
+      // Open chat if confirming
+      if (status === 'confirmed') {
+        setChatRequestId(requestId);
+      }
     }
     setUpdatingRequestId(null);
   };
@@ -776,6 +785,95 @@ export default function FarmerDashboard() {
 
         </main>
       </div>
+
+      {/* Chat Modal for Confirmed Requests */}
+      {chatRequestId !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-stone-950/40 p-4" role="dialog" aria-modal="true" aria-labelledby="chat-title">
+          {(() => {
+            const chatRequest = requests.find((r) => r.id === chatRequestId);
+            return (
+              <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl flex flex-col max-h-[80vh]">
+                <div className="mb-4 flex items-start justify-between gap-4">
+                  <div>
+                    <h2 id="chat-title" className="text-lg font-bold text-stone-900">
+                      Επικοινωνία: {chatRequest?.product_title}
+                    </h2>
+                    <p className="mt-1 text-sm text-stone-500">
+                      Αγοραστής: {chatRequest?.buyer_email || 'Χωρίς email'} · {chatRequest?.buyer_phone || 'Χωρίς κινητό'}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setChatRequestId(null);
+                      setChatMessage('');
+                    }}
+                    className="text-sm text-stone-500 hover:text-stone-900"
+                  >
+                    Κλείσιμο
+                  </button>
+                </div>
+
+                <div className="mb-4 flex-1 overflow-y-auto rounded-lg border border-stone-200 bg-stone-50 p-3">
+                  <p className="text-sm text-stone-600 mb-3 p-2 bg-white rounded border border-stone-200">
+                    <strong>Αγοραστής:</strong> Θα ήθελα {chatRequest?.requested_quantity} {getUnitLabel(chatRequest?.unit_at_request || '', chatRequest?.requested_quantity || 0)} του {chatRequest?.product_title}
+                  </p>
+                  {chatRequest?.message && (
+                    <p className="text-sm text-stone-600 mb-3 p-2 bg-white rounded border border-stone-200">
+                      <strong>Μήνυμα:</strong> {chatRequest.message}
+                    </p>
+                  )}
+                  <p className="text-xs text-stone-500 italic">Ξεκινήστε τη συνεννόηση με τον αγοραστή...</p>
+                </div>
+
+                <form
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    if (!chatMessage.trim() || !chatRequestId) return;
+
+                    setSendingChat(true);
+                    // In a real app, this would save the message to a messages table
+                    // For now, we just show a confirmation
+                    alert('Μήνυμα που θα στείλετε: ' + chatMessage);
+                    setChatMessage('');
+                    setChatRequestId(null);
+                    setSendingChat(false);
+                  }}
+                  className="space-y-3"
+                >
+                  <textarea
+                    value={chatMessage}
+                    onChange={(e) => setChatMessage(e.target.value)}
+                    placeholder="Γράψτε το μήνυμά σας εδώ..."
+                    maxLength={500}
+                    rows={3}
+                    className="w-full rounded-lg border border-stone-300 px-3 py-2.5 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                  />
+                  <div className="flex gap-3">
+                    <button
+                      type="submit"
+                      disabled={sendingChat || !chatMessage.trim()}
+                      className="flex-1 rounded-lg bg-emerald-700 px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:bg-emerald-400"
+                    >
+                      {sendingChat ? 'Αποστολή...' : 'Αποστολή μηνύματος'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setChatRequestId(null);
+                        setChatMessage('');
+                      }}
+                      className="flex-1 rounded-lg border border-stone-300 px-3 py-2.5 text-sm font-semibold text-stone-700 transition hover:bg-stone-100"
+                    >
+                      Αργότερα
+                    </button>
+                  </div>
+                </form>
+              </div>
+            );
+          })()}
+        </div>
+      )}
     </div>
   );
 }
