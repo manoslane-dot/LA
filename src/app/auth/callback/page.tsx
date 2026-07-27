@@ -32,6 +32,13 @@ function AuthCallbackContent() {
         let resolvedRole = session.user.user_metadata?.role;
         let resolvedUser = session.user;
 
+        // ✅ Check if email is verified - BLOCK if not confirmed
+        if (!resolvedUser.email_confirmed_at && resolvedUser.email) {
+          console.warn('Email not confirmed yet');
+          router.replace('/auth?message=Πρέπει+να+επιβεβαιώσεις+το+email+σου+για+να+συνεχίσεις.+Ελέγξε+το+εισερχόμενό+σου.');
+          return;
+        }
+
         if (intendedRole && resolvedRole !== intendedRole) {
           const { data: updateData, error: updateError } = await supabase.auth.updateUser({
             data: { role: intendedRole },
