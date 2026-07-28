@@ -758,8 +758,8 @@ export default function ConsumerDashboard() {
             </button>
             <button type="button" onClick={() => setActiveTab('requests')} className={`px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors flex items-center gap-2 ${activeTab === 'requests' ? 'border-emerald-700 text-emerald-800' : 'border-transparent text-stone-500 hover:text-stone-900'}`}>
               Τα αιτήματά μου
-              {requests.length > 0 && (
-                <span className="rounded-full bg-stone-100 px-1.5 py-0.5 text-xs font-semibold text-stone-700">{requests.length}</span>
+              {requests.filter((r) => r.status === 'pending' || r.status === 'confirmed').length > 0 && (
+                <span className="rounded-full bg-stone-100 px-1.5 py-0.5 text-xs font-semibold text-stone-700">{requests.filter((r) => r.status === 'pending' || r.status === 'confirmed').length}</span>
               )}
             </button>
           </div>
