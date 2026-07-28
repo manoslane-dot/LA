@@ -48,6 +48,17 @@ interface PurchaseRequest {
   products?: { unit: string; price: number } | { unit: string; price: number }[] | null;
 }
 
+interface Review {
+  id: number;
+  request_id: number;
+  buyer_id: string;
+  farmer_id: string;
+  product_id: number | null;
+  rating: number;
+  message: string | null;
+  created_at: string;
+}
+
 const requestStatusLabels: Record<PurchaseRequest['status'], string> = {
   pending: 'Σε αναμονή',
   confirmed: 'Επιβεβαιώθηκε',
@@ -105,6 +116,7 @@ export default function ConsumerDashboard() {
   const [reviewStars, setReviewStars] = useState(0);
   const [reviewMessage, setReviewMessage] = useState('');
   const [reviewError, setReviewError] = useState('');
+  const [reviewsByRequestId, setReviewsByRequestId] = useState<Record<number, Review[]>>({});
 
   const formatCurrency = (value: number) => new Intl.NumberFormat('el-GR', {
     style: 'currency',
@@ -182,6 +194,11 @@ export default function ConsumerDashboard() {
       return;
     }
 
+    const existingReviews = reviewsByRequestId[completedRequest.id] ?? [];
+    if (existingReviews.length > 0) {
+      return;
+    }
+
     const storageKey = `agrodirect-review-${buyerId}-${completedRequest.id}`;
     if (typeof window === 'undefined') {
       return;
@@ -196,7 +213,7 @@ export default function ConsumerDashboard() {
     setReviewStars(0);
     setReviewMessage('');
     setReviewError('');
-  }, [buyerId, requests, reviewPromptRequest]);
+  }, [buyerId, requests, reviewPromptRequest, reviewsByRequestId]);
 
   const fetchProducts = useCallback(async () => {
     try {
@@ -223,6 +240,41 @@ export default function ConsumerDashboard() {
     }
   }, [supabase]);
 
+  const fetchReviews = useCallback(async (requestIds: number[]) => {
+    if (requestIds.length === 0) {
+      setReviewsByRequestId({});
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('reviews')
+        .select('id, request_id, buyer_id, farmer_id, product_id, rating, message, created_at')
+        .in('request_id', requestIds)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Σφάλμα κατά τη φόρτωση αξιολογήσεων:', {
+          status: error.code,
+          message: error.message,
+        });
+        return;
+      }
+
+      const grouped: Record<number, Review[]> = {};
+      for (const review of (data ?? []) as Review[]) {
+        if (!grouped[review.request_id]) {
+          grouped[review.request_id] = [];
+        }
+        grouped[review.request_id].push(review);
+      }
+
+      setReviewsByRequestId(grouped);
+    } catch (err) {
+      console.error('Exception loading reviews:', err);
+    }
+  }, [supabase]);
+
   const fetchRequests = useCallback(async (userId: string) => {
     try {
       const { data, error } = await supabase
@@ -239,10 +291,11 @@ export default function ConsumerDashboard() {
         return;
       }
 
-      setRequests((data ?? []) as PurchaseRequest[]);
+      const requestsData = (data ?? []) as PurchaseRequest[];
+      setRequests(requestsData);
 
       // Φόρτωση στοιχείων παραγωγών
-      const farmerIds = [...new Set((data ?? []).map((r) => r.farmer_id).filter(Boolean) as string[])];
+      const farmerIds = [...new Set(requestsData.map((r) => r.farmer_id).filter(Boolean) as string[])];
       if (farmerIds.length > 0) {
         try {
           const { data: profiles, error: profileError } = await supabase
@@ -268,10 +321,12 @@ export default function ConsumerDashboard() {
           console.warn('Exception loading farmer profiles:', err);
         }
       }
+
+      await fetchReviews(requestsData.map((request) => request.id));
     } catch (err) {
       console.error('Exception loading requests:', err);
     }
-  }, [supabase]);
+  }, [fetchReviews, supabase]);
 
   const fetchFarmerServiceAreas = useCallback(async () => {
     const farmerIds = [...new Set(products.map((p) => p.farmer_id).filter(Boolean) as string[])];
@@ -515,15 +570,49 @@ export default function ConsumerDashboard() {
     setReviewError('');
   };
 
-  const submitReview = () => {
+  const submitReview = async () => {
     if (reviewStars < 1) {
       setReviewError('Βάλε τουλάχιστον 1 αστέρι για να υποβάλεις αξιολόγηση.');
       return;
     }
 
-    if (reviewPromptRequest && buyerId && typeof window !== 'undefined') {
-      const storageKey = `agrodirect-review-${buyerId}-${reviewPromptRequest.id}`;
-      window.localStorage.setItem(storageKey, JSON.stringify({ rating: reviewStars, message: reviewMessage.trim() }));
+    if (!reviewPromptRequest || !buyerId) {
+      return;
+    }
+
+    try {
+      const { data: insertedReview, error } = await supabase
+        .from('reviews')
+        .insert({
+          request_id: reviewPromptRequest.id,
+          buyer_id: buyerId,
+          farmer_id: reviewPromptRequest.farmer_id,
+          product_id: reviewPromptRequest.product_id,
+          rating: reviewStars,
+          message: reviewMessage.trim() || null,
+        })
+        .select('id, request_id, buyer_id, farmer_id, product_id, rating, message, created_at')
+        .single();
+
+      if (error) {
+        console.error('Σφάλμα αποθήκευσης αξιολόγησης:', error.message);
+        setReviewError('Δεν ήταν δυνατή η αποθήκευση της αξιολόγησης. Δοκιμάστε ξανά.');
+        return;
+      }
+
+      if (typeof window !== 'undefined') {
+        const storageKey = `agrodirect-review-${buyerId}-${reviewPromptRequest.id}`;
+        window.localStorage.setItem(storageKey, JSON.stringify({ rating: reviewStars, message: reviewMessage.trim() }));
+      }
+
+      setReviewsByRequestId((previous) => ({
+        ...previous,
+        [reviewPromptRequest.id]: [insertedReview as Review, ...(previous[reviewPromptRequest.id] ?? [])],
+      }));
+    } catch (err) {
+      console.error('Exception saving review:', err);
+      setReviewError('Δεν ήταν δυνατή η αποθήκευση της αξιολόγησης. Δοκιμάστε ξανά.');
+      return;
     }
 
     setReviewPromptRequest(null);
@@ -765,36 +854,40 @@ export default function ConsumerDashboard() {
                   const unit = productDetails.unit;
                   const unitPrice = productDetails.price;
                   const totalCost = request.requested_quantity * unitPrice;
-                  const isContactVisible = request.status === 'confirmed';
+                  const requestReviews = reviewsByRequestId[request.id] ?? [];
+                  const isReviewVisible = request.status === 'confirmed' || request.status === 'ready';
                   return (
                     <li key={request.id} className="flex flex-wrap items-center justify-between gap-2 p-3 text-sm">
                       <div className="flex-grow">
                         <strong className="text-stone-900">{request.product_title}</strong>
                         <span className="text-stone-500"> · {request.requested_quantity} {getUnitLabel(unit, request.requested_quantity)}</span>
                         <p className="mt-1 text-sm text-stone-600">Εκτιμώμενο κόστος: <strong className="text-base font-bold text-emerald-700">{formatCurrency(totalCost)}</strong> <span className="text-xs">({formatCurrency(unitPrice)} / {unit || 'μονάδα'})</span></p>
-                        {isContactVisible ? (
-                          <>
-                            <p className="mt-1 text-xs text-emerald-700">
-                              Στοιχεία επικοινωνίας που κοινοποιήθηκαν: {request.buyer_email ?? buyerEmail ?? 'χωρίς email'} · {(request.buyer_phone ?? buyerPhone) || 'χωρίς κινητό'}
-                            </p>
-                            {farmerProfiles[request.farmer_id] && (
-                              <div className="mt-1.5 flex flex-wrap items-center gap-2">
-                                <p className="text-xs text-stone-700">
-                                  Παραγωγός: {farmerProfiles[request.farmer_id]?.full_name ?? 'Παραγωγός'}{farmerProfiles[request.farmer_id]?.contact_phone ? ` · ${farmerProfiles[request.farmer_id].contact_phone}` : ''}
-                                </p>
-                                {farmerProfiles[request.farmer_id]?.contact_phone && (
-                                  <a
-                                    href={`tel:${sanitizePhoneForTel(farmerProfiles[request.farmer_id]?.contact_phone ?? '')}`}
-                                    className="inline-flex items-center gap-1 rounded-md bg-emerald-700 px-2.5 py-1 text-xs font-semibold text-white hover:bg-emerald-800"
-                                  >
-                                    <Phone className="h-3 w-3" /> Κλήση παραγωγού
-                                  </a>
-                                )}
+                        {isReviewVisible ? (
+                          <div className="mt-2 rounded-lg border border-stone-200 bg-stone-50 p-3">
+                            <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Κριτικές</p>
+                            {requestReviews.length > 0 ? (
+                              <div className="mt-2 space-y-2">
+                                {requestReviews.map((review) => (
+                                  <div key={review.id} className="rounded-md border border-stone-200 bg-white p-2.5">
+                                    <div className="flex items-center gap-1 text-amber-500">
+                                      {Array.from({ length: review.rating }).map((_, index) => (
+                                        <Star key={`${review.id}-${index}`} className="h-4 w-4 fill-current" />
+                                      ))}
+                                    </div>
+                                    {review.message ? (
+                                      <p className="mt-1 text-sm text-stone-600">{review.message}</p>
+                                    ) : (
+                                      <p className="mt-1 text-sm text-stone-500">Δεν υπάρχει κείμενο στην αξιολόγηση.</p>
+                                    )}
+                                  </div>
+                                ))}
                               </div>
+                            ) : (
+                              <p className="mt-1 text-sm text-stone-600">Δεν υπάρχουν ακόμη αξιολογήσεις για αυτή τη συναλλαγή.</p>
                             )}
-                          </>
+                          </div>
                         ) : (
-                          <p className="mt-1 text-xs text-stone-500">Τα στοιχεία επικοινωνίας παραμένουν κρυφά μέχρι την έγκριση από τον παραγωγό.</p>
+                          <p className="mt-1 text-xs text-stone-500">Οι κριτικές θα εμφανιστούν μόλις ολοκληρωθεί η πρώτη σας συναλλαγή.</p>
                         )}
                       </div>
                       <span className="shrink-0 font-medium text-emerald-800">{requestStatusLabels[request.status]}</span>
