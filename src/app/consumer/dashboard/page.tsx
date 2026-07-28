@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ShoppingBag, ClipboardList, LogOut, Leaf, Phone, Search, ChevronDown, User, Mail, MapPin, Bell, Star } from 'lucide-react';
+import { ShoppingBag, ClipboardList, LogOut, Leaf, Phone, Search, ChevronDown, User, Mail, MapPin, Bell } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { formatGreekPhoneInput, isPhoneValid, normalizePhone } from '@/lib/auth/contactInfo';
 import { sanitizePhoneForTel } from '@/lib/serviceAreas';
@@ -46,17 +46,6 @@ interface PurchaseRequest {
   unit_price_at_request: number;
   profit: number;
   products?: { unit: string; price: number } | { unit: string; price: number }[] | null;
-}
-
-interface Review {
-  id: number;
-  request_id: number;
-  buyer_id: string;
-  farmer_id: string;
-  product_id: number | null;
-  rating: number;
-  message: string | null;
-  created_at: string;
 }
 
 const requestStatusLabels: Record<PurchaseRequest['status'], string> = {
@@ -112,11 +101,6 @@ export default function ConsumerDashboard() {
   const [emailConfirmedAt, setEmailConfirmedAt] = useState<string | null>(null);
   const [showEmailVerificationWarning, setShowEmailVerificationWarning] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
-  const [reviewPromptRequest, setReviewPromptRequest] = useState<PurchaseRequest | null>(null);
-  const [reviewStars, setReviewStars] = useState(0);
-  const [reviewMessage, setReviewMessage] = useState('');
-  const [reviewError, setReviewError] = useState('');
-  const [reviewsByRequestId, setReviewsByRequestId] = useState<Record<number, Review[]>>({});
 
   const formatCurrency = (value: number) => new Intl.NumberFormat('el-GR', {
     style: 'currency',
@@ -184,37 +168,6 @@ export default function ConsumerDashboard() {
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
-  useEffect(() => {
-    if (!buyerId || reviewPromptRequest || requests.length === 0) {
-      return;
-    }
-
-    const completedRequest = requests.find((request) => request.status === 'ready');
-    if (!completedRequest) {
-      return;
-    }
-
-    const existingReviews = reviewsByRequestId[completedRequest.id] ?? [];
-    if (existingReviews.length > 0) {
-      return;
-    }
-
-    const storageKey = `agrodirect-review-${buyerId}-${completedRequest.id}`;
-    if (typeof window === 'undefined') {
-      return;
-    }
-
-    const storedReview = window.localStorage.getItem(storageKey);
-    if (storedReview) {
-      return;
-    }
-
-    setReviewPromptRequest(completedRequest);
-    setReviewStars(0);
-    setReviewMessage('');
-    setReviewError('');
-  }, [buyerId, requests, reviewPromptRequest, reviewsByRequestId]);
-
   const fetchProducts = useCallback(async () => {
     try {
       const { data, error } = await supabase
@@ -237,41 +190,6 @@ export default function ConsumerDashboard() {
     } catch (err) {
       console.error('Exception loading products:', err);
       setErrorMsg('Σφάλμα κατά τη φόρτωση προϊόντων.');
-    }
-  }, [supabase]);
-
-  const fetchReviews = useCallback(async (requestIds: number[]) => {
-    if (requestIds.length === 0) {
-      setReviewsByRequestId({});
-      return;
-    }
-
-    try {
-      const { data, error } = await supabase
-        .from('reviews')
-        .select('id, request_id, buyer_id, farmer_id, product_id, rating, message, created_at')
-        .in('request_id', requestIds)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Σφάλμα κατά τη φόρτωση αξιολογήσεων:', {
-          status: error.code,
-          message: error.message,
-        });
-        return;
-      }
-
-      const grouped: Record<number, Review[]> = {};
-      for (const review of (data ?? []) as Review[]) {
-        if (!grouped[review.request_id]) {
-          grouped[review.request_id] = [];
-        }
-        grouped[review.request_id].push(review);
-      }
-
-      setReviewsByRequestId(grouped);
-    } catch (err) {
-      console.error('Exception loading reviews:', err);
     }
   }, [supabase]);
 
@@ -322,11 +240,10 @@ export default function ConsumerDashboard() {
         }
       }
 
-      await fetchReviews(requestsData.map((request) => request.id));
     } catch (err) {
       console.error('Exception loading requests:', err);
     }
-  }, [fetchReviews, supabase]);
+  }, [supabase]);
 
   const fetchFarmerServiceAreas = useCallback(async () => {
     const farmerIds = [...new Set(products.map((p) => p.farmer_id).filter(Boolean) as string[])];
@@ -556,71 +473,6 @@ export default function ConsumerDashboard() {
     clearLoginPreference();
     await supabase.auth.signOut();
     router.replace('/auth');
-  };
-
-  const dismissReviewPrompt = () => {
-    if (reviewPromptRequest && buyerId && typeof window !== 'undefined') {
-      const storageKey = `agrodirect-review-${buyerId}-${reviewPromptRequest.id}`;
-      window.localStorage.setItem(storageKey, 'dismissed');
-    }
-
-    setReviewPromptRequest(null);
-    setReviewStars(0);
-    setReviewMessage('');
-    setReviewError('');
-  };
-
-  const submitReview = async () => {
-    if (reviewStars < 1) {
-      setReviewError('Βάλε τουλάχιστον 1 αστέρι για να υποβάλεις αξιολόγηση.');
-      return;
-    }
-
-    if (!reviewPromptRequest || !buyerId) {
-      return;
-    }
-
-    try {
-      const { data: insertedReview, error } = await supabase
-        .from('reviews')
-        .insert({
-          request_id: reviewPromptRequest.id,
-          buyer_id: buyerId,
-          farmer_id: reviewPromptRequest.farmer_id,
-          product_id: reviewPromptRequest.product_id,
-          rating: reviewStars,
-          message: reviewMessage.trim() || null,
-        })
-        .select('id, request_id, buyer_id, farmer_id, product_id, rating, message, created_at')
-        .single();
-
-      if (error) {
-        console.error('Σφάλμα αποθήκευσης αξιολόγησης:', error.message);
-        setReviewError('Δεν ήταν δυνατή η αποθήκευση της αξιολόγησης. Δοκιμάστε ξανά.');
-        return;
-      }
-
-      if (typeof window !== 'undefined') {
-        const storageKey = `agrodirect-review-${buyerId}-${reviewPromptRequest.id}`;
-        window.localStorage.setItem(storageKey, JSON.stringify({ rating: reviewStars, message: reviewMessage.trim() }));
-      }
-
-      setReviewsByRequestId((previous) => ({
-        ...previous,
-        [reviewPromptRequest.id]: [insertedReview as Review, ...(previous[reviewPromptRequest.id] ?? [])],
-      }));
-    } catch (err) {
-      console.error('Exception saving review:', err);
-      setReviewError('Δεν ήταν δυνατή η αποθήκευση της αξιολόγησης. Δοκιμάστε ξανά.');
-      return;
-    }
-
-    setReviewPromptRequest(null);
-    setReviewStars(0);
-    setReviewMessage('');
-    setReviewError('');
-    setSuccessMsg('Η αξιολόγησή σου καταχωρήθηκε. Ευχαριστούμε!');
-    window.setTimeout(() => setSuccessMsg(''), 5000);
   };
 
   const getRequestProductDetails = (request: PurchaseRequest): { unit: string; price: number } => {
@@ -854,33 +706,12 @@ export default function ConsumerDashboard() {
                   const unit = productDetails.unit;
                   const unitPrice = productDetails.price;
                   const totalCost = request.requested_quantity * unitPrice;
-                  const requestReviews = reviewsByRequestId[request.id] ?? [];
-                  const isReviewVisible = request.status === 'confirmed' || request.status === 'ready';
                   return (
                     <li key={request.id} className="flex flex-wrap items-center justify-between gap-2 p-3 text-sm">
                       <div className="flex-grow">
                         <strong className="text-stone-900">{request.product_title}</strong>
                         <span className="text-stone-500"> · {request.requested_quantity} {getUnitLabel(unit, request.requested_quantity)}</span>
                         <p className="mt-1 text-sm text-stone-600">Εκτιμώμενο κόστος: <strong className="text-base font-bold text-emerald-700">{formatCurrency(totalCost)}</strong> <span className="text-xs">({formatCurrency(unitPrice)} / {unit || 'μονάδα'})</span></p>
-                        {isReviewVisible && requestReviews.length > 0 ? (
-                          <div className="mt-2 rounded-lg border border-stone-200 bg-stone-50 p-3">
-                            <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Κριτικές</p>
-                            <div className="mt-2 space-y-2">
-                              {requestReviews.map((review) => (
-                                <div key={review.id} className="rounded-md border border-stone-200 bg-white p-2.5">
-                                  <div className="flex items-center gap-1 text-amber-500">
-                                    {Array.from({ length: review.rating }).map((_, index) => (
-                                      <Star key={`${review.id}-${index}`} className="h-4 w-4 fill-current" />
-                                    ))}
-                                  </div>
-                                  {review.message ? (
-                                    <p className="mt-1 text-sm text-stone-600">{review.message}</p>
-                                  ) : null}
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        ) : null}
                       </div>
                       <span className="shrink-0 font-medium text-emerald-800">{requestStatusLabels[request.status]}</span>
                     </li>
@@ -1015,62 +846,12 @@ export default function ConsumerDashboard() {
         </main>
       </div>
 
-      {reviewPromptRequest && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-stone-950/40 p-4" role="dialog" aria-modal="true" aria-labelledby="review-title">
-          <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
-            <div className="mb-4 flex items-start justify-between gap-4">
-              <div>
-                <h2 id="review-title" className="text-lg font-bold text-stone-900">Αξιολόγησε την πρώτη σου συναλλαγή</h2>
-                <p className="mt-1 text-sm text-stone-500">Για το {reviewPromptRequest.product_title}</p>
-              </div>
-              <button type="button" onClick={dismissReviewPrompt} className="text-sm text-stone-500 hover:text-stone-900">Αργότερα</button>
-            </div>
-
-            {reviewError && <div className="mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">{reviewError}</div>}
-
-            <div className="mb-4">
-              <p className="mb-2 text-sm font-medium text-stone-700">Βάλε αστέρια</p>
-              <div className="flex items-center gap-2">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <button
-                    key={star}
-                    type="button"
-                    onClick={() => setReviewStars(star)}
-                    className="text-2xl text-amber-500 transition hover:scale-110"
-                    aria-label={`Αστέρι ${star}`}
-                  >
-                    <Star className={`h-6 w-6 ${star <= reviewStars ? 'fill-current' : 'text-stone-300'}`} />
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <label className="mb-5 block text-sm font-medium text-stone-700">
-              Μήνυμα (προαιρετικό)
-              <textarea
-                value={reviewMessage}
-                onChange={(event) => setReviewMessage(event.target.value)}
-                maxLength={500}
-                rows={4}
-                className="mt-1 w-full rounded-md border border-stone-300 px-3 py-2 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
-                placeholder="Πες μας τη γνώμη σου για τη συναλλαγή..."
-              />
-            </label>
-
-            <div className="flex gap-3">
-              <button type="button" onClick={submitReview} className="flex-1 rounded-md bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-800">Αποστολή αξιολόγησης</button>
-              <button type="button" onClick={dismissReviewPrompt} className="flex-1 rounded-md border border-stone-300 px-4 py-2.5 text-sm font-semibold text-stone-700 transition hover:bg-stone-100">Όχι τώρα</button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {selectedProduct && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-stone-950/40 p-4" role="dialog" aria-modal="true" aria-labelledby="request-title">
           <form onSubmit={handleRequest} className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
             <div className="mb-5 flex items-start justify-between gap-4"><div><h2 id="request-title" className="text-lg font-bold text-stone-900">Αίτημα για {selectedProduct.title}</h2><p className="mt-1 text-sm text-stone-500">Ο παραγωγός θα απαντήσει στη διαθεσιμότητα.</p></div><button type="button" onClick={() => setSelectedProduct(null)} className="text-sm text-stone-500 hover:text-stone-900">Κλείσιμο</button></div>
             {errorMsg && <div className="mb-4 rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{errorMsg}</div>}
-            <label className="mb-4 block text-sm font-medium text-stone-700">Κινητό τηλέφωνο επικοινωνίας
+            <label className="mb-4 block text-sm font-medium text-stone-700">Κινητό τηλέφωνο
               <input
                 type="tel"
                 required

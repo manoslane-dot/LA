@@ -135,22 +135,21 @@ export default function Home() {
       <section className="bg-[#fbfaf5] py-16 sm:py-20">
         <div className="mx-auto max-w-7xl px-5 sm:px-8 lg:px-10">
           <div className="max-w-2xl">
-            <p className="text-sm font-bold uppercase tracking-[0.12em] text-[#587b44]">Αληθινές εμπειρίες</p>
-            <h2 className="mt-3 text-3xl font-bold text-[#173b2a] sm:text-4xl">Η εμπιστοσύνη μεγαλώνει μαζί μας.</h2>
+            <p className="text-sm font-bold uppercase tracking-[0.12em] text-[#587b44]">Μια αγορά που σέβεται τη γη</p>
+            <h2 className="mt-3 text-3xl font-bold text-[#173b2a] sm:text-4xl">Απλή, καθαρή και άμεση επικοινωνία από την πρώτη στιγμή.</h2>
+            <p className="mt-5 leading-8 text-[#496554]">
+              Από την επιλογή του προϊόντος μέχρι την παραλαβή, το AgroDirect κρατά τη σχέση παραγωγού και καταναλωτή ξεκάθαρη, αξιόπιστη και κοντά στην πραγματική αξία της τροφής.
+            </p>
           </div>
           <div className="mt-10 grid gap-5 lg:grid-cols-3">
             {[
-              { initials: 'ΓΠ', name: 'Γιώργος Π.', role: 'Καταναλωτής, Αθήνα', quote: 'Σαν να πήρα τα λαχανικά από το χωριό. Ξέρω ποιος τα καλλιέργησε και η διαφορά στη γεύση είναι απίστευτη.', tone: 'bg-[#dcece2]' },
-              { initials: 'ΔΚ', name: 'Δημήτρης Κ.', role: 'Παραγωγός ελαιολάδου, Μεσσηνία', quote: 'Βρήκα ανθρώπους που εκτιμούν τη δουλειά μου και διαθέτω την παραγωγή μου με τρόπο τίμιο και απλό.', tone: 'bg-[#f9e8c6]' },
-              { initials: 'ΕΜ', name: 'Ελένη Μ.', role: 'Καταναλώτρια, Θεσσαλονίκη', quote: 'Η παραγγελία ήταν εύκολη και το μέλι έφτασε την επόμενη μέρα, ακριβώς όπως το υποσχέθηκε ο παραγωγός.', tone: 'bg-[#e8dfcf]' },
-            ].map(({ initials, name, role, quote, tone }) => (
-              <article key={name} className="border border-[#e1e7dd] bg-white p-6 sm:p-7">
-                <div className="flex gap-1 text-[#e09a21]">{[1, 2, 3, 4, 5].map((star) => <Star key={star} size={16} fill="currentColor" />)}</div>
-                <blockquote className="mt-5 text-lg leading-8 text-[#355746]">“{quote}”</blockquote>
-                <div className="mt-7 flex items-center gap-3">
-                  <span className={`grid h-10 w-10 place-items-center rounded-full text-xs font-bold text-[#173b2a] ${tone}`}>{initials}</span>
-                  <div><p className="font-bold text-[#173b2a]">{name}</p><p className="text-sm text-[#668070]">{role}</p></div>
-                </div>
+              { title: 'Άμεση επικοινωνία', text: 'Συνδέεστε με τον παραγωγό και διατηρείτε σαφή κανάλι επικοινωνίας πριν και μετά την παραγγελία.' },
+              { title: 'Διαφάνεια τιμών', text: 'Βλέπετε καθαρά την ποσότητα, την τιμή και την προέλευση του προϊόντος που επιλέγετε.' },
+              { title: 'Αξιόπιστη παρακολούθηση', text: 'Παρακολουθείτε την κατάσταση της παραγγελίας με τρόπο απλό και κατανοητό.' },
+            ].map(({ title, text }) => (
+              <article key={title} className="border border-[#e1e7dd] bg-white p-6 sm:p-7">
+                <h3 className="text-xl font-bold text-[#173b2a]">{title}</h3>
+                <p className="mt-3 leading-7 text-[#5b7465]">{text}</p>
               </article>
             ))}
           </div>
