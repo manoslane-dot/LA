@@ -642,14 +642,14 @@ export default function FarmerDashboard() {
                 )}
               </button>
               {showNotifications && (
-                <div className="absolute right-0 top-12 z-20 w-full max-w-sm rounded-lg border border-stone-200 bg-white shadow-lg">
-                  <div className="rounded-t-lg bg-stone-100 px-4 py-3 text-center text-sm font-medium text-stone-700">
+                <div className="absolute right-0 top-12 z-20 w-[90vw] max-w-[32rem] rounded-xl border border-stone-200 bg-white shadow-xl">
+                  <div className="rounded-t-xl bg-stone-100 px-4 py-3 text-center text-sm font-medium text-stone-700">
                     Ειδοποιήσεις
                   </div>
                   {notifications.length === 0 ? (
                     <div className="px-4 py-6 text-sm text-stone-500">Δεν υπάρχουν ειδοποιήσεις ακόμη.</div>
                   ) : (
-                    <div className="max-h-80 divide-y divide-stone-100 overflow-y-auto">
+                    <div className="max-h-[32rem] divide-y divide-stone-100 overflow-y-auto">
                       {notifications.map((notification) => {
                         const isSelected = selectedNotificationId === notification.id;
                         return (
@@ -657,7 +657,7 @@ export default function FarmerDashboard() {
                             key={notification.id}
                             type="button"
                             onClick={() => handleNotificationSelect(notification)}
-                            className={`flex w-full px-4 py-3 text-left transition-colors ${isSelected ? 'bg-stone-50' : notification.read ? 'bg-white hover:bg-stone-50' : 'bg-amber-50 hover:bg-amber-100'}`}
+                            className={`flex w-full items-start px-4 py-4 text-left transition-colors ${isSelected ? 'bg-stone-50' : notification.read ? 'bg-white hover:bg-stone-50' : 'bg-amber-50 hover:bg-amber-100'}`}
                           >
                             <div className="shrink-0">
                               <div className={`flex h-11 w-11 items-center justify-center rounded-full ${notification.read ? 'bg-stone-100 text-stone-600' : 'bg-emerald-100 text-emerald-700'}`}>
@@ -669,7 +669,7 @@ export default function FarmerDashboard() {
                                 <span className="font-semibold text-stone-900">{notification.title}</span>
                                 <div className="mt-1 text-xs text-stone-500">{notification.status}</div>
                               </div>
-                              <div className="text-sm text-stone-600">{notification.message}</div>
+                              <div className="text-sm leading-6 text-stone-600 break-words whitespace-pre-wrap">{notification.message}</div>
                             </div>
                           </button>
                         );
@@ -677,14 +677,14 @@ export default function FarmerDashboard() {
                     </div>
                   )}
                   {selectedNotificationId && (
-                    <div className="border-t border-stone-200 bg-stone-50 px-4 py-3">
+                    <div className="border-t border-stone-200 bg-stone-50 px-4 py-4">
                       {(() => {
                         const selected = notifications.find((item) => item.id === selectedNotificationId);
                         if (!selected) return null;
                         return (
                           <div>
                             <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">Πλήρες μήνυμα</p>
-                            <p className="mt-1 text-sm text-stone-700">{selected.message}</p>
+                            <p className="mt-2 text-sm leading-7 text-stone-700 break-words whitespace-pre-wrap">{selected.message}</p>
                           </div>
                         );
                       })()}
