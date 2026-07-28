@@ -776,6 +776,15 @@ export default function FarmerDashboard() {
                               <p className="mt-1 text-sm text-stone-600">
                                 Ενδεικτικό κόστος: {formatCurrency(totalCost)} ({formatCurrency(unitPrice)} / {unit || 'μονάδα'})
                               </p>
+                              {request.status === 'confirmed' && (
+                                <div className="mt-2 rounded-md border border-stone-200 bg-stone-50 p-2.5 w-full">
+                                  <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-700">Στοιχεία επικοινωνίας</p>
+                                  <div className="mt-1 space-y-1 text-sm text-stone-600">
+                                    <p><span className="font-medium text-stone-800">Email:</span> {request.buyer_email || 'Δεν έχει καταχωρημένο email'}</p>
+                                    <p><span className="font-medium text-stone-800">Τηλέφωνο:</span> {request.buyer_phone || 'Δεν έχει καταχωρημένο τηλέφωνο'}</p>
+                                  </div>
+                                </div>
+                              )}
                               {request.status === 'ready' && (
                                 <div className="mt-2 rounded-md bg-emerald-50 border border-emerald-200 p-2 w-full">
                                   <p className="text-xs font-semibold text-emerald-700">Συνολικό κέρδος:</p>

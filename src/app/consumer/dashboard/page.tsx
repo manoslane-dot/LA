@@ -706,12 +706,24 @@ export default function ConsumerDashboard() {
                   const unit = productDetails.unit;
                   const unitPrice = productDetails.price;
                   const totalCost = request.requested_quantity * unitPrice;
+                  const farmerProfile = farmerProfiles[request.farmer_id];
+                  const farmerName = farmerProfile?.full_name || 'Παραγωγός';
+                  const farmerPhone = farmerProfile?.contact_phone || 'Δεν έχει καταχωρημένο τηλέφωνο';
                   return (
                     <li key={request.id} className="flex flex-wrap items-center justify-between gap-2 p-3 text-sm">
                       <div className="flex-grow">
                         <strong className="text-stone-900">{request.product_title}</strong>
                         <span className="text-stone-500"> · {request.requested_quantity} {getUnitLabel(unit, request.requested_quantity)}</span>
                         <p className="mt-1 text-sm text-stone-600">Εκτιμώμενο κόστος: <strong className="text-base font-bold text-emerald-700">{formatCurrency(totalCost)}</strong> <span className="text-xs">({formatCurrency(unitPrice)} / {unit || 'μονάδα'})</span></p>
+                        {request.status === 'confirmed' && (
+                          <div className="mt-2 rounded-md border border-stone-200 bg-stone-50 p-2.5">
+                            <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-700">Στοιχεία επικοινωνίας</p>
+                            <div className="mt-1 space-y-1 text-sm text-stone-600">
+                              <p><span className="font-medium text-stone-800">Παραγωγός:</span> {farmerName}</p>
+                              <p><span className="font-medium text-stone-800">Τηλέφωνο:</span> {farmerPhone}</p>
+                            </div>
+                          </div>
+                        )}
                       </div>
                       <span className="shrink-0 font-medium text-emerald-800">{requestStatusLabels[request.status]}</span>
                     </li>
