@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Bell, CircleDollarSign, ClipboardList, LayoutDashboard, Leaf, LogOut, Mail, Package, Pencil, Phone, Plus, ShoppingBag, Trash2, User } from 'lucide-react';
@@ -92,6 +92,7 @@ export default function FarmerDashboard() {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [selectedNotificationId, setSelectedNotificationId] = useState<string | null>(null);
+  const notificationRef = useRef<HTMLDivElement | null>(null);
   
   // Προϊόντα προς Πώληση
   const [products, setProducts] = useState<Product[]>([]);
@@ -578,6 +579,19 @@ export default function FarmerDashboard() {
     const { price } = getRequestProductDetails(request);
     return total + request.requested_quantity * price;
   }, 0);
+  useEffect(() => {
+    if (!showNotifications) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
+        setShowNotifications(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showNotifications]);
+
   const formatCurrency = (value: number) => new Intl.NumberFormat('el-GR', {
     style: 'currency',
     currency: 'EUR',
@@ -628,7 +642,7 @@ export default function FarmerDashboard() {
           <Link href="/" className="flex items-center gap-2 lg:hidden"><Leaf className="h-5 w-5 text-emerald-700" /><span className="font-bold text-emerald-900">AgroDirect</span></Link>
           <p className="hidden lg:block text-sm text-stone-500">Πίνακας ελέγχου αγρότη</p>
           <div className="flex items-center gap-2">
-            <div className="relative">
+            <div className="relative" ref={notificationRef}>
               <button
                 type="button"
                 onClick={() => setShowNotifications((prev) => !prev)}
@@ -652,6 +666,15 @@ export default function FarmerDashboard() {
                     <div className="max-h-[32rem] divide-y divide-stone-100 overflow-y-auto">
                       {notifications.map((notification) => {
                         const isSelected = selectedNotificationId === notification.id;
+                        const isCompleted = notification.status === 'Επιβεβαιώθηκε' || notification.status === 'Ολοκληρώθηκε';
+                        const isRejected = notification.status === 'Δεν είναι διαθέσιμο';
+                        const iconColor = isRejected
+                          ? 'bg-rose-100 text-rose-700'
+                          : isCompleted
+                            ? 'bg-emerald-100 text-emerald-700'
+                            : notification.read
+                              ? 'bg-stone-100 text-stone-600'
+                              : 'bg-amber-100 text-amber-700';
                         return (
                           <button
                             key={notification.id}
@@ -660,7 +683,7 @@ export default function FarmerDashboard() {
                             className={`flex w-full items-start px-4 py-4 text-left transition-colors ${isSelected ? 'bg-stone-50' : notification.read ? 'bg-white hover:bg-stone-50' : 'bg-amber-50 hover:bg-amber-100'}`}
                           >
                             <div className="shrink-0">
-                              <div className={`flex h-11 w-11 items-center justify-center rounded-full ${notification.read ? 'bg-stone-100 text-stone-600' : 'bg-emerald-100 text-emerald-700'}`}>
+                              <div className={`flex h-11 w-11 items-center justify-center rounded-full ${iconColor}`}>
                                 <Bell className="h-5 w-5" />
                               </div>
                             </div>
@@ -674,20 +697,6 @@ export default function FarmerDashboard() {
                           </button>
                         );
                       })}
-                    </div>
-                  )}
-                  {selectedNotificationId && (
-                    <div className="border-t border-stone-200 bg-stone-50 px-4 py-4">
-                      {(() => {
-                        const selected = notifications.find((item) => item.id === selectedNotificationId);
-                        if (!selected) return null;
-                        return (
-                          <div>
-                            <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">Πλήρες μήνυμα</p>
-                            <p className="mt-2 text-sm leading-7 text-stone-700 break-words whitespace-pre-wrap">{selected.message}</p>
-                          </div>
-                        );
-                      })()}
                     </div>
                   )}
                 </div>
@@ -1217,7 +1226,7 @@ export default function FarmerDashboard() {
                       const nextNotifications = addNotification(getNotificationStorageKey(chatRequest.buyer_id), {
                         title: 'Νέο μήνυμα από τον παραγωγό',
                         status: 'Μήνυμα παραγωγού',
-                        message: chatMessage.trim(),
+                        message: 'Ο παραγωγός σας έστειλε ένα νέο μήνυμα.',
                       });
                       setNotifications(nextNotifications);
                       setNotificationCount(getUnreadNotificationCount(nextNotifications));
