@@ -440,8 +440,8 @@ export default function ConsumerDashboard() {
   };
 
   const handleNotificationSelect = (notification: NotificationItem) => {
-    if (!notification.read && buyerId) {
-      const updatedNotifications = markNotificationsRead(getNotificationStorageKey(buyerId), [notification.id]);
+    if (buyerId) {
+      const updatedNotifications = markNotificationsRead(getNotificationStorageKey(buyerId), notifications.map((item) => item.id));
       setNotifications(updatedNotifications);
       setNotificationCount(getUnreadNotificationCount(updatedNotifications));
     }
@@ -517,11 +517,10 @@ export default function ConsumerDashboard() {
         console.error('Σφάλμα αποθήκευσης τηλεφώνου στο προφίλ:', metadataError.message);
       }
 
-      const customerNote = message.trim() ? `Μήνυμα καταναλωτή: ${message.trim()}` : 'Δεν δόθηκε επιπλέον μήνυμα.';
       const nextNotifications = addNotification(getNotificationStorageKey(selectedProduct.farmer_id), {
         title: `Νέο αίτημα για ${selectedProduct.title}`,
         status: 'Σε αναμονή',
-        message: `Κατάσταση παραγγελίας: Σε αναμονή\n${customerNote}`,
+        message: 'Κατάσταση παραγγελίας: Σε αναμονή',
       });
       setNotifications(nextNotifications);
       setNotificationCount(getUnreadNotificationCount(nextNotifications));
@@ -665,13 +664,13 @@ export default function ConsumerDashboard() {
                       {notifications.map((notification) => {
                         const isSelected = selectedNotificationId === notification.id;
                         const isCompleted = notification.status === 'Επιβεβαιώθηκε' || notification.status === 'Ολοκληρώθηκε';
-                        const isRejected = notification.status === 'Δεν είναι διαθέσιμο';
-                        const iconColor = notification.read
-                          ? 'bg-stone-100 text-stone-600'
-                          : isRejected
-                            ? 'bg-rose-100 text-rose-700'
-                            : isCompleted
-                              ? 'bg-emerald-100 text-emerald-700'
+                        const isRejected = notification.status === 'Δεν είναι διαθέσιμο' || notification.status === 'Απορρίφθηκε';
+                        const iconColor = isRejected
+                          ? 'bg-rose-100 text-rose-700'
+                          : isCompleted
+                            ? 'bg-emerald-100 text-emerald-700'
+                            : notification.read
+                              ? 'bg-stone-100 text-stone-600'
                               : 'bg-amber-100 text-amber-700';
                         return (
                           <button
