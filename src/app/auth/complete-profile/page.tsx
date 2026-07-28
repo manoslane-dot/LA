@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Leaf, Phone, User, UserRoundCheck } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import {
+  formatGreekPhoneInput,
   hasRequiredContactInfo,
   isPhoneValid,
   normalizeContactEmail,
@@ -22,7 +23,7 @@ function CompleteProfileForm() {
   const [errorMsg, setErrorMsg] = useState('');
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('+30');
+  const [phone, setPhone] = useState('');
   const [userRole, setUserRole] = useState<unknown>(null);
 
   const requestedRedirect = searchParams.get('redirectUrl');
@@ -56,7 +57,7 @@ function CompleteProfileForm() {
         typeof session.user.user_metadata?.full_name === 'string'
           ? session.user.user_metadata.full_name.trim()
           : '';
-      const resolvedPhone = normalizePhone(session.user.user_metadata?.phone) ?? '+30';
+      const resolvedPhone = normalizePhone(session.user.user_metadata?.phone) ?? '';
       const resolvedNextUrl = resolvePostLoginRedirect({
         requestedRedirectUrl: requestedRedirect,
         userRole: session.user.user_metadata?.role,
@@ -203,11 +204,10 @@ function CompleteProfileForm() {
               required
               value={phone}
               onChange={(event) => {
-                const nextValue = event.target.value.replace(/[^\d+]/g, '');
-                setPhone(nextValue ? (nextValue.startsWith('+') ? nextValue : `+30${nextValue.replace(/^0+/, '')}`) : '+30');
+                setPhone(formatGreekPhoneInput(event.target.value));
               }}
               className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
-              placeholder="π.χ. +30 69XXXXXXXX"
+              placeholder="π.χ. +30 69 12345678"
             />
           </label>
 

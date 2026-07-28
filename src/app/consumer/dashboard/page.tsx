@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ShoppingBag, ClipboardList, LogOut, Leaf, Phone, Search, ChevronDown, User, Mail, MapPin } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { formatGreekPhoneInput, isPhoneValid, normalizePhone } from '@/lib/auth/contactInfo';
 import { sanitizePhoneForTel } from '@/lib/serviceAreas';
 import {
   clearLoginPreference,
@@ -338,8 +339,8 @@ export default function ConsumerDashboard() {
     }
 
     const sanitizedPhone = buyerPhone.trim();
-    const normalizedPhone = sanitizedPhone.replace(/\D/g, '');
-    if (!/^69\d{8}$/.test(normalizedPhone)) {
+    const normalizedPhone = normalizePhone(sanitizedPhone);
+    if (!normalizedPhone || !isPhoneValid(normalizedPhone)) {
       setErrorMsg('Συμπληρώστε ένα έγκυρο ελληνικό κινητό τηλέφωνο που ξεκινά από 69 και έχει 10 ψηφία.');
       return;
     }
@@ -769,11 +770,10 @@ export default function ConsumerDashboard() {
                     required
                     value={profileForm.phone}
                     onChange={(e) => {
-                      const nextValue = e.target.value.replace(/\D/g, '');
-                      setProfileForm({ ...profileForm, phone: nextValue ? (nextValue.startsWith('69') ? nextValue : `69${nextValue.replace(/^0+/, '').slice(0, 8)}`) : '' });
+                      setProfileForm({ ...profileForm, phone: formatGreekPhoneInput(e.target.value) });
                     }}
                     className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-stone-400 focus:ring-2 focus:ring-emerald-100"
-                    placeholder="π.χ. 69XXXXXXXX"
+                    placeholder="π.χ. +30 69 12345678"
                   />
                 </label>
                 <div className="flex gap-3">
@@ -809,10 +809,9 @@ export default function ConsumerDashboard() {
                 required
                 value={buyerPhone}
                 onChange={(event) => {
-                  const nextValue = event.target.value.replace(/\D/g, '');
-                  setBuyerPhone(nextValue ? (nextValue.startsWith('69') ? nextValue : `69${nextValue.replace(/^0+/, '').slice(0, 8)}`) : '');
+                  setBuyerPhone(formatGreekPhoneInput(event.target.value));
                 }}
-                placeholder="π.χ. 69XXXXXXXX"
+                placeholder="π.χ. +30 69 12345678"
                 className="mt-1 w-full rounded-md border border-stone-300 px-3 py-2"
               />
             </label>

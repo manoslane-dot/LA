@@ -21,27 +21,47 @@ export function normalizeContactEmail(value: unknown): string | null {
   return normalized;
 }
 
+export function formatGreekPhoneInput(value: string): string {
+  const digits = value.replace(/\D/g, '');
+  if (!digits) {
+    return '';
+  }
+
+  const withoutCountryPrefix = digits.startsWith('30') ? digits.slice(2) : digits;
+  const normalizedDigits = withoutCountryPrefix.slice(0, 10);
+
+  if (!normalizedDigits) {
+    return '';
+  }
+
+  if (normalizedDigits.length <= 2) {
+    return `+30 ${normalizedDigits}`.trim();
+  }
+
+  return `+30 ${normalizedDigits.slice(0, 2)} ${normalizedDigits.slice(2)}`.trim();
+}
+
 export function normalizePhone(value: unknown): string | null {
   if (typeof value !== 'string') {
     return null;
   }
 
-  const trimmed = value.trim();
+  const trimmed = value.trim().replace(/\s+/g, '');
   if (!trimmed) {
     return null;
   }
 
-  const digitsOnly = trimmed.replace(/\D/g, '');
-  if (!digitsOnly) {
-    return null;
+  const cleaned = trimmed.startsWith('+') ? trimmed : `+${trimmed}`;
+  if (/^\+3069\d{8}$/.test(cleaned)) {
+    return cleaned;
   }
 
-  if (digitsOnly.startsWith('30')) {
-    return `+${digitsOnly}`;
+  if (/^3069\d{8}$/.test(trimmed)) {
+    return `+${trimmed}`;
   }
 
-  if (digitsOnly.startsWith('69')) {
-    return `+30${digitsOnly}`;
+  if (/^69\d{8}$/.test(trimmed)) {
+    return `+30${trimmed}`;
   }
 
   return null;
@@ -49,12 +69,7 @@ export function normalizePhone(value: unknown): string | null {
 
 export function isPhoneValid(value: unknown): boolean {
   const normalized = normalizePhone(value);
-  if (!normalized) {
-    return false;
-  }
-
-  const digitsOnly = normalized.replace(/\+/g, '').replace(/\D/g, '');
-  return digitsOnly === `30${digitsOnly.slice(2)}` && digitsOnly.length === 12 && digitsOnly.startsWith('3069');
+  return Boolean(normalized && /^\+3069\d{8}$/.test(normalized));
 }
 
 export function hasRequiredContactInfo(user: ContactUser): boolean {

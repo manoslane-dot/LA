@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { CircleDollarSign, ClipboardList, LayoutDashboard, Leaf, LogOut, Mail, Package, Pencil, Phone, Plus, ShoppingBag, Trash2, User } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { formatGreekPhoneInput } from '@/lib/auth/contactInfo';
 import { sanitizePhoneForTel } from '@/lib/serviceAreas';
 import {
   clearLoginPreference,
@@ -879,11 +880,10 @@ export default function FarmerDashboard() {
                     required
                     value={profileForm.phone}
                     onChange={(e) => {
-                      const nextValue = e.target.value.replace(/\D/g, '');
-                      setProfileForm({ ...profileForm, phone: nextValue ? (nextValue.startsWith('69') ? nextValue : `69${nextValue.replace(/^0+/, '').slice(0, 8)}`) : '' });
+                      setProfileForm({ ...profileForm, phone: formatGreekPhoneInput(e.target.value) });
                     }}
                     className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
-                    placeholder="π.χ. 69XXXXXXXX"
+                    placeholder="π.χ. +30 69 12345678"
                   />
                 </label>
                 <div className="flex gap-3">
