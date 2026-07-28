@@ -415,10 +415,11 @@ export default function FarmerDashboard() {
             ? `Η παραγγελία σας για ${request.product_title} ολοκληρώθηκε.`
             : `Η παραγγελία σας για ${request.product_title} απορρίφθηκε.`;
 
+        const buyerNote = request.message?.trim() ? `Μήνυμα αγοραστή: ${request.message.trim()}` : 'Δεν δόθηκε επιπλέον μήνυμα.';
         const nextNotifications = addNotification(getNotificationStorageKey(request.buyer_id), {
           title: `Ενημέρωση παραγγελίας: ${statusLabel}`,
           status: statusLabel,
-          message: notificationMessage,
+          message: `Κατάσταση παραγγελίας: ${statusLabel}\n${buyerNote}`,
         });
         setNotifications(nextNotifications);
         setNotificationCount(getUnreadNotificationCount(nextNotifications));
@@ -585,6 +586,7 @@ export default function FarmerDashboard() {
     const handleClickOutside = (event: MouseEvent) => {
       if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
         setShowNotifications(false);
+        setSelectedNotificationId(null);
       }
     };
 
@@ -668,12 +670,12 @@ export default function FarmerDashboard() {
                         const isSelected = selectedNotificationId === notification.id;
                         const isCompleted = notification.status === 'Επιβεβαιώθηκε' || notification.status === 'Ολοκληρώθηκε';
                         const isRejected = notification.status === 'Δεν είναι διαθέσιμο';
-                        const iconColor = isRejected
-                          ? 'bg-rose-100 text-rose-700'
-                          : isCompleted
-                            ? 'bg-emerald-100 text-emerald-700'
-                            : notification.read
-                              ? 'bg-stone-100 text-stone-600'
+                        const iconColor = notification.read
+                          ? 'bg-stone-100 text-stone-600'
+                          : isRejected
+                            ? 'bg-rose-100 text-rose-700'
+                            : isCompleted
+                              ? 'bg-emerald-100 text-emerald-700'
                               : 'bg-amber-100 text-amber-700';
                         return (
                           <button
@@ -697,6 +699,23 @@ export default function FarmerDashboard() {
                           </button>
                         );
                       })}
+                    </div>
+                  )}
+                  {selectedNotificationId && (
+                    <div className="border-t border-stone-200 bg-stone-50 px-4 py-4">
+                      {(() => {
+                        const selected = notifications.find((item) => item.id === selectedNotificationId);
+                        if (!selected) return null;
+                        return (
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between gap-3">
+                              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-stone-500">Μήνυμα ειδοποίησης</p>
+                              <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700">{selected.status}</span>
+                            </div>
+                            <p className="text-sm leading-7 text-stone-700 break-words whitespace-pre-wrap">{selected.message}</p>
+                          </div>
+                        );
+                      })()}
                     </div>
                   )}
                 </div>
@@ -1226,7 +1245,7 @@ export default function FarmerDashboard() {
                       const nextNotifications = addNotification(getNotificationStorageKey(chatRequest.buyer_id), {
                         title: 'Νέο μήνυμα από τον παραγωγό',
                         status: 'Μήνυμα παραγωγού',
-                        message: 'Ο παραγωγός σας έστειλε ένα νέο μήνυμα.',
+                        message: `Κατάσταση παραγγελίας: Μήνυμα παραγωγού\nΜήνυμα παραγωγού: ${chatMessage.trim()}`,
                       });
                       setNotifications(nextNotifications);
                       setNotificationCount(getUnreadNotificationCount(nextNotifications));

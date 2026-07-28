@@ -120,6 +120,7 @@ export default function ConsumerDashboard() {
     const handleClickOutside = (event: MouseEvent) => {
       if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
         setShowNotifications(false);
+        setSelectedNotificationId(null);
       }
     };
 
@@ -516,10 +517,11 @@ export default function ConsumerDashboard() {
         console.error('Σφάλμα αποθήκευσης τηλεφώνου στο προφίλ:', metadataError.message);
       }
 
+      const customerNote = message.trim() ? `Μήνυμα καταναλωτή: ${message.trim()}` : 'Δεν δόθηκε επιπλέον μήνυμα.';
       const nextNotifications = addNotification(getNotificationStorageKey(selectedProduct.farmer_id), {
         title: `Νέο αίτημα για ${selectedProduct.title}`,
         status: 'Σε αναμονή',
-        message: `Νέο αίτημα για ${quantity} ${getUnitLabel(selectedProduct.unit, quantity)} από τον καταναλωτή.`,
+        message: `Κατάσταση παραγγελίας: Σε αναμονή\n${customerNote}`,
       });
       setNotifications(nextNotifications);
       setNotificationCount(getUnreadNotificationCount(nextNotifications));
@@ -664,12 +666,12 @@ export default function ConsumerDashboard() {
                         const isSelected = selectedNotificationId === notification.id;
                         const isCompleted = notification.status === 'Επιβεβαιώθηκε' || notification.status === 'Ολοκληρώθηκε';
                         const isRejected = notification.status === 'Δεν είναι διαθέσιμο';
-                        const iconColor = isRejected
-                          ? 'bg-rose-100 text-rose-700'
-                          : isCompleted
-                            ? 'bg-emerald-100 text-emerald-700'
-                            : notification.read
-                              ? 'bg-stone-100 text-stone-600'
+                        const iconColor = notification.read
+                          ? 'bg-stone-100 text-stone-600'
+                          : isRejected
+                            ? 'bg-rose-100 text-rose-700'
+                            : isCompleted
+                              ? 'bg-emerald-100 text-emerald-700'
                               : 'bg-amber-100 text-amber-700';
                         return (
                           <button
@@ -693,6 +695,23 @@ export default function ConsumerDashboard() {
                           </button>
                         );
                       })}
+                    </div>
+                  )}
+                  {selectedNotificationId && (
+                    <div className="border-t border-stone-200 bg-stone-50 px-4 py-4">
+                      {(() => {
+                        const selected = notifications.find((item) => item.id === selectedNotificationId);
+                        if (!selected) return null;
+                        return (
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between gap-3">
+                              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-stone-500">Μήνυμα ειδοποίησης</p>
+                              <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700">{selected.status}</span>
+                            </div>
+                            <p className="text-sm leading-7 text-stone-700 break-words whitespace-pre-wrap">{selected.message}</p>
+                          </div>
+                        );
+                      })()}
                     </div>
                   )}
                 </div>
