@@ -1059,7 +1059,7 @@ export default function FarmerDashboard() {
                       Επικοινωνία: {chatRequest?.product_title}
                     </h2>
                     <p className="mt-1 text-sm text-stone-500">
-                      Αγοραστής: {chatRequest?.buyer_email || 'Χωρίς email'} · {chatRequest?.buyer_phone || 'Χωρίς κινητό'}
+                      Συνεννόηση για το αίτημα
                     </p>
                   </div>
                   <button
