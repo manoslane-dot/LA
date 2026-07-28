@@ -153,10 +153,16 @@ export default function FarmerDashboard() {
 
     if (error) {
       console.error('Error fetching purchase requests:', error.message);
-    } else if (data) {
+      return [] as PurchaseRequest[];
+    }
+
+    if (data) {
       const requestsData = data as unknown as PurchaseRequest[];
       setRequests(requestsData);
+      return requestsData;
     }
+
+    return [] as PurchaseRequest[];
   }, [supabase]);
 
   useEffect(() => {
@@ -220,7 +226,20 @@ export default function FarmerDashboard() {
         setTotalRevenue(profileData.total_revenue);
       }
       
-      await Promise.all([fetchProducts(session.user.id), fetchRequests(session.user.id)]);
+      const requestsData = await fetchRequests(session.user.id);
+      const derivedTotalRevenue = requestsData.reduce((sum, request) => {
+        if (request.status === 'ready' && typeof request.profit === 'number') {
+          return sum + request.profit;
+        }
+        return sum;
+      }, 0);
+
+      const resolvedTotalRevenue = derivedTotalRevenue > 0
+        ? derivedTotalRevenue
+        : (profileData?.total_revenue ?? 0);
+
+      setTotalRevenue(resolvedTotalRevenue);
+      await fetchProducts(session.user.id);
       setLoading(false);
     };
 
@@ -390,12 +409,17 @@ export default function FarmerDashboard() {
 
         if (revenueError) {
           console.error('Σφάλμα ενημέρωσης εισπράξεων:', revenueError.message);
-        } else {
-          setTotalRevenue(newRevenue);
         }
       }
 
-      await fetchRequests(userId);
+      const updatedRequests = await fetchRequests(userId);
+      const derivedRevenue = updatedRequests.reduce((sum, currentRequest) => {
+        if (currentRequest.status === 'ready' && typeof currentRequest.profit === 'number') {
+          return sum + currentRequest.profit;
+        }
+        return sum;
+      }, 0);
+      setTotalRevenue(derivedRevenue > 0 ? derivedRevenue : totalRevenue);
     } catch (err) {
       console.error('Exception in handleRequestStatus:', err);
       alert('Σφάλμα κατά την ενημέρωση του αιτήματος');
@@ -598,7 +622,7 @@ export default function FarmerDashboard() {
               <div className="flex justify-between"><div><p className="text-sm font-medium text-stone-500">Εκτιμώμενο κέρδος</p><p className="mt-2 text-2xl font-bold">{formatCurrency(estimatedOpenRequestsRevenue)}</p></div><CircleDollarSign className="h-5 w-5 text-emerald-700" /></div>
             </article>
             <article className="border border-stone-200 bg-white p-5 lg:col-span-1">
-              <div className="flex justify-between"><div><p className="text-sm font-medium text-stone-500">Συνολικές εισπράξεις</p><p className="mt-2 text-2xl font-bold">{formatCurrency(totalRevenue)}</p><p className="mt-1 text-sm font-medium text-emerald-700">Κέρδος παραγωγού: {formatCurrency(estimatedOpenRequestsRevenue)}</p></div><CircleDollarSign className="h-5 w-5 text-green-600" /></div>
+              <div className="flex justify-between"><div><p className="text-sm font-medium text-stone-500">Συνολικές εισπράξεις</p><p className="mt-2 text-2xl font-bold">{formatCurrency(totalRevenue)}</p></div><CircleDollarSign className="h-5 w-5 text-green-600" /></div>
             </article>
           </section>
           
