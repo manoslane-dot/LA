@@ -598,7 +598,7 @@ export default function FarmerDashboard() {
               <div className="flex justify-between"><div><p className="text-sm font-medium text-stone-500">Εκτιμώμενο κέρδος</p><p className="mt-2 text-2xl font-bold">{formatCurrency(estimatedOpenRequestsRevenue)}</p></div><CircleDollarSign className="h-5 w-5 text-emerald-700" /></div>
             </article>
             <article className="border border-stone-200 bg-white p-5 lg:col-span-1">
-              <div className="flex justify-between"><div><p className="text-sm font-medium text-stone-500">Συνολικές εισπράξεις</p><p className="mt-2 text-2xl font-bold">{formatCurrency(totalRevenue)}</p></div><CircleDollarSign className="h-5 w-5 text-green-600" /></div>
+              <div className="flex justify-between"><div><p className="text-sm font-medium text-stone-500">Συνολικές εισπράξεις</p><p className="mt-2 text-2xl font-bold">{formatCurrency(totalRevenue)}</p><p className="mt-1 text-sm font-medium text-emerald-700">Κέρδος παραγωγού: {formatCurrency(estimatedOpenRequestsRevenue)}</p></div><CircleDollarSign className="h-5 w-5 text-green-600" /></div>
             </article>
           </section>
           
@@ -781,7 +781,17 @@ export default function FarmerDashboard() {
                                   <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-700">Στοιχεία επικοινωνίας</p>
                                   <div className="mt-1 space-y-1 text-sm text-stone-600">
                                     <p><span className="font-medium text-stone-800">Email:</span> {request.buyer_email || 'Δεν έχει καταχωρημένο email'}</p>
-                                    <p><span className="font-medium text-stone-800">Τηλέφωνο:</span> {request.buyer_phone || 'Δεν έχει καταχωρημένο τηλέφωνο'}</p>
+                                    <div className="flex flex-wrap items-center gap-2">
+                                      <p><span className="font-medium text-stone-800">Τηλέφωνο:</span> {request.buyer_phone || 'Δεν έχει καταχωρημένο τηλέφωνο'}</p>
+                                      {request.buyer_phone && (
+                                        <a
+                                          href={`tel:${request.buyer_phone}`}
+                                          className="inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-white px-2.5 py-1 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-50"
+                                        >
+                                          <Phone className="h-3.5 w-3.5" /> Κλήση
+                                        </a>
+                                      )}
+                                    </div>
                                   </div>
                                 </div>
                               )}
