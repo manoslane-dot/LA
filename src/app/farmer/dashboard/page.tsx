@@ -12,6 +12,7 @@ import {
   shouldLogoutOnAppClose,
 } from '@/lib/auth/sessionPersistence';
 import { getDashboardForRole, normalizeUserRole } from '@/lib/auth/roleRouting';
+import { validateUsername } from '@/lib/auth/credentialsPolicy';
 
 interface Product {
   id: number;
@@ -160,7 +161,11 @@ export default function FarmerDashboard() {
         }
       }
       
-      setUserName((session.user.user_metadata?.full_name as string | undefined)?.trim() || session.user.email || 'Παραγωγός');
+      const metadata = session.user.user_metadata as Record<string, unknown> | undefined;
+      const resolvedUsername = typeof metadata?.username === 'string' ? metadata.username.trim() : '';
+      const resolvedFullName = typeof metadata?.full_name === 'string' ? metadata.full_name.trim() : '';
+
+      setUserName(resolvedUsername || resolvedFullName || session.user.email || 'Παραγωγός');
       setUserEmail(session.user.email ?? 'Πωλητής');
       setUserId(session.user.id);
       setEmailConfirmedAt(session.user.email_confirmed_at ?? null);
@@ -807,11 +812,18 @@ export default function FarmerDashboard() {
                   }
                   
                   setSavingProfile(true);
+                  const trimmedFullName = profileForm.fullName.trim();
+                  const updateData: Record<string, string> = {
+                    full_name: trimmedFullName,
+                    phone: profileForm.phone.trim(),
+                  };
+
+                  if (!validateUsername(trimmedFullName)) {
+                    updateData.username = trimmedFullName;
+                  }
+
                   const { error } = await supabase.auth.updateUser({
-                    data: {
-                      full_name: profileForm.fullName.trim(),
-                      phone: profileForm.phone.trim(),
-                    },
+                    data: updateData,
                   });
                   
                   if (!error && userId) {
@@ -825,7 +837,7 @@ export default function FarmerDashboard() {
                   if (error) {
                     alert('Σφάλμα αποθήκευσης: ' + error.message);
                   } else {
-                    setUserName(profileForm.fullName.trim());
+                    setUserName(trimmedFullName);
                     setUserPhone(profileForm.phone.trim());
                     setEditingProfile(false);
                   }
@@ -866,9 +878,12 @@ export default function FarmerDashboard() {
                     type="tel"
                     required
                     value={profileForm.phone}
-                    onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
+                    onChange={(e) => {
+                      const nextValue = e.target.value.replace(/[^\d+]/g, '');
+                      setProfileForm({ ...profileForm, phone: nextValue ? (nextValue.startsWith('+') ? nextValue : `+30${nextValue.replace(/^0+/, '')}`) : '+30' });
+                    }}
                     className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
-                    placeholder="π.χ. 69XXXXXXXX"
+                    placeholder="π.χ. +30 69XXXXXXXX"
                   />
                 </label>
                 <div className="flex gap-3">

@@ -12,6 +12,7 @@ import {
   shouldLogoutOnAppClose,
 } from '@/lib/auth/sessionPersistence';
 import { getDashboardForRole, normalizeUserRole } from '@/lib/auth/roleRouting';
+import { validateUsername } from '@/lib/auth/credentialsPolicy';
 import { usePermissions } from '@/lib/permissions';
 import {
   getUserLocation,
@@ -283,10 +284,14 @@ export default function ConsumerDashboard() {
         }
       }
 
+      const metadata = session.user.user_metadata as Record<string, unknown> | undefined;
+      const resolvedUsername = typeof metadata?.username === 'string' ? metadata.username.trim() : '';
+      const resolvedFullName = typeof metadata?.full_name === 'string' ? metadata.full_name.trim() : '';
+
       setLoading(true);
       setBuyerId(session.user.id);
       setBuyerEmail(session.user.email ?? null);
-      setUserName((session.user.user_metadata?.full_name as string | undefined)?.trim() || session.user.email || 'Καταναλωτής');
+      setUserName(resolvedUsername || resolvedFullName || session.user.email || 'Καταναλωτής');
       setBuyerPhone((session.user.user_metadata?.phone as string | undefined) ?? '');
       setEmailConfirmedAt(session.user.email_confirmed_at ?? null);
       await Promise.all([fetchProducts(), fetchRequests(session.user.id)]);
@@ -705,16 +710,23 @@ export default function ConsumerDashboard() {
                   }
                   
                   setSavingProfile(true);
+                  const trimmedFullName = profileForm.fullName.trim();
+                  const updateData: Record<string, string> = {
+                    full_name: trimmedFullName,
+                    phone: profileForm.phone.trim(),
+                  };
+
+                  if (!validateUsername(trimmedFullName)) {
+                    updateData.username = trimmedFullName;
+                  }
+
                   const { error } = await supabase.auth.updateUser({
-                    data: {
-                      full_name: profileForm.fullName.trim(),
-                      phone: profileForm.phone.trim(),
-                    },
+                    data: updateData,
                   });
                   if (error) {
                     alert('Σφάλμα αποθήκευσης: ' + error.message);
                   } else {
-                    setUserName(profileForm.fullName.trim());
+                    setUserName(trimmedFullName);
                     setBuyerPhone(profileForm.phone.trim());
                     setEditingProfile(false);
                   }
@@ -755,9 +767,12 @@ export default function ConsumerDashboard() {
                     type="tel"
                     required
                     value={profileForm.phone}
-                    onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
-                    className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
-                    placeholder="π.χ. 69XXXXXXXX"
+                    onChange={(e) => {
+                      const nextValue = e.target.value.replace(/[^\d+]/g, '');
+                      setProfileForm({ ...profileForm, phone: nextValue ? (nextValue.startsWith('+') ? nextValue : `+30${nextValue.replace(/^0+/, '')}`) : '+30' });
+                    }}
+                    className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-stone-400 focus:ring-2 focus:ring-emerald-100"
+                    placeholder="π.χ. +30 69XXXXXXXX"
                   />
                 </label>
                 <div className="flex gap-3">
@@ -792,8 +807,11 @@ export default function ConsumerDashboard() {
                 type="tel"
                 required
                 value={buyerPhone}
-                onChange={(event) => setBuyerPhone(event.target.value)}
-                placeholder="π.χ. 69XXXXXXXX"
+                onChange={(event) => {
+                  const nextValue = event.target.value.replace(/[^\d+]/g, '');
+                  setBuyerPhone(nextValue ? (nextValue.startsWith('+') ? nextValue : `+30${nextValue.replace(/^0+/, '')}`) : '+30');
+                }}
+                placeholder="π.χ. +30 69XXXXXXXX"
                 className="mt-1 w-full rounded-md border border-stone-300 px-3 py-2"
               />
             </label>

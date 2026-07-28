@@ -26,12 +26,25 @@ export function normalizePhone(value: unknown): string | null {
     return null;
   }
 
-  const normalized = value.trim();
-  if (!normalized) {
+  const trimmed = value.trim();
+  if (!trimmed) {
     return null;
   }
 
-  return normalized;
+  const compactValue = trimmed.replace(/[^\d+]/g, '');
+  if (!compactValue) {
+    return null;
+  }
+
+  if (compactValue.startsWith('+')) {
+    return compactValue;
+  }
+
+  if (compactValue.startsWith('00')) {
+    return `+${compactValue.slice(2)}`;
+  }
+
+  return `+30${compactValue.replace(/^0+/, '')}`;
 }
 
 export function isPhoneValid(value: unknown): boolean {
@@ -40,8 +53,8 @@ export function isPhoneValid(value: unknown): boolean {
     return false;
   }
 
-  const compactPhone = normalized.replace(/\s/g, '');
-  return compactPhone.length >= 7 && compactPhone.length <= 20;
+  const digitsOnly = normalized.replace(/\+/g, '').replace(/\D/g, '');
+  return digitsOnly.length >= 7 && digitsOnly.length <= 15;
 }
 
 export function hasRequiredContactInfo(user: ContactUser): boolean {

@@ -11,7 +11,6 @@ import {
   normalizePhone,
 } from '@/lib/auth/contactInfo';
 import { resolvePostLoginRedirect } from '@/lib/auth/roleRouting';
-import { normalizeServiceAreas, SERVICE_AREA_OPTIONS } from '@/lib/serviceAreas';
 
 function CompleteProfileForm() {
   const router = useRouter();
@@ -23,8 +22,7 @@ function CompleteProfileForm() {
   const [errorMsg, setErrorMsg] = useState('');
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [serviceAreas, setServiceAreas] = useState<string[]>([]);
+  const [phone, setPhone] = useState('+30');
   const [userRole, setUserRole] = useState<unknown>(null);
 
   const requestedRedirect = searchParams.get('redirectUrl');
@@ -38,14 +36,6 @@ function CompleteProfileForm() {
     [requestedRedirect, userRole],
   );
   const isFarmer = userRole === 'farmer';
-
-  const toggleServiceArea = (value: string) => {
-    setServiceAreas((prev) =>
-      prev.includes(value)
-        ? prev.filter((item) => item !== value)
-        : [...prev, value],
-    );
-  };
 
   useEffect(() => {
     const loadUser = async () => {
@@ -66,8 +56,7 @@ function CompleteProfileForm() {
         typeof session.user.user_metadata?.full_name === 'string'
           ? session.user.user_metadata.full_name.trim()
           : '';
-      const resolvedPhone = normalizePhone(session.user.user_metadata?.phone) ?? '';
-      const resolvedServiceAreas = normalizeServiceAreas(session.user.user_metadata?.service_areas);
+      const resolvedPhone = normalizePhone(session.user.user_metadata?.phone) ?? '+30';
       const resolvedNextUrl = resolvePostLoginRedirect({
         requestedRedirectUrl: requestedRedirect,
         userRole: session.user.user_metadata?.role,
@@ -76,7 +65,6 @@ function CompleteProfileForm() {
       setFullName(resolvedName);
       setEmail(resolvedEmail);
       setPhone(resolvedPhone);
-      setServiceAreas(resolvedServiceAreas);
       setUserRole(session.user.user_metadata?.role);
 
       if (hasRequiredContactInfo(session.user)) {
@@ -112,13 +100,7 @@ function CompleteProfileForm() {
     }
 
     if (!isPhoneValid(normalizedPhone)) {
-      setErrorMsg('Συμπληρώστε έγκυρο κινητό τηλέφωνο (7-20 χαρακτήρες).');
-      setLoading(false);
-      return;
-    }
-
-    if (isFarmer && serviceAreas.length === 0) {
-      setErrorMsg('Επιλέξτε τουλάχιστον μία περιοχή εξυπηρέτησης (ΤΚ / Πόλη).');
+      setErrorMsg('Συμπληρώστε έγκυρο κινητό τηλέφωνο (π.χ. +30 69XXXXXXXX).');
       setLoading(false);
       return;
     }
@@ -128,7 +110,6 @@ function CompleteProfileForm() {
         full_name: trimmedName,
         contact_email: normalizedEmail,
         phone: normalizedPhone,
-        service_areas: isFarmer ? serviceAreas : [],
       },
     });
 
@@ -221,32 +202,14 @@ function CompleteProfileForm() {
               type="tel"
               required
               value={phone}
-              onChange={(event) => setPhone(event.target.value)}
+              onChange={(event) => {
+                const nextValue = event.target.value.replace(/[^\d+]/g, '');
+                setPhone(nextValue ? (nextValue.startsWith('+') ? nextValue : `+30${nextValue.replace(/^0+/, '')}`) : '+30');
+              }}
               className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
-              placeholder="π.χ. 69XXXXXXXX"
+              placeholder="π.χ. +30 69XXXXXXXX"
             />
           </label>
-
-          {isFarmer && (
-            <div>
-              <p className="text-sm font-semibold text-slate-700 mb-2">
-                Περιοχές εξυπηρέτησης (ΤΚ / Πόλη)
-              </p>
-              <div className="max-h-48 overflow-y-auto rounded-xl border border-slate-200 p-3 grid grid-cols-1 gap-1.5">
-                {SERVICE_AREA_OPTIONS.map((area) => (
-                  <label key={area.zip} className="flex cursor-pointer items-center gap-2 text-sm text-slate-700 hover:text-emerald-800">
-                    <input
-                      type="checkbox"
-                      checked={serviceAreas.includes(area.zip)}
-                      onChange={() => toggleServiceArea(area.zip)}
-                      className="h-4 w-4 rounded border-slate-300 accent-emerald-700"
-                    />
-                    {area.label}
-                  </label>
-                ))}
-              </div>
-            </div>
-          )}
 
           <button
             type="submit"

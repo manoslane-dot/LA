@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { KeyRound, Leaf } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { validateStrongPassword } from '@/lib/auth/credentialsPolicy';
 
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -17,8 +18,9 @@ export default function ResetPasswordPage() {
   const handleResetPassword = async (event: React.FormEvent) => {
     event.preventDefault();
 
-    if (password.length < 6) {
-      setErrorMsg('Ο νέος κωδικός πρέπει να έχει τουλάχιστον 6 χαρακτήρες.');
+    const passwordError = validateStrongPassword(password);
+    if (passwordError) {
+      setErrorMsg(passwordError);
       return;
     }
 
@@ -82,6 +84,9 @@ export default function ResetPasswordPage() {
               className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
               placeholder="••••••••"
             />
+            <p className="mt-1 text-xs text-slate-500">
+              8-12 χαρακτήρες με κεφαλαία, πεζά, αριθμούς και ειδικούς χαρακτήρες (π.χ. ! @ # $ %).
+            </p>
           </div>
 
           <div>
