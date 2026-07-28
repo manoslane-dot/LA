@@ -107,6 +107,33 @@ export default function ConsumerDashboard() {
     maximumFractionDigits: 2,
   }).format(value);
 
+  const handleQuantityChange = (value: string) => {
+    if (!selectedProduct) {
+      setRequestedQuantity(value);
+      return;
+    }
+
+    if (value === '') {
+      setRequestedQuantity('');
+      return;
+    }
+
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+      setRequestedQuantity(value);
+      return;
+    }
+
+    const clampedValue = Math.min(parsed, selectedProduct.quantity);
+    setRequestedQuantity(String(clampedValue));
+
+    if (parsed > selectedProduct.quantity) {
+      setErrorMsg(`Η διαθέσιμη ποσότητα είναι ${selectedProduct.quantity} ${selectedProduct.unit}.`);
+    } else {
+      setErrorMsg('');
+    }
+  };
+
   const fetchProducts = useCallback(async () => {
     try {
       const { data, error } = await supabase
@@ -815,7 +842,7 @@ export default function ConsumerDashboard() {
                 className="mt-1 w-full rounded-md border border-stone-300 px-3 py-2"
               />
             </label>
-            <label className="mb-4 block text-sm font-medium text-stone-700">Ποσότητα ({selectedProduct.unit})<input type="number" min="0.01" step="any" max={selectedProduct.quantity} required value={requestedQuantity} onChange={(event) => setRequestedQuantity(event.target.value)} className="mt-1 w-full rounded-md border border-stone-300 px-3 py-2" /></label>
+            <label className="mb-4 block text-sm font-medium text-stone-700">Ποσότητα ({selectedProduct.unit})<input type="number" min="0.01" step="any" max={selectedProduct.quantity} required value={requestedQuantity} onChange={(event) => handleQuantityChange(event.target.value)} className="mt-1 w-full rounded-md border border-stone-300 px-3 py-2" /></label>
             <div className="mb-4 rounded-md border border-stone-200 bg-stone-50 px-3 py-2 text-sm text-stone-700">
               Εκτιμώμενο κόστος: {
                 formatCurrency((Number(requestedQuantity) > 0 ? Number(requestedQuantity) : 0) * selectedProduct.price)
