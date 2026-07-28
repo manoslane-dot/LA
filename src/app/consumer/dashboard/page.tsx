@@ -338,8 +338,9 @@ export default function ConsumerDashboard() {
     }
 
     const sanitizedPhone = buyerPhone.trim();
-    if (sanitizedPhone.length < 7) {
-      setErrorMsg('Συμπληρώστε ένα έγκυρο κινητό τηλέφωνο.');
+    const normalizedPhone = sanitizedPhone.replace(/\D/g, '');
+    if (!/^69\d{8}$/.test(normalizedPhone)) {
+      setErrorMsg('Συμπληρώστε ένα έγκυρο ελληνικό κινητό τηλέφωνο που ξεκινά από 69 και έχει 10 ψηφία.');
       return;
     }
 
@@ -768,11 +769,11 @@ export default function ConsumerDashboard() {
                     required
                     value={profileForm.phone}
                     onChange={(e) => {
-                      const nextValue = e.target.value.replace(/[^\d+]/g, '');
-                      setProfileForm({ ...profileForm, phone: nextValue ? (nextValue.startsWith('+') ? nextValue : `+30${nextValue.replace(/^0+/, '')}`) : '+30' });
+                      const nextValue = e.target.value.replace(/\D/g, '');
+                      setProfileForm({ ...profileForm, phone: nextValue ? (nextValue.startsWith('69') ? nextValue : `69${nextValue.replace(/^0+/, '').slice(0, 8)}`) : '' });
                     }}
                     className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-stone-400 focus:ring-2 focus:ring-emerald-100"
-                    placeholder="π.χ. +30 69XXXXXXXX"
+                    placeholder="π.χ. 69XXXXXXXX"
                   />
                 </label>
                 <div className="flex gap-3">
@@ -808,10 +809,10 @@ export default function ConsumerDashboard() {
                 required
                 value={buyerPhone}
                 onChange={(event) => {
-                  const nextValue = event.target.value.replace(/[^\d+]/g, '');
-                  setBuyerPhone(nextValue ? (nextValue.startsWith('+') ? nextValue : `+30${nextValue.replace(/^0+/, '')}`) : '+30');
+                  const nextValue = event.target.value.replace(/\D/g, '');
+                  setBuyerPhone(nextValue ? (nextValue.startsWith('69') ? nextValue : `69${nextValue.replace(/^0+/, '').slice(0, 8)}`) : '');
                 }}
-                placeholder="π.χ. +30 69XXXXXXXX"
+                placeholder="π.χ. 69XXXXXXXX"
                 className="mt-1 w-full rounded-md border border-stone-300 px-3 py-2"
               />
             </label>

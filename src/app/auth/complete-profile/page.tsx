@@ -100,7 +100,7 @@ function CompleteProfileForm() {
     }
 
     if (!isPhoneValid(normalizedPhone)) {
-      setErrorMsg('Συμπληρώστε έγκυρο κινητό τηλέφωνο (π.χ. +30 69XXXXXXXX).');
+      setErrorMsg('Συμπληρώστε έγκυρο ελληνικό κινητό τηλέφωνο που ξεκινά από 69 και έχει 10 ψηφία (π.χ. 69XXXXXXXX).');
       setLoading(false);
       return;
     }

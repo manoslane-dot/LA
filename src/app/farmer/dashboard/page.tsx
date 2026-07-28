@@ -879,11 +879,11 @@ export default function FarmerDashboard() {
                     required
                     value={profileForm.phone}
                     onChange={(e) => {
-                      const nextValue = e.target.value.replace(/[^\d+]/g, '');
-                      setProfileForm({ ...profileForm, phone: nextValue ? (nextValue.startsWith('+') ? nextValue : `+30${nextValue.replace(/^0+/, '')}`) : '+30' });
+                      const nextValue = e.target.value.replace(/\D/g, '');
+                      setProfileForm({ ...profileForm, phone: nextValue ? (nextValue.startsWith('69') ? nextValue : `69${nextValue.replace(/^0+/, '').slice(0, 8)}`) : '' });
                     }}
                     className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
-                    placeholder="π.χ. +30 69XXXXXXXX"
+                    placeholder="π.χ. 69XXXXXXXX"
                   />
                 </label>
                 <div className="flex gap-3">
