@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ShoppingBag, ClipboardList, LogOut, Leaf, Phone, Search, ChevronDown, User, Mail, MapPin } from 'lucide-react';
+import { ShoppingBag, ClipboardList, LogOut, Leaf, Phone, Search, ChevronDown, User, Mail, MapPin, Bell } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { formatGreekPhoneInput, isPhoneValid, normalizePhone } from '@/lib/auth/contactInfo';
 import { sanitizePhoneForTel } from '@/lib/serviceAreas';
@@ -51,7 +51,7 @@ interface PurchaseRequest {
 const requestStatusLabels: Record<PurchaseRequest['status'], string> = {
   pending: 'Σε αναμονή',
   confirmed: 'Επιβεβαιώθηκε',
-  ready: 'Έτοιμο για παραλαβή',
+  ready: 'Ολοκληρώθηκε',
   rejected: 'Δεν είναι διαθέσιμο',
 };
 
@@ -100,6 +100,7 @@ export default function ConsumerDashboard() {
   const [savingProfile, setSavingProfile] = useState(false);
   const [emailConfirmedAt, setEmailConfirmedAt] = useState<string | null>(null);
   const [showEmailVerificationWarning, setShowEmailVerificationWarning] = useState(false);
+  const [notificationCount, setNotificationCount] = useState(0);
 
   const formatCurrency = (value: number) => new Intl.NumberFormat('el-GR', {
     style: 'currency',
@@ -128,11 +129,44 @@ export default function ConsumerDashboard() {
     setRequestedQuantity(String(clampedValue));
 
     if (parsed > selectedProduct.quantity) {
-      setErrorMsg(`Η διαθέσιμη ποσότητα είναι ${selectedProduct.quantity} ${selectedProduct.unit}.`);
+      setErrorMsg(`Η διαθέσιμη ποσότητα είναι ${selectedProduct.quantity} ${getUnitLabel(selectedProduct.unit, selectedProduct.quantity)}.`);
     } else {
       setErrorMsg('');
     }
   };
+
+  const readNotificationCount = () => {
+    if (typeof window === 'undefined') {
+      return 0;
+    }
+
+    try {
+      const storedValue = window.localStorage.getItem('agrodirect-message-notifications');
+      return Number(storedValue ?? 0) || 0;
+    } catch {
+      return 0;
+    }
+  };
+
+  const syncNotificationCount = (nextCount: number) => {
+    setNotificationCount(nextCount);
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('agrodirect-message-notifications', String(nextCount));
+    }
+  };
+
+  useEffect(() => {
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === 'agrodirect-message-notifications') {
+        syncNotificationCount(readNotificationCount());
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    syncNotificationCount(readNotificationCount());
+
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   const fetchProducts = useCallback(async () => {
     try {
@@ -379,7 +413,7 @@ export default function ConsumerDashboard() {
     }
 
     if (quantity > selectedProduct.quantity) {
-      setErrorMsg(`Η διαθέσιμη ποσότητα είναι ${selectedProduct.quantity} ${selectedProduct.unit}.`);
+      setErrorMsg(`Η διαθέσιμη ποσότητα είναι ${selectedProduct.quantity} ${getUnitLabel(selectedProduct.unit, selectedProduct.quantity)}.`);
       return;
     }
 
@@ -535,12 +569,22 @@ export default function ConsumerDashboard() {
         <header className="bg-white border-b border-stone-200 h-16 flex items-center justify-between px-4 sm:px-8">
           <Link href="/" className="flex items-center gap-2 lg:hidden"><Leaf className="h-5 w-5 text-emerald-700" /><span className="font-bold text-emerald-900">AgroDirect</span></Link>
           <p className="hidden lg:block text-sm text-stone-500">Πίνακας ελέγχου καταναλωτή</p>
-          <button
-            onClick={handleLogout}
-            className="inline-flex items-center gap-2 border border-stone-300 hover:border-red-200 hover:bg-red-50 hover:text-red-700 text-stone-700 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-          >
-            <LogOut className="h-4 w-4" /><span className="hidden sm:inline">Αποσύνδεση</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <div className="relative inline-flex items-center rounded-md border border-stone-300 bg-stone-50 px-3 py-2 text-stone-700">
+              <Bell className="h-4 w-4" />
+              {notificationCount > 0 && (
+                <span className="ml-2 rounded-full bg-amber-500 px-2 py-0.5 text-[11px] font-semibold text-white">
+                  {notificationCount}
+                </span>
+              )}
+            </div>
+            <button
+              onClick={handleLogout}
+              className="inline-flex items-center gap-2 border border-stone-300 hover:border-red-200 hover:bg-red-50 hover:text-red-700 text-stone-700 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+            >
+              <LogOut className="h-4 w-4" /><span className="hidden sm:inline">Αποσύνδεση</span>
+            </button>
+          </div>
         </header>
 
         {/* Dashboard Body */}
@@ -660,7 +704,7 @@ export default function ConsumerDashboard() {
                   const unit = productDetails.unit;
                   const unitPrice = productDetails.price;
                   const totalCost = request.requested_quantity * unitPrice;
-                  const isContactVisible = request.status === 'confirmed' || request.status === 'ready';
+                  const isContactVisible = request.status === 'confirmed';
                   return (
                     <li key={request.id} className="flex flex-wrap items-center justify-between gap-2 p-3 text-sm">
                       <div className="flex-grow">
@@ -842,7 +886,7 @@ export default function ConsumerDashboard() {
                 className="mt-1 w-full rounded-md border border-stone-300 px-3 py-2"
               />
             </label>
-            <label className="mb-4 block text-sm font-medium text-stone-700">Ποσότητα ({selectedProduct.unit})<input type="number" min="0.01" step="any" max={selectedProduct.quantity} required value={requestedQuantity} onChange={(event) => handleQuantityChange(event.target.value)} className="mt-1 w-full rounded-md border border-stone-300 px-3 py-2" /></label>
+            <label className="mb-4 block text-sm font-medium text-stone-700">Ποσότητα ({getUnitLabel(selectedProduct.unit, selectedProduct.quantity)})<input type="number" min="0.01" step="any" max={selectedProduct.quantity} required value={requestedQuantity} onChange={(event) => handleQuantityChange(event.target.value)} className="mt-1 w-full rounded-md border border-stone-300 px-3 py-2" /></label>
             <div className="mb-4 rounded-md border border-stone-200 bg-stone-50 px-3 py-2 text-sm text-stone-700">
               Εκτιμώμενο κόστος: {
                 formatCurrency((Number(requestedQuantity) > 0 ? Number(requestedQuantity) : 0) * selectedProduct.price)

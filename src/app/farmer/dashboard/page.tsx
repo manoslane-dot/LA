@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { CircleDollarSign, ClipboardList, LayoutDashboard, Leaf, LogOut, Mail, Package, Pencil, Phone, Plus, ShoppingBag, Trash2, User } from 'lucide-react';
+import { Bell, CircleDollarSign, ClipboardList, LayoutDashboard, Leaf, LogOut, Mail, Package, Pencil, Phone, Plus, ShoppingBag, Trash2, User } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { formatGreekPhoneInput } from '@/lib/auth/contactInfo';
 import { sanitizePhoneForTel } from '@/lib/serviceAreas';
@@ -45,7 +45,7 @@ interface PurchaseRequest {
 const requestStatusLabels: Record<PurchaseRequest['status'], string> = {
   pending: 'Σε αναμονή',
   confirmed: 'Επιβεβαιώθηκε',
-  ready: 'Έτοιμο για παραλαβή',
+  ready: 'Ολοκληρώθηκε',
   rejected: 'Απορρίφθηκε',
 };
 
@@ -79,6 +79,7 @@ export default function FarmerDashboard() {
   const [emailConfirmedAt, setEmailConfirmedAt] = useState<string | null>(null);
   const [showEmailVerificationWarning, setShowEmailVerificationWarning] = useState(false);
   const [totalRevenue, setTotalRevenue] = useState(0);
+  const [notificationCount, setNotificationCount] = useState(0);
   
   // Προϊόντα προς Πώληση
   const [products, setProducts] = useState<Product[]>([]);
@@ -100,6 +101,39 @@ export default function FarmerDashboard() {
   
   // Confirmation dialog for request confirmation
   const [confirmingRequestId, setConfirmingRequestId] = useState<number | null>(null);
+
+  const readNotificationCount = () => {
+    if (typeof window === 'undefined') {
+      return 0;
+    }
+
+    try {
+      const storedValue = window.localStorage.getItem('agrodirect-message-notifications');
+      return Number(storedValue ?? 0) || 0;
+    } catch {
+      return 0;
+    }
+  };
+
+  const syncNotificationCount = (nextCount: number) => {
+    setNotificationCount(nextCount);
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('agrodirect-message-notifications', String(nextCount));
+    }
+  };
+
+  useEffect(() => {
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === 'agrodirect-message-notifications') {
+        syncNotificationCount(readNotificationCount());
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    syncNotificationCount(readNotificationCount());
+
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   const fetchProducts = useCallback(async (farmerId: string) => {
     const { data, error } = await supabase.from('products').select('*').eq('farmer_id', farmerId);
@@ -505,12 +539,22 @@ export default function FarmerDashboard() {
         <header className="bg-white border-b border-stone-200 h-16 flex items-center justify-between px-4 sm:px-8">
           <Link href="/" className="flex items-center gap-2 lg:hidden"><Leaf className="h-5 w-5 text-emerald-700" /><span className="font-bold text-emerald-900">AgroDirect</span></Link>
           <p className="hidden lg:block text-sm text-stone-500">Πίνακας ελέγχου αγρότη</p>
-          <button
-            onClick={handleLogout}
-            className="inline-flex items-center gap-2 border border-stone-300 hover:border-red-200 hover:bg-red-50 hover:text-red-700 text-stone-700 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-          >
-            <LogOut className="h-4 w-4" /><span className="hidden sm:inline">Αποσύνδεση</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <div className="relative inline-flex items-center rounded-md border border-stone-300 bg-stone-50 px-3 py-2 text-stone-700">
+              <Bell className="h-4 w-4" />
+              {notificationCount > 0 && (
+                <span className="ml-2 rounded-full bg-amber-500 px-2 py-0.5 text-[11px] font-semibold text-white">
+                  {notificationCount}
+                </span>
+              )}
+            </div>
+            <button
+              onClick={handleLogout}
+              className="inline-flex items-center gap-2 border border-stone-300 hover:border-red-200 hover:bg-red-50 hover:text-red-700 text-stone-700 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+            >
+              <LogOut className="h-4 w-4" /><span className="hidden sm:inline">Αποσύνδεση</span>
+            </button>
+          </div>
         </header>
 
         {/* Dashboard Body */}
@@ -731,7 +775,7 @@ export default function FarmerDashboard() {
                               <p className="mt-1 text-sm text-stone-600">
                                 Ενδεικτικό κόστος: {formatCurrency(totalCost)} ({formatCurrency(unitPrice)} / {unit || 'μονάδα'})
                               </p>
-                              {request.status === 'confirmed' || request.status === 'ready' ? (
+                              {request.status === 'confirmed' ? (
                                 <div className="mt-1 flex flex-wrap items-center gap-2">
                                   <p className="text-xs text-emerald-700">
                                     Στοιχεία αγοραστή: {request.buyer_email ?? 'χωρίς email'} · {request.buyer_phone ?? 'χωρίς κινητό'}
@@ -1021,9 +1065,8 @@ export default function FarmerDashboard() {
                     if (!chatMessage.trim() || !chatRequestId) return;
 
                     setSendingChat(true);
-                    // In a real app, this would save the message to a messages table
-                    // For now, we just show a confirmation
-                    alert('Μήνυμα που θα στείλετε: ' + chatMessage);
+                    const nextCount = readNotificationCount() + 1;
+                    syncNotificationCount(nextCount);
                     setChatMessage('');
                     setChatRequestId(null);
                     setSendingChat(false);
