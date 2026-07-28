@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ShoppingBag, ClipboardList, LogOut, Leaf, Phone, Search, ChevronDown, User, Mail, MapPin, Bell } from 'lucide-react';
+import { ShoppingBag, ClipboardList, LogOut, Leaf, Phone, Search, ChevronDown, User, Mail, MapPin, Bell, Star } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { formatGreekPhoneInput, isPhoneValid, normalizePhone } from '@/lib/auth/contactInfo';
 import { sanitizePhoneForTel } from '@/lib/serviceAreas';
@@ -101,6 +101,10 @@ export default function ConsumerDashboard() {
   const [emailConfirmedAt, setEmailConfirmedAt] = useState<string | null>(null);
   const [showEmailVerificationWarning, setShowEmailVerificationWarning] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
+  const [reviewPromptRequest, setReviewPromptRequest] = useState<PurchaseRequest | null>(null);
+  const [reviewStars, setReviewStars] = useState(0);
+  const [reviewMessage, setReviewMessage] = useState('');
+  const [reviewError, setReviewError] = useState('');
 
   const formatCurrency = (value: number) => new Intl.NumberFormat('el-GR', {
     style: 'currency',
@@ -167,6 +171,32 @@ export default function ConsumerDashboard() {
 
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
+
+  useEffect(() => {
+    if (!buyerId || reviewPromptRequest || requests.length === 0) {
+      return;
+    }
+
+    const completedRequest = requests.find((request) => request.status === 'ready');
+    if (!completedRequest) {
+      return;
+    }
+
+    const storageKey = `agrodirect-review-${buyerId}-${completedRequest.id}`;
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const storedReview = window.localStorage.getItem(storageKey);
+    if (storedReview) {
+      return;
+    }
+
+    setReviewPromptRequest(completedRequest);
+    setReviewStars(0);
+    setReviewMessage('');
+    setReviewError('');
+  }, [buyerId, requests, reviewPromptRequest]);
 
   const fetchProducts = useCallback(async () => {
     try {
@@ -471,6 +501,37 @@ export default function ConsumerDashboard() {
     clearLoginPreference();
     await supabase.auth.signOut();
     router.replace('/auth');
+  };
+
+  const dismissReviewPrompt = () => {
+    if (reviewPromptRequest && buyerId && typeof window !== 'undefined') {
+      const storageKey = `agrodirect-review-${buyerId}-${reviewPromptRequest.id}`;
+      window.localStorage.setItem(storageKey, 'dismissed');
+    }
+
+    setReviewPromptRequest(null);
+    setReviewStars(0);
+    setReviewMessage('');
+    setReviewError('');
+  };
+
+  const submitReview = () => {
+    if (reviewStars < 1) {
+      setReviewError('Βάλε τουλάχιστον 1 αστέρι για να υποβάλεις αξιολόγηση.');
+      return;
+    }
+
+    if (reviewPromptRequest && buyerId && typeof window !== 'undefined') {
+      const storageKey = `agrodirect-review-${buyerId}-${reviewPromptRequest.id}`;
+      window.localStorage.setItem(storageKey, JSON.stringify({ rating: reviewStars, message: reviewMessage.trim() }));
+    }
+
+    setReviewPromptRequest(null);
+    setReviewStars(0);
+    setReviewMessage('');
+    setReviewError('');
+    setSuccessMsg('Η αξιολόγησή σου καταχωρήθηκε. Ευχαριστούμε!');
+    window.setTimeout(() => setSuccessMsg(''), 5000);
   };
 
   const getRequestProductDetails = (request: PurchaseRequest): { unit: string; price: number } => {
@@ -868,6 +929,56 @@ export default function ConsumerDashboard() {
           </section>
         </main>
       </div>
+
+      {reviewPromptRequest && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-stone-950/40 p-4" role="dialog" aria-modal="true" aria-labelledby="review-title">
+          <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+            <div className="mb-4 flex items-start justify-between gap-4">
+              <div>
+                <h2 id="review-title" className="text-lg font-bold text-stone-900">Αξιολόγησε την πρώτη σου συναλλαγή</h2>
+                <p className="mt-1 text-sm text-stone-500">Για το {reviewPromptRequest.product_title}</p>
+              </div>
+              <button type="button" onClick={dismissReviewPrompt} className="text-sm text-stone-500 hover:text-stone-900">Αργότερα</button>
+            </div>
+
+            {reviewError && <div className="mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">{reviewError}</div>}
+
+            <div className="mb-4">
+              <p className="mb-2 text-sm font-medium text-stone-700">Βάλε αστέρια</p>
+              <div className="flex items-center gap-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setReviewStars(star)}
+                    className="text-2xl text-amber-500 transition hover:scale-110"
+                    aria-label={`Αστέρι ${star}`}
+                  >
+                    <Star className={`h-6 w-6 ${star <= reviewStars ? 'fill-current' : 'text-stone-300'}`} />
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <label className="mb-5 block text-sm font-medium text-stone-700">
+              Μήνυμα (προαιρετικό)
+              <textarea
+                value={reviewMessage}
+                onChange={(event) => setReviewMessage(event.target.value)}
+                maxLength={500}
+                rows={4}
+                className="mt-1 w-full rounded-md border border-stone-300 px-3 py-2 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                placeholder="Πες μας τη γνώμη σου για τη συναλλαγή..."
+              />
+            </label>
+
+            <div className="flex gap-3">
+              <button type="button" onClick={submitReview} className="flex-1 rounded-md bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-800">Αποστολή αξιολόγησης</button>
+              <button type="button" onClick={dismissReviewPrompt} className="flex-1 rounded-md border border-stone-300 px-4 py-2.5 text-sm font-semibold text-stone-700 transition hover:bg-stone-100">Όχι τώρα</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {selectedProduct && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-stone-950/40 p-4" role="dialog" aria-modal="true" aria-labelledby="request-title">
