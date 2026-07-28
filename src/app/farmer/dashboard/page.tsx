@@ -14,6 +14,14 @@ import {
 } from '@/lib/auth/sessionPersistence';
 import { getDashboardForRole, normalizeUserRole } from '@/lib/auth/roleRouting';
 import { validateUsername } from '@/lib/auth/credentialsPolicy';
+import {
+  addNotification,
+  getNotificationStorageKey,
+  getUnreadNotificationCount,
+  loadNotifications,
+  markNotificationsRead,
+  type NotificationItem,
+} from '@/lib/notifications';
 
 interface Product {
   id: number;
@@ -30,6 +38,7 @@ interface PurchaseRequest {
   product_id: number | null;
   product_title: string;
   farmer_id: string;
+  buyer_id: string | null;
   buyer_email: string | null;
   buyer_phone: string | null;
   requested_quantity: number;
@@ -80,6 +89,9 @@ export default function FarmerDashboard() {
   const [showEmailVerificationWarning, setShowEmailVerificationWarning] = useState(false);
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [notificationCount, setNotificationCount] = useState(0);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [selectedNotificationId, setSelectedNotificationId] = useState<string | null>(null);
   
   // Προϊόντα προς Πώληση
   const [products, setProducts] = useState<Product[]>([]);
@@ -135,6 +147,28 @@ export default function FarmerDashboard() {
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
+  useEffect(() => {
+    if (!userId) {
+      return;
+    }
+
+    const storageKey = getNotificationStorageKey(userId);
+    const storedNotifications = loadNotifications(storageKey);
+    setNotifications(storedNotifications);
+    setNotificationCount(getUnreadNotificationCount(storedNotifications));
+
+    const handleNotificationStorage = (event: StorageEvent) => {
+      if (event.key === storageKey) {
+        const nextNotifications = loadNotifications(storageKey);
+        setNotifications(nextNotifications);
+        setNotificationCount(getUnreadNotificationCount(nextNotifications));
+      }
+    };
+
+    window.addEventListener('storage', handleNotificationStorage);
+    return () => window.removeEventListener('storage', handleNotificationStorage);
+  }, [userId]);
+
   const fetchProducts = useCallback(async (farmerId: string) => {
     const { data, error } = await supabase.from('products').select('*').eq('farmer_id', farmerId);
     if (error) {
@@ -147,7 +181,7 @@ export default function FarmerDashboard() {
   const fetchRequests = useCallback(async (farmerId: string) => {
     const { data, error } = await supabase
       .from('purchase_requests')
-      .select('id, product_id, product_title, farmer_id, buyer_email, buyer_phone, requested_quantity, message, status, created_at, unit_at_request, unit_price_at_request, profit')
+      .select('id, product_id, product_title, farmer_id, buyer_id, buyer_email, buyer_phone, requested_quantity, message, status, created_at, unit_at_request, unit_price_at_request, profit')
       .eq('farmer_id', farmerId)
       .order('created_at', { ascending: false });
 
@@ -372,6 +406,23 @@ export default function FarmerDashboard() {
         return;
       }
 
+      if (status !== 'pending') {
+        const statusLabel = status === 'confirmed' ? 'Επιβεβαιώθηκε' : status === 'ready' ? 'Ολοκληρώθηκε' : 'Απορρίφθηκε';
+        const notificationMessage = status === 'confirmed'
+          ? `Η παραγγελία σας για ${request.product_title} επιβεβαιώθηκε.`
+          : status === 'ready'
+            ? `Η παραγγελία σας για ${request.product_title} ολοκληρώθηκε.`
+            : `Η παραγγελία σας για ${request.product_title} απορρίφθηκε.`;
+
+        const nextNotifications = addNotification(getNotificationStorageKey(request.buyer_id), {
+          title: `Ενημέρωση παραγγελίας: ${statusLabel}`,
+          status: statusLabel,
+          message: notificationMessage,
+        });
+        setNotifications(nextNotifications);
+        setNotificationCount(getUnreadNotificationCount(nextNotifications));
+      }
+
       // When changing status to 'ready', calculate profit and decrease product quantity
       if (status === 'ready') {
         const profit = request.requested_quantity * request.unit_price_at_request;
@@ -426,6 +477,17 @@ export default function FarmerDashboard() {
     }
     
     setUpdatingRequestId(null);
+  };
+
+  const handleNotificationSelect = (notification: NotificationItem) => {
+    if (!notification.read && userId) {
+      const updatedNotifications = markNotificationsRead(getNotificationStorageKey(userId), [notification.id]);
+      setNotifications(updatedNotifications);
+      setNotificationCount(getUnreadNotificationCount(updatedNotifications));
+    }
+
+    setSelectedNotificationId(notification.id);
+    setShowNotifications(true);
   };
 
   const handleConfirmRequest = (requestId: number) => {
@@ -490,6 +552,7 @@ export default function FarmerDashboard() {
     product_id: number | null;
     product_title: string;
     farmer_id: string;
+    buyer_id: string | null;
     buyer_email: string | null;
     buyer_phone: string | null;
     requested_quantity: number;
@@ -565,12 +628,67 @@ export default function FarmerDashboard() {
           <Link href="/" className="flex items-center gap-2 lg:hidden"><Leaf className="h-5 w-5 text-emerald-700" /><span className="font-bold text-emerald-900">AgroDirect</span></Link>
           <p className="hidden lg:block text-sm text-stone-500">Πίνακας ελέγχου αγρότη</p>
           <div className="flex items-center gap-2">
-            <div className="relative inline-flex items-center rounded-md border border-stone-300 bg-stone-50 px-3 py-2 text-stone-700">
-              <Bell className="h-4 w-4" />
-              {notificationCount > 0 && (
-                <span className="ml-2 rounded-full bg-amber-500 px-2 py-0.5 text-[11px] font-semibold text-white">
-                  {notificationCount}
-                </span>
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setShowNotifications((prev) => !prev)}
+                className={`inline-flex items-center rounded-md border px-3 py-2 text-sm font-medium transition-colors ${notificationCount > 0 ? 'border-amber-300 bg-amber-50 text-amber-700' : 'border-stone-300 bg-stone-50 text-stone-700'}`}
+              >
+                <Bell className="h-4 w-4" />
+                {notificationCount > 0 && (
+                  <span className="ml-2 rounded-full bg-amber-500 px-2 py-0.5 text-[11px] font-semibold text-white">
+                    {notificationCount}
+                  </span>
+                )}
+              </button>
+              {showNotifications && (
+                <div className="absolute right-0 top-12 z-40 w-80 rounded-lg border border-stone-200 bg-white shadow-lg">
+                  <div className="border-b border-stone-200 px-4 py-3">
+                    <p className="text-sm font-semibold text-stone-900">Ειδοποιήσεις</p>
+                    <p className="text-xs text-stone-500">Δες τα νέα μηνύματα και τις ενημερώσεις παραγγελιών</p>
+                  </div>
+                  {notifications.length === 0 ? (
+                    <div className="px-4 py-6 text-sm text-stone-500">Δεν υπάρχουν ειδοποιήσεις ακόμη.</div>
+                  ) : (
+                    <ul className="max-h-80 overflow-y-auto">
+                      {notifications.map((notification) => {
+                        const isSelected = selectedNotificationId === notification.id;
+                        return (
+                          <li key={notification.id}>
+                            <button
+                              type="button"
+                              onClick={() => handleNotificationSelect(notification)}
+                              className={`w-full border-b border-stone-100 px-4 py-3 text-left transition-colors ${isSelected ? 'bg-stone-50' : notification.read ? 'bg-white' : 'bg-amber-50'}`}
+                            >
+                              <div className="flex items-start justify-between gap-3">
+                                <div>
+                                  <p className="text-sm font-semibold text-stone-900">{notification.title}</p>
+                                  <p className="mt-1 text-xs text-stone-600">{notification.status}</p>
+                                </div>
+                                {!notification.read && <span className="mt-0.5 h-2.5 w-2.5 rounded-full bg-amber-500" />}
+                              </div>
+                              <p className="mt-2 text-sm text-stone-600 line-clamp-3">{notification.message}</p>
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                  {selectedNotificationId && (
+                    <div className="border-t border-stone-200 bg-stone-50 px-4 py-3">
+                      {(() => {
+                        const selected = notifications.find((item) => item.id === selectedNotificationId);
+                        if (!selected) return null;
+                        return (
+                          <div>
+                            <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">Πλήρες μήνυμα</p>
+                            <p className="mt-1 text-sm text-stone-700">{selected.message}</p>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  )}
+                </div>
               )}
             </div>
             <button
@@ -1092,6 +1210,16 @@ export default function FarmerDashboard() {
                     if (!chatMessage.trim() || !chatRequestId) return;
 
                     setSendingChat(true);
+                    const chatRequest = requests.find((request) => request.id === chatRequestId);
+                    if (chatRequest?.buyer_id) {
+                      const nextNotifications = addNotification(getNotificationStorageKey(chatRequest.buyer_id), {
+                        title: 'Νέο μήνυμα από τον παραγωγό',
+                        status: 'Μήνυμα παραγωγού',
+                        message: chatMessage.trim(),
+                      });
+                      setNotifications(nextNotifications);
+                      setNotificationCount(getUnreadNotificationCount(nextNotifications));
+                    }
                     const nextCount = readNotificationCount() + 1;
                     syncNotificationCount(nextCount);
                     setChatMessage('');
