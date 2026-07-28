@@ -628,47 +628,49 @@ export default function ConsumerDashboard() {
               <button
                 type="button"
                 onClick={() => setShowNotifications((prev) => !prev)}
-                className={`inline-flex items-center rounded-md border px-3 py-2 text-sm font-medium transition-colors ${notificationCount > 0 ? 'border-amber-300 bg-amber-50 text-amber-700' : 'border-stone-300 bg-stone-50 text-stone-700'}`}
+                className="relative inline-flex items-center text-sm font-medium text-center text-stone-700 hover:text-stone-900 focus:outline-none"
               >
-                <Bell className="h-4 w-4" />
+                <svg className="h-6 w-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                  <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 5.365V3m0 2.365a5.338 5.338 0 0 1 5.133 5.368v1.8c0 2.386 1.867 2.982 1.867 4.175 0 .593 0 1.292-.538 1.292H5.538C5 18 5 17.301 5 16.708c0-1.193 1.867-1.789 1.867-4.175v-1.8A5.338 5.338 0 0 1 12 5.365ZM8.733 18c.094.852.306 1.54.944 2.112a3.48 3.48 0 0 0 4.646 0c.638-.572 1.236-1.26 1.33-2.112h-6.92Z" />
+                </svg>
                 {notificationCount > 0 && (
-                  <span className="ml-2 rounded-full bg-amber-500 px-2 py-0.5 text-[11px] font-semibold text-white">
-                    {notificationCount}
-                  </span>
+                  <div className="absolute top-0 start-3 block h-3 w-3 rounded-full border-2 border-white bg-rose-500" />
                 )}
               </button>
               {showNotifications && (
-                <div className="absolute right-0 top-12 z-40 w-80 rounded-lg border border-stone-200 bg-white shadow-lg">
-                  <div className="border-b border-stone-200 px-4 py-3">
-                    <p className="text-sm font-semibold text-stone-900">Ειδοποιήσεις</p>
-                    <p className="text-xs text-stone-500">Δες τις ενημερώσεις της παραγγελίας σου</p>
+                <div className="absolute right-0 top-12 z-20 w-full max-w-sm rounded-lg border border-stone-200 bg-white shadow-lg">
+                  <div className="rounded-t-lg bg-stone-100 px-4 py-3 text-center text-sm font-medium text-stone-700">
+                    Ειδοποιήσεις
                   </div>
                   {notifications.length === 0 ? (
                     <div className="px-4 py-6 text-sm text-stone-500">Δεν υπάρχουν ειδοποιήσεις ακόμη.</div>
                   ) : (
-                    <ul className="max-h-80 overflow-y-auto">
+                    <div className="max-h-80 divide-y divide-stone-100 overflow-y-auto">
                       {notifications.map((notification) => {
                         const isSelected = selectedNotificationId === notification.id;
                         return (
-                          <li key={notification.id}>
-                            <button
-                              type="button"
-                              onClick={() => handleNotificationSelect(notification)}
-                              className={`w-full border-b border-stone-100 px-4 py-3 text-left transition-colors ${isSelected ? 'bg-stone-50' : notification.read ? 'bg-white' : 'bg-amber-50'}`}
-                            >
-                              <div className="flex items-start justify-between gap-3">
-                                <div>
-                                  <p className="text-sm font-semibold text-stone-900">{notification.title}</p>
-                                  <p className="mt-1 text-xs text-stone-600">{notification.status}</p>
-                                </div>
-                                {!notification.read && <span className="mt-0.5 h-2.5 w-2.5 rounded-full bg-amber-500" />}
+                          <button
+                            key={notification.id}
+                            type="button"
+                            onClick={() => handleNotificationSelect(notification)}
+                            className={`flex w-full px-4 py-3 text-left transition-colors ${isSelected ? 'bg-stone-50' : notification.read ? 'bg-white hover:bg-stone-50' : 'bg-amber-50 hover:bg-amber-100'}`}
+                          >
+                            <div className="shrink-0">
+                              <div className={`flex h-11 w-11 items-center justify-center rounded-full ${notification.read ? 'bg-stone-100 text-stone-600' : 'bg-emerald-100 text-emerald-700'}`}>
+                                <Bell className="h-5 w-5" />
                               </div>
-                              <p className="mt-2 text-sm text-stone-600 line-clamp-3">{notification.message}</p>
-                            </button>
-                          </li>
+                            </div>
+                            <div className="w-full ps-3">
+                              <div className="mb-1.5 text-sm text-stone-700">
+                                <span className="font-semibold text-stone-900">{notification.title}</span>
+                                <div className="mt-1 text-xs text-stone-500">{notification.status}</div>
+                              </div>
+                              <div className="text-sm text-stone-600">{notification.message}</div>
+                            </div>
+                          </button>
                         );
                       })}
-                    </ul>
+                    </div>
                   )}
                   {selectedNotificationId && (
                     <div className="border-t border-stone-200 bg-stone-50 px-4 py-3">
