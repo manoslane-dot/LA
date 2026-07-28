@@ -646,14 +646,7 @@ export default function FarmerDashboard() {
             <div className="relative" ref={notificationRef}>
               <button
                 type="button"
-                onClick={() => {
-                  if (!showNotifications && userId) {
-                    const updatedNotifications = markNotificationsRead(getNotificationStorageKey(userId), notifications.map((item) => item.id));
-                    setNotifications(updatedNotifications);
-                    setNotificationCount(getUnreadNotificationCount(updatedNotifications));
-                  }
-                  setShowNotifications((prev) => !prev);
-                }}
+                onClick={() => setShowNotifications((prev) => !prev)}
                 className="relative inline-flex items-center text-sm font-medium text-center text-stone-700 hover:text-stone-900 focus:outline-none"
               >
                 <svg className="h-6 w-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
