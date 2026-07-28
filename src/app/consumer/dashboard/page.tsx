@@ -114,19 +114,34 @@ export default function ConsumerDashboard() {
   const [selectedNotificationId, setSelectedNotificationId] = useState<string | null>(null);
   const notificationRef = useRef<HTMLDivElement | null>(null);
 
+  const markAllNotificationsAsRead = useCallback(() => {
+    if (!buyerId || !notifications.some((item) => !item.read)) {
+      return;
+    }
+
+    const updatedNotifications = markNotificationsRead(getNotificationStorageKey(buyerId), notifications.map((item) => item.id));
+    setNotifications(updatedNotifications);
+    setNotificationCount(getUnreadNotificationCount(updatedNotifications));
+  }, [buyerId, notifications]);
+
+  const closeNotifications = useCallback(() => {
+    markAllNotificationsAsRead();
+    setShowNotifications(false);
+    setSelectedNotificationId(null);
+  }, [markAllNotificationsAsRead]);
+
   useEffect(() => {
     if (!showNotifications) return;
 
     const handleClickOutside = (event: MouseEvent) => {
       if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
-        setShowNotifications(false);
-        setSelectedNotificationId(null);
+        closeNotifications();
       }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showNotifications]);
+  }, [showNotifications, closeNotifications]);
 
   const formatCurrency = (value: number) => new Intl.NumberFormat('el-GR', {
     style: 'currency',
@@ -642,7 +657,13 @@ export default function ConsumerDashboard() {
             <div className="relative" ref={notificationRef}>
               <button
                 type="button"
-                onClick={() => setShowNotifications((prev) => !prev)}
+                onClick={() => {
+                  if (showNotifications) {
+                    closeNotifications();
+                  } else {
+                    setShowNotifications(true);
+                  }
+                }}
                 className="relative inline-flex items-center text-sm font-medium text-center text-stone-700 hover:text-stone-900 focus:outline-none"
               >
                 <svg className="h-6 w-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
