@@ -775,18 +775,22 @@ export default function FarmerDashboard() {
                               <p className="mt-1 text-sm text-stone-600">
                                 Ενδεικτικό κόστος: {formatCurrency(totalCost)} ({formatCurrency(unitPrice)} / {unit || 'μονάδα'})
                               </p>
-                              {request.status === 'confirmed' ? (
+                              {(request.status === 'confirmed' || request.status === 'ready') ? (
                                 <div className="mt-1 flex flex-wrap items-center gap-2">
-                                  <p className="text-xs text-emerald-700">
-                                    Στοιχεία αγοραστή: {request.buyer_email ?? 'χωρίς email'} · {request.buyer_phone ?? 'χωρίς κινητό'}
-                                  </p>
-                                  {request.buyer_phone && (
-                                    <a
-                                      href={`tel:${sanitizePhoneForTel(request.buyer_phone)}`}
-                                      className="inline-flex items-center gap-1 rounded-md bg-emerald-700 px-2.5 py-1 text-xs font-semibold text-white hover:bg-emerald-800"
-                                    >
-                                      <Phone className="h-3 w-3" /> Κλήση
-                                    </a>
+                                  {request.status === 'confirmed' && (
+                                    <>
+                                      <p className="text-xs text-emerald-700">
+                                        Στοιχεία αγοραστή: {request.buyer_email ?? 'χωρίς email'} · {request.buyer_phone ?? 'χωρίς κινητό'}
+                                      </p>
+                                      {request.buyer_phone && (
+                                        <a
+                                          href={`tel:${sanitizePhoneForTel(request.buyer_phone)}`}
+                                          className="inline-flex items-center gap-1 rounded-md bg-emerald-700 px-2.5 py-1 text-xs font-semibold text-white hover:bg-emerald-800"
+                                        >
+                                          <Phone className="h-3 w-3" /> Κλήση
+                                        </a>
+                                      )}
+                                    </>
                                   )}
                                   {request.status === 'ready' && (
                                     <div className="mt-2 rounded-md bg-emerald-50 border border-emerald-200 p-2 w-full">
