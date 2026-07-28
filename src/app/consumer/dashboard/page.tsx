@@ -862,33 +862,25 @@ export default function ConsumerDashboard() {
                         <strong className="text-stone-900">{request.product_title}</strong>
                         <span className="text-stone-500"> · {request.requested_quantity} {getUnitLabel(unit, request.requested_quantity)}</span>
                         <p className="mt-1 text-sm text-stone-600">Εκτιμώμενο κόστος: <strong className="text-base font-bold text-emerald-700">{formatCurrency(totalCost)}</strong> <span className="text-xs">({formatCurrency(unitPrice)} / {unit || 'μονάδα'})</span></p>
-                        {isReviewVisible ? (
+                        {isReviewVisible && requestReviews.length > 0 ? (
                           <div className="mt-2 rounded-lg border border-stone-200 bg-stone-50 p-3">
                             <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Κριτικές</p>
-                            {requestReviews.length > 0 ? (
-                              <div className="mt-2 space-y-2">
-                                {requestReviews.map((review) => (
-                                  <div key={review.id} className="rounded-md border border-stone-200 bg-white p-2.5">
-                                    <div className="flex items-center gap-1 text-amber-500">
-                                      {Array.from({ length: review.rating }).map((_, index) => (
-                                        <Star key={`${review.id}-${index}`} className="h-4 w-4 fill-current" />
-                                      ))}
-                                    </div>
-                                    {review.message ? (
-                                      <p className="mt-1 text-sm text-stone-600">{review.message}</p>
-                                    ) : (
-                                      <p className="mt-1 text-sm text-stone-500">Δεν υπάρχει κείμενο στην αξιολόγηση.</p>
-                                    )}
+                            <div className="mt-2 space-y-2">
+                              {requestReviews.map((review) => (
+                                <div key={review.id} className="rounded-md border border-stone-200 bg-white p-2.5">
+                                  <div className="flex items-center gap-1 text-amber-500">
+                                    {Array.from({ length: review.rating }).map((_, index) => (
+                                      <Star key={`${review.id}-${index}`} className="h-4 w-4 fill-current" />
+                                    ))}
                                   </div>
-                                ))}
-                              </div>
-                            ) : (
-                              <p className="mt-1 text-sm text-stone-600">Δεν υπάρχουν ακόμη αξιολογήσεις για αυτή τη συναλλαγή.</p>
-                            )}
+                                  {review.message ? (
+                                    <p className="mt-1 text-sm text-stone-600">{review.message}</p>
+                                  ) : null}
+                                </div>
+                              ))}
+                            </div>
                           </div>
-                        ) : (
-                          <p className="mt-1 text-xs text-stone-500">Οι κριτικές θα εμφανιστούν μόλις ολοκληρωθεί η πρώτη σας συναλλαγή.</p>
-                        )}
+                        ) : null}
                       </div>
                       <span className="shrink-0 font-medium text-emerald-800">{requestStatusLabels[request.status]}</span>
                     </li>

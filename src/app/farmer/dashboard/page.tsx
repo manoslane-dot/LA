@@ -817,32 +817,26 @@ export default function FarmerDashboard() {
                               <p className="mt-1 text-sm text-stone-600">
                                 Ενδεικτικό κόστος: {formatCurrency(totalCost)} ({formatCurrency(unitPrice)} / {unit || 'μονάδα'})
                               </p>
-                              {(request.status === 'confirmed' || request.status === 'ready') ? (
+                              {(request.status === 'confirmed' || request.status === 'ready') && (reviewsByRequestId[request.id] ?? []).length > 0 ? (
                                 <div className="mt-1 flex flex-wrap items-center gap-2">
                                   <div className="w-full rounded-lg border border-stone-200 bg-stone-50 p-3">
                                     <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Κριτικές</p>
-                                    {((reviewsByRequestId[request.id] ?? []).length > 0) ? (
-                                      <div className="mt-2 space-y-2">
-                                        {(reviewsByRequestId[request.id] ?? []).map((review) => (
-                                          <div key={review.id} className="rounded-md border border-stone-200 bg-white p-2.5">
-                                            <div className="flex items-center gap-1 text-amber-500">
-                                              {Array.from({ length: review.rating }).map((_, index) => (
-                                                <svg key={`${review.id}-${index}`} viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
-                                                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 0 0 .95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 0 0-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 0 0-1.176 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 0 0-.364-1.118L2.98 8.529c-.783-.57-.38-1.81.588-1.81h3.462a1 1 0 0 0 .95-.69l1.07-3.292Z" />
-                                                </svg>
-                                              ))}
-                                            </div>
-                                            {review.message ? (
-                                              <p className="mt-1 text-sm text-stone-600">{review.message}</p>
-                                            ) : (
-                                              <p className="mt-1 text-sm text-stone-500">Δεν υπάρχει κείμενο στην αξιολόγηση.</p>
-                                            )}
+                                    <div className="mt-2 space-y-2">
+                                      {(reviewsByRequestId[request.id] ?? []).map((review) => (
+                                        <div key={review.id} className="rounded-md border border-stone-200 bg-white p-2.5">
+                                          <div className="flex items-center gap-1 text-amber-500">
+                                            {Array.from({ length: review.rating }).map((_, index) => (
+                                              <svg key={`${review.id}-${index}`} viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
+                                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 0 0 .95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 0 0-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 0 0-1.176 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 0 0-.364-1.118L2.98 8.529c-.783-.57-.38-1.81.588-1.81h3.462a1 1 0 0 0 .95-.69l1.07-3.292Z" />
+                                              </svg>
+                                            ))}
                                           </div>
-                                        ))}
-                                      </div>
-                                    ) : (
-                                      <p className="mt-1 text-sm text-stone-600">Δεν υπάρχουν ακόμη αξιολογήσεις για αυτό το αίτημα.</p>
-                                    )}
+                                          {review.message ? (
+                                            <p className="mt-1 text-sm text-stone-600">{review.message}</p>
+                                          ) : null}
+                                        </div>
+                                      ))}
+                                    </div>
                                   </div>
                                   {request.status === 'ready' && (
                                     <div className="mt-2 rounded-md bg-emerald-50 border border-emerald-200 p-2 w-full">
@@ -851,9 +845,7 @@ export default function FarmerDashboard() {
                                     </div>
                                   )}
                                 </div>
-                              ) : (
-                                <p className="mt-1 text-xs text-stone-500">Οι κριτικές θα εμφανιστούν μετά την επιβεβαίωση.</p>
-                              )}
+                              ) : null}
                               {request.message && <p className="mt-2 rounded-md bg-stone-50 p-2 text-sm text-stone-600">{request.message}</p>}
                             </>
                           );
@@ -1085,7 +1077,7 @@ export default function FarmerDashboard() {
                 <div className="mb-4 flex items-start justify-between gap-4">
                   <div>
                     <h2 id="chat-title" className="text-lg font-bold text-stone-900">
-                      Επικοινωνία: {chatRequest?.product_title}
+                      Κριτικές: {chatRequest?.product_title}
                     </h2>
                     <p className="mt-1 text-sm text-stone-500">
                       Αγοραστής: {chatRequest?.buyer_email || 'Χωρίς email'} · {chatRequest?.buyer_phone || 'Χωρίς κινητό'}
