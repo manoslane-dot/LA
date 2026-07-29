@@ -921,7 +921,7 @@ export default function FarmerDashboard() {
           <section id="overview" className={`hidden border-b border-stone-200 pb-2 flex-col gap-2 sm:flex sm:flex-row sm:items-end sm:justify-between${activeTab !== 'overview' ? ' hidden' : ''}`}>
             <div>
               {activeTab === 'overview' && (
-                <h2 className="text-3xl font-bold text-stone-900">Τα προϊόντα μου</h2>
+                <h2 className="text-3xl font-bold text-stone-900">Επισκόπηση</h2>
               )}
             </div>
             {activeTab === 'overview' && (
