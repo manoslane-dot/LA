@@ -915,22 +915,27 @@ export default function FarmerDashboard() {
             )}
           </section>
 
-          <section className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4${activeTab !== 'overview' ? ' hidden' : ''}`} aria-label="Στατιστικά προϊόντων">
-            <article className="border border-stone-200 bg-white p-5">
-              <div className="flex justify-between"><div><p className="text-sm font-medium text-stone-500">Συνολικά προϊόντα</p><p className="mt-2 text-3xl font-bold">{products.length}</p></div><Package className="h-5 w-5 text-emerald-700" /></div>
-            </article>
-            <article className="border border-stone-200 bg-white p-5">
-              <div className="flex justify-between"><div><p className="text-sm font-medium text-stone-500">Ενεργές καταχωρήσεις</p><p className="mt-2 text-3xl font-bold">{activeProducts}</p></div><ShoppingBag className="h-5 w-5 text-amber-600" /></div>
-            </article>
-            <article className="border border-stone-200 bg-white p-5">
-              <div className="flex justify-between"><div><p className="text-sm font-medium text-stone-500">Αξία αποθέματος</p><p className="mt-2 text-2xl font-bold">{formatCurrency(estimatedInventoryValue)}</p></div><CircleDollarSign className="h-5 w-5 text-sky-700" /></div>
-            </article>
-            <article className="border border-stone-200 bg-white p-5">
-              <div className="flex justify-between"><div><p className="text-sm font-medium text-stone-500">Εκτιμώμενο κέρδος</p><p className="mt-2 text-2xl font-bold">{formatCurrency(estimatedOpenRequestsRevenue)}</p></div><CircleDollarSign className="h-5 w-5 text-emerald-700" /></div>
-            </article>
-            <article className="border border-stone-200 bg-white p-5 lg:col-span-1">
-              <div className="flex justify-between"><div><p className="text-sm font-medium text-stone-500">Συνολικές εισπράξεις</p><p className="mt-2 text-2xl font-bold">{formatCurrency(totalRevenue)}</p></div><CircleDollarSign className="h-5 w-5 text-green-600" /></div>
-            </article>
+          <section className={`space-y-4${activeTab !== 'overview' ? ' hidden' : ''}`} aria-label="Επισκόπηση">
+            <div className="flex items-center gap-2">
+              <h3 className="text-lg font-semibold text-stone-800">Επισκόπηση</h3>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4" aria-label="Στατιστικά προϊόντων">
+              <article className="border border-stone-200 bg-white p-5">
+                <div className="flex justify-between"><div><p className="text-sm font-medium text-stone-500">Συνολικά προϊόντα</p><p className="mt-2 text-3xl font-bold">{products.length}</p></div><Package className="h-5 w-5 text-emerald-700" /></div>
+              </article>
+              <article className="border border-stone-200 bg-white p-5">
+                <div className="flex justify-between"><div><p className="text-sm font-medium text-stone-500">Ενεργές καταχωρήσεις</p><p className="mt-2 text-3xl font-bold">{activeProducts}</p></div><ShoppingBag className="h-5 w-5 text-amber-600" /></div>
+              </article>
+              <article className="border border-stone-200 bg-white p-5">
+                <div className="flex justify-between"><div><p className="text-sm font-medium text-stone-500">Αξία αποθέματος</p><p className="mt-2 text-2xl font-bold">{formatCurrency(estimatedInventoryValue)}</p></div><CircleDollarSign className="h-5 w-5 text-sky-700" /></div>
+              </article>
+              <article className="border border-stone-200 bg-white p-5">
+                <div className="flex justify-between"><div><p className="text-sm font-medium text-stone-500">Εκτιμώμενο κέρδος</p><p className="mt-2 text-2xl font-bold">{formatCurrency(estimatedOpenRequestsRevenue)}</p></div><CircleDollarSign className="h-5 w-5 text-emerald-700" /></div>
+              </article>
+              <article className="border border-stone-200 bg-white p-5 lg:col-span-1">
+                <div className="flex justify-between"><div><p className="text-sm font-medium text-stone-500">Συνολικές εισπράξεις</p><p className="mt-2 text-2xl font-bold">{formatCurrency(totalRevenue)}</p></div><CircleDollarSign className="h-5 w-5 text-green-600" /></div>
+              </article>
+            </div>
           </section>
           
           {/* Grid για Προϊόντα Προς Πώληση */}
