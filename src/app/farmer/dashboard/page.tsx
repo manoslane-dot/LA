@@ -899,9 +899,13 @@ export default function FarmerDashboard() {
           </div>
           <section id="overview" className={`hidden border-b border-stone-200 pb-2 flex-col gap-2 sm:flex sm:flex-row sm:items-end sm:justify-between${activeTab !== 'overview' ? ' hidden' : ''}`}>
             <div>
-              <h2 className="text-3xl font-bold text-stone-900">Τα προϊόντα μου</h2>
+              {activeTab === 'overview' && (
+                <h2 className="text-3xl font-bold text-stone-900">Τα προϊόντα μου</h2>
+              )}
             </div>
-            <a href="#new-product" className="inline-flex items-center justify-center gap-2 rounded-md bg-emerald-700 hover:bg-emerald-800 text-white px-4 py-2.5 text-sm font-semibold transition-colors"><Plus className="h-4 w-4" />Νέο προϊόν</a>
+            {activeTab === 'overview' && (
+              <a href="#new-product" className="inline-flex items-center justify-center gap-2 rounded-md bg-emerald-700 hover:bg-emerald-800 text-white px-4 py-2.5 text-sm font-semibold transition-colors"><Plus className="h-4 w-4" />Νέο προϊόν</a>
+            )}
           </section>
 
           <section className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4${activeTab !== 'overview' ? ' hidden' : ''}`} aria-label="Στατιστικά προϊόντων">
