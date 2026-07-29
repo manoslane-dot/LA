@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Bell, CircleDollarSign, ClipboardList, LayoutDashboard, Leaf, LogOut, Mail, Package, Pencil, Phone, Plus, ShoppingBag, Trash2, User } from 'lucide-react';
+import { Bell, CircleDollarSign, ClipboardList, LayoutDashboard, Leaf, LogOut, Mail, Package, Pencil, Phone, Plus, Settings, ShoppingBag, Trash2, User } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { formatGreekPhoneInput } from '@/lib/auth/contactInfo';
 import { sanitizePhoneForTel } from '@/lib/serviceAreas';
@@ -81,6 +81,7 @@ export default function FarmerDashboard() {
   const [userName, setUserName] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'requests' | 'profile'>('overview');  // Profile info shown in overview header
+  const [profileSubTab, setProfileSubTab] = useState<'profile' | 'dashboard' | 'settings' | 'contacts'>('profile');
   const [editingProfile, setEditingProfile] = useState(false);
   const [profileForm, setProfileForm] = useState({ fullName: '', email: '', phone: '' });
   const [savingProfile, setSavingProfile] = useState(false);
@@ -1013,136 +1014,208 @@ export default function FarmerDashboard() {
             )}
           </section>
 
-          <section id="profile" className={`rounded-lg border border-stone-200 bg-white p-6 shadow-sm${activeTab !== 'profile' ? ' hidden' : ''}`}>
-            <h2 className="mb-5 text-xl font-semibold text-stone-800">Το Προφίλ μου</h2>
-            {!editingProfile ? (
-              <div className="space-y-4">
-                <div className="rounded-lg border border-stone-200 bg-stone-50 p-4">
-                  <p className="text-xs font-semibold text-stone-600 mb-1">Ονοματεπώνυμο</p>
-                  <p className="text-base text-stone-900">{userName || 'Επανόθηση απαιτείται'}</p>
-                </div>
-                <div className="rounded-lg border border-stone-200 bg-stone-50 p-4">
-                  <p className="text-xs font-semibold text-stone-600 mb-1">Email</p>
-                  <p className="text-base text-stone-900">{userEmail || 'Επανόθηση απαιτείται'}</p>
-                </div>
-                <div className="rounded-lg border border-stone-200 bg-stone-50 p-4">
-                  <p className="text-xs font-semibold text-stone-600 mb-1">Κινητό τηλέφωνο</p>
-                  <p className="text-base text-stone-900">{userPhone || 'Επανόθηση απαιτείται'}</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setProfileForm({ fullName: userName || '', email: userEmail || '', phone: userPhone || '' });
-                    setEditingProfile(true);
-                  }}
-                  className="w-full rounded-lg bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-800"
-                >
-                  Επεξεργασία Προφίλ
-                </button>
-              </div>
-            ) : (
-              <form
-                onSubmit={async (e) => {
-                  e.preventDefault();
-                  
-                  // Check if email is verified before allowing profile save
-                  if (!emailConfirmedAt) {
-                    setShowEmailVerificationWarning(true);
-                    return;
-                  }
-                  
-                  setSavingProfile(true);
-                  const trimmedFullName = profileForm.fullName.trim();
-                  const updateData: Record<string, string> = {
-                    full_name: trimmedFullName,
-                    phone: profileForm.phone.trim(),
-                  };
+          <section id="profile" className={`rounded-lg border border-stone-200 bg-white shadow-sm${activeTab !== 'profile' ? ' hidden' : ''}`}>
+            <div className="border-b border-stone-200 px-4 py-3 sm:px-6">
+              <ul className="flex flex-wrap -mb-px text-sm font-medium text-center text-stone-600">
+                {[
+                  { key: 'profile', label: 'Προφίλ', icon: User },
+                  { key: 'dashboard', label: 'Πίνακας', icon: LayoutDashboard },
+                  { key: 'settings', label: 'Ρυθμίσεις', icon: Settings },
+                  { key: 'contacts', label: 'Επικοινωνία', icon: Phone },
+                ].map(({ key, label, icon: Icon }) => {
+                  const isActive = profileSubTab === key;
+                  return (
+                    <li key={key} className="me-2">
+                      <button
+                        type="button"
+                        onClick={() => setProfileSubTab(key as 'profile' | 'dashboard' | 'settings' | 'contacts')}
+                        className={`inline-flex items-center justify-center rounded-t-lg border-b-2 px-4 py-3 transition-colors ${isActive ? 'border-emerald-700 text-emerald-800' : 'border-transparent text-stone-500 hover:border-emerald-200 hover:text-emerald-700'}`}
+                      >
+                        <Icon className="mr-2 h-4 w-4" />
+                        {label}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
 
-                  if (!validateUsername(trimmedFullName)) {
-                    updateData.username = trimmedFullName;
-                  }
+            <div className="p-6">
+              {profileSubTab === 'profile' && (
+                <>
+                  <h2 className="mb-5 text-xl font-semibold text-stone-800">Το Προφίλ μου</h2>
+                  {!editingProfile ? (
+                    <div className="space-y-4">
+                      <div className="rounded-lg border border-stone-200 bg-stone-50 p-4">
+                        <p className="mb-1 text-xs font-semibold text-stone-600">Ονοματεπώνυμο</p>
+                        <p className="text-base text-stone-900">{userName || 'Επανόθηση απαιτείται'}</p>
+                      </div>
+                      <div className="rounded-lg border border-stone-200 bg-stone-50 p-4">
+                        <p className="mb-1 text-xs font-semibold text-stone-600">Email</p>
+                        <p className="text-base text-stone-900">{userEmail || 'Επανόθηση απαιτείται'}</p>
+                      </div>
+                      <div className="rounded-lg border border-stone-200 bg-stone-50 p-4">
+                        <p className="mb-1 text-xs font-semibold text-stone-600">Κινητό τηλέφωνο</p>
+                        <p className="text-base text-stone-900">{userPhone || 'Επανόθηση απαιτείται'}</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setProfileForm({ fullName: userName || '', email: userEmail || '', phone: userPhone || '' });
+                          setEditingProfile(true);
+                        }}
+                        className="w-full rounded-lg bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-800"
+                      >
+                        Επεξεργασία Προφίλ
+                      </button>
+                    </div>
+                  ) : (
+                    <form
+                      onSubmit={async (e) => {
+                        e.preventDefault();
 
-                  const { error } = await supabase.auth.updateUser({
-                    data: updateData,
-                  });
-                  
-                  if (!error && userId) {
-                    // Update farmer_profiles table as well
-                    await supabase.from('farmer_profiles').upsert({
-                      user_id: userId,
-                      contact_phone: profileForm.phone.trim(),
-                    });
-                  }
-                  
-                  if (error) {
-                    alert('Σφάλμα αποθήκευσης: ' + error.message);
-                  } else {
-                    setUserName(trimmedFullName);
-                    setUserPhone(profileForm.phone.trim());
-                    setEditingProfile(false);
-                  }
-                  setSavingProfile(false);
-                }}
-                className="space-y-4"
-              >
-                <label className="block text-sm font-semibold text-stone-700">
-                  <span className="inline-flex items-center gap-2 mb-1.5">
-                    <User className="h-4 w-4 text-emerald-700" /> Ονοματεπώνυμο
-                  </span>
-                  <input
-                    type="text"
-                    required
-                    value={profileForm.fullName}
-                    onChange={(e) => setProfileForm({ ...profileForm, fullName: e.target.value })}
-                    className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
-                    placeholder="π.χ. Γιάννης Παπαδόπουλος"
-                  />
-                </label>
-                <label className="block text-sm font-semibold text-stone-700">
-                  <span className="inline-flex items-center gap-2 mb-1.5">
-                    <Mail className="h-4 w-4 text-emerald-700" /> Email
-                  </span>
-                  <input
-                    type="email"
-                    disabled
-                    value={profileForm.email}
-                    className="w-full rounded-lg border border-stone-300 bg-stone-100 px-3 py-2.5 text-sm text-stone-600 cursor-not-allowed"
-                  />
-                  <p className="mt-1 text-xs text-stone-500">Το email δεν μπορεί να αλλάξει</p>
-                </label>
-                <label className="block text-sm font-semibold text-stone-700">
-                  <span className="inline-flex items-center gap-2 mb-1.5">
-                    <Phone className="h-4 w-4 text-emerald-700" /> Κινητό τηλέφωνο
-                  </span>
-                  <input
-                    type="tel"
-                    required
-                    value={profileForm.phone}
-                    onChange={(e) => {
-                      setProfileForm({ ...profileForm, phone: formatGreekPhoneInput(e.target.value) });
-                    }}
-                    className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
-                    placeholder="π.χ. +30 69 12345678"
-                  />
-                </label>
-                <div className="flex gap-3">
-                  <button
-                    type="submit"
-                    disabled={savingProfile}
-                    className="flex-1 rounded-lg bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:bg-emerald-400"
-                  >
-                    {savingProfile ? 'Αποθήκευση...' : 'Αποθήκευση'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setEditingProfile(false)}
-                    className="flex-1 rounded-lg border border-stone-300 px-4 py-2.5 text-sm font-semibold text-stone-700 transition hover:bg-stone-100"
-                  >
-                    Ακύρωση
-                  </button>
+                        if (!emailConfirmedAt) {
+                          setShowEmailVerificationWarning(true);
+                          return;
+                        }
+
+                        setSavingProfile(true);
+                        const trimmedFullName = profileForm.fullName.trim();
+                        const updateData: Record<string, string> = {
+                          full_name: trimmedFullName,
+                          phone: profileForm.phone.trim(),
+                        };
+
+                        if (!validateUsername(trimmedFullName)) {
+                          updateData.username = trimmedFullName;
+                        }
+
+                        const { error } = await supabase.auth.updateUser({
+                          data: updateData,
+                        });
+
+                        if (!error && userId) {
+                          await supabase.from('farmer_profiles').upsert({
+                            user_id: userId,
+                            contact_phone: profileForm.phone.trim(),
+                          });
+                        }
+
+                        if (error) {
+                          alert('Σφάλμα αποθήκευσης: ' + error.message);
+                        } else {
+                          setUserName(trimmedFullName);
+                          setUserPhone(profileForm.phone.trim());
+                          setEditingProfile(false);
+                        }
+                        setSavingProfile(false);
+                      }}
+                      className="space-y-4"
+                    >
+                      <label className="block text-sm font-semibold text-stone-700">
+                        <span className="mb-1.5 inline-flex items-center gap-2">
+                          <User className="h-4 w-4 text-emerald-700" /> Ονοματεπώνυμο
+                        </span>
+                        <input
+                          type="text"
+                          required
+                          value={profileForm.fullName}
+                          onChange={(e) => setProfileForm({ ...profileForm, fullName: e.target.value })}
+                          className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                          placeholder="π.χ. Γιάννης Παπαδόπουλος"
+                        />
+                      </label>
+                      <label className="block text-sm font-semibold text-stone-700">
+                        <span className="mb-1.5 inline-flex items-center gap-2">
+                          <Mail className="h-4 w-4 text-emerald-700" /> Email
+                        </span>
+                        <input
+                          type="email"
+                          disabled
+                          value={profileForm.email}
+                          className="w-full cursor-not-allowed rounded-lg border border-stone-300 bg-stone-100 px-3 py-2.5 text-sm text-stone-600"
+                        />
+                        <p className="mt-1 text-xs text-stone-500">Το email δεν μπορεί να αλλάξει</p>
+                      </label>
+                      <label className="block text-sm font-semibold text-stone-700">
+                        <span className="mb-1.5 inline-flex items-center gap-2">
+                          <Phone className="h-4 w-4 text-emerald-700" /> Κινητό τηλέφωνο
+                        </span>
+                        <input
+                          type="tel"
+                          required
+                          value={profileForm.phone}
+                          onChange={(e) => {
+                            setProfileForm({ ...profileForm, phone: formatGreekPhoneInput(e.target.value) });
+                          }}
+                          className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                          placeholder="π.χ. +30 69 12345678"
+                        />
+                      </label>
+                      <div className="flex gap-3">
+                        <button
+                          type="submit"
+                          disabled={savingProfile}
+                          className="flex-1 rounded-lg bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:bg-emerald-400"
+                        >
+                          {savingProfile ? 'Αποθήκευση...' : 'Αποθήκευση'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setEditingProfile(false)}
+                          className="flex-1 rounded-lg border border-stone-300 px-4 py-2.5 text-sm font-semibold text-stone-700 transition hover:bg-stone-100"
+                        >
+                          Ακύρωση
+                        </button>
+                      </div>
+                    </form>
+                  )}
+                </>
+              )}
+
+              {profileSubTab === 'dashboard' && (
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-500">Στοιχεία αγρότη</p>
+                    <p className="mt-3 text-lg font-semibold text-stone-900">{userName || 'Αγρότης'}</p>
+                    <p className="mt-1 text-sm text-stone-600">{userEmail || 'Δεν έχει καταχωρημένο email'}</p>
+                  </div>
+                  <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">Συνολικές εισπράξεις</p>
+                    <p className="mt-3 text-2xl font-bold text-emerald-900">{formatCurrency(totalRevenue)}</p>
+                    <p className="mt-1 text-sm text-emerald-700">Σύνολο από ολοκληρωμένες παραγγελίες</p>
+                  </div>
                 </div>
-              </form>
-            )}
+              )}
+
+              {profileSubTab === 'settings' && (
+                <div className="space-y-4">
+                  <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-500">Κατάσταση λογαριασμού</p>
+                    <p className="mt-2 text-sm text-stone-700">
+                      {emailConfirmedAt ? 'Το email έχει επιβεβαιωθεί.' : 'Η επιβεβαίωση email είναι ακόμη εκκρεμής.'}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-stone-200 bg-white p-4">
+                    <p className="text-sm font-semibold text-stone-900">Επεξεργασία στοιχείων</p>
+                    <p className="mt-2 text-sm text-stone-600">Από την καρτέλα “Προφίλ” μπορείτε να ενημερώσετε το όνομα και το κινητό σας.</p>
+                  </div>
+                </div>
+              )}
+
+              {profileSubTab === 'contacts' && (
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="rounded-xl border border-stone-200 bg-white p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-500">Email</p>
+                    <p className="mt-2 text-sm font-semibold text-stone-900">{userEmail || 'Δεν έχει καταχωρημένο email'}</p>
+                  </div>
+                  <div className="rounded-xl border border-stone-200 bg-white p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-500">Τηλέφωνο</p>
+                    <p className="mt-2 text-sm font-semibold text-stone-900">{userPhone || 'Δεν έχει καταχωρημένο τηλέφωνο'}</p>
+                  </div>
+                </div>
+              )}
+            </div>
           </section>
 
         </main>
