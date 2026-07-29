@@ -92,21 +92,7 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="mt-8 flex w-full max-w-xl items-center gap-3 rounded-[20px] border border-white/20 bg-[#143c2b]/70 px-4 py-3 shadow-xl shadow-black/15 backdrop-blur-sm sm:mt-10 sm:w-fit sm:max-w-none">
-            <div className="flex -space-x-2">
-              {['Μ', 'Γ', 'Ε', 'Κ'].map((initial, index) => (
-                <span key={initial} className={`grid h-8 w-8 place-items-center rounded-full border-2 border-[#143c2b] text-xs font-bold ${['bg-[#d97746]', 'bg-[#78a08c]', 'bg-[#cf8f51]', 'bg-[#b8605f]'][index]}`}>
-                  {initial}
-                </span>
-              ))}
-            </div>
-            <div>
-              <div className="flex items-center gap-1 text-[#ffd47d]">
-                {[1, 2, 3, 4, 5].map((star) => <Star key={star} size={14} fill="currentColor" />)}
-              </div>
-              <p className="mt-0.5 text-xs font-medium text-white/90">4.9/5 από 500+ καταναλωτές και αγρότες</p>
-            </div>
-          </div>
+          <div className="mt-8 flex min-h-[72px] w-full max-w-xl items-center justify-center rounded-[20px] border border-white/20 bg-[#143c2b]/70 px-4 py-3 shadow-xl shadow-black/15 backdrop-blur-sm sm:mt-10 sm:w-fit sm:max-w-none" />
         </div>
       </section>
 
