@@ -92,6 +92,7 @@ export default function FarmerDashboard() {
   const [showEmailVerificationWarning, setShowEmailVerificationWarning] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [showAvatarPreview, setShowAvatarPreview] = useState(false);
   const [productImages, setProductImages] = useState<File[]>([]);
   const [productImagesByProductId, setProductImagesByProductId] = useState<Record<number, Array<{ image_url: string; image_path: string; sort_order: number }>>>({});
   const [totalRevenue, setTotalRevenue] = useState(0);
@@ -1332,7 +1333,14 @@ export default function FarmerDashboard() {
                       <div className="flex items-center gap-4 rounded-lg border border-stone-200 bg-stone-50 p-4">
                         <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border border-stone-300 bg-white">
                           {avatarUrl ? (
-                            <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+                            <button
+                              type="button"
+                              onClick={() => setShowAvatarPreview(true)}
+                              className="h-full w-full"
+                              aria-label="Προεπισκόπηση φωτογραφίας προφίλ"
+                            >
+                              <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+                            </button>
                           ) : (
                             <span className="text-lg font-semibold text-stone-700">
                               {(userName ?? userEmail ?? 'F').charAt(0).toUpperCase()}
@@ -1680,6 +1688,27 @@ export default function FarmerDashboard() {
               </div>
             );
           })()}
+        </div>
+      )}
+
+      {showAvatarPreview && avatarUrl && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setShowAvatarPreview(false)}
+        >
+          <div className="relative max-h-[90vh] max-w-[90vw] rounded-2xl bg-white p-3 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              onClick={() => setShowAvatarPreview(false)}
+              className="absolute right-2 top-2 rounded-full bg-white/90 p-2 text-stone-700 shadow-sm transition hover:bg-white"
+              aria-label="Κλείσιμο προεπισκόπησης"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            <img src={avatarUrl} alt="Προεπισκόπηση φωτογραφίας προφίλ" className="max-h-[80vh] max-w-full rounded-xl object-contain" />
+          </div>
         </div>
       )}
 
