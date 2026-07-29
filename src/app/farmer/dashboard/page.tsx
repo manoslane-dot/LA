@@ -22,6 +22,7 @@ import {
   markNotificationsRead,
   type NotificationItem,
 } from '@/lib/notifications';
+import { uploadImageToSupabase } from '@/lib/supabase/images';
 
 interface Product {
   id: number;
@@ -89,6 +90,9 @@ export default function FarmerDashboard() {
   const [userPhone, setUserPhone] = useState('');
   const [emailConfirmedAt, setEmailConfirmedAt] = useState<string | null>(null);
   const [showEmailVerificationWarning, setShowEmailVerificationWarning] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [productImages, setProductImages] = useState<File[]>([]);
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [notificationCount, setNotificationCount] = useState(0);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
@@ -253,12 +257,15 @@ export default function FarmerDashboard() {
       // Fetch farmer profile for phone and revenue
       const { data: profileData } = await supabase
         .from('farmer_profiles')
-        .select('contact_phone, total_revenue')
+        .select('contact_phone, total_revenue, avatar_url')
         .eq('user_id', session.user.id)
         .maybeSingle();
       
       if (profileData?.contact_phone) {
         setUserPhone(profileData.contact_phone);
+      }
+      if (profileData?.avatar_url) {
+        setAvatarUrl(profileData.avatar_url);
       }
       if (profileData?.total_revenue !== undefined && profileData?.total_revenue !== null) {
         setTotalRevenue(profileData.total_revenue);
@@ -284,37 +291,88 @@ export default function FarmerDashboard() {
     void checkUserAndFetchData();
   }, [router, supabase, fetchProducts, fetchRequests]);
 
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !userId) return;
+
+    setUploadingAvatar(true);
+
+    try {
+      const { publicUrl } = await uploadImageToSupabase(supabase, 'avatars', userId, file);
+      const { error } = await supabase.from('farmer_profiles').upsert({
+        user_id: userId,
+        avatar_url: publicUrl,
+      });
+
+      if (error) throw error;
+
+      setAvatarUrl(publicUrl);
+    } catch (err) {
+      console.error('Σφάλμα upload avatar:', err);
+      alert('Δεν ήταν δυνατή η αποστολή της φωτογραφίας.');
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!prodTitle || !prodQuantity || !prodPrice || !userId) return;
 
-    // Check if email is verified before allowing product creation
     if (!emailConfirmedAt) {
       setShowEmailVerificationWarning(true);
       return;
     }
 
     setSubmittingProd(true);
-    const { error } = await supabase.from('products').insert([
-      { 
-        title: prodTitle, 
-        quantity: parseFloat(prodQuantity), 
-        price: parseFloat(prodPrice), 
-        unit: prodUnit,
-        status: '🟢 Ενεργό / Δημοσιευμένο',
-        farmer_id: userId,
-      }
-    ]);
 
-    if (!error) {
+    try {
+      const { data: insertedProduct, error: insertError } = await supabase
+        .from('products')
+        .insert([
+          {
+            title: prodTitle,
+            quantity: parseFloat(prodQuantity),
+            price: parseFloat(prodPrice),
+            unit: prodUnit,
+            status: '🟢 Ενεργό / Δημοσιευμένο',
+            farmer_id: userId,
+          },
+        ])
+        .select('id')
+        .single();
+
+      if (insertError) throw insertError;
+
+      if (insertedProduct?.id && productImages.length > 0) {
+        const imageRows = [] as Array<{ product_id: number; image_url: string; image_path: string; sort_order: number }>;
+
+        for (const [index, file] of productImages.entries()) {
+          const { publicUrl, path } = await uploadImageToSupabase(supabase, 'product-images', userId, file);
+          imageRows.push({
+            product_id: insertedProduct.id,
+            image_url: publicUrl,
+            image_path: path,
+            sort_order: index,
+          });
+        }
+
+        const { error: imageError } = await supabase.from('product_images').insert(imageRows);
+        if (imageError) throw imageError;
+      }
+
       setProdTitle('');
       setProdQuantity('');
       setProdPrice('');
+      setProductImages([]);
+      setShowNewProductForm(false);
       await fetchProducts(userId);
-    } else {
-      alert('Σφάλμα: ' + error.message);
+    } catch (err) {
+      console.error('Σφάλμα δημιουργίας προϊόντος:', err);
+      alert('Σφάλμα: ' + (err as Error).message);
+    } finally {
+      setSubmittingProd(false);
     }
-    setSubmittingProd(false);
   };
 
   // Νέα συνάρτηση διαγραφής προϊόντος
@@ -1004,6 +1062,22 @@ export default function FarmerDashboard() {
                     placeholder="π.χ. 8.50"
                   />
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Εικόνες προϊόντος (μέχρι 2)</label>
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    multiple
+                    onChange={(e) => {
+                      const files = Array.from(e.target.files ?? []).slice(0, 2);
+                      setProductImages(files);
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                  />
+                  {productImages.length > 0 && (
+                    <p className="mt-2 text-xs text-stone-500">Επιλεγμένες εικόνες: {productImages.length}</p>
+                  )}
+                </div>
                 <button
                   type="submit"
                   disabled={submittingProd}
@@ -1210,6 +1284,21 @@ export default function FarmerDashboard() {
                   <h2 className="mb-5 text-xl font-semibold text-stone-800">Το Προφίλ μου</h2>
                   {!editingProfile ? (
                     <div className="space-y-4">
+                      <div className="flex items-center gap-4 rounded-lg border border-stone-200 bg-stone-50 p-4">
+                        <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border border-stone-300 bg-white">
+                          {avatarUrl ? (
+                            <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+                          ) : (
+                            <span className="text-lg font-semibold text-stone-700">
+                              {(userName ?? userEmail ?? 'F').charAt(0).toUpperCase()}
+                            </span>
+                          )}
+                        </div>
+                        <label className="cursor-pointer rounded-lg border border-emerald-300 bg-white px-3 py-2 text-sm font-semibold text-emerald-700">
+                          <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={handleAvatarUpload} />
+                          {uploadingAvatar ? 'Αποστολή...' : 'Αλλαγή φωτογραφίας'}
+                        </label>
+                      </div>
                       <div className="rounded-lg border border-stone-200 bg-stone-50 p-4">
                         <p className="mb-1 text-xs font-semibold text-stone-600">Ονοματεπώνυμο</p>
                         <p className="text-base text-stone-900">{userName || 'Επανόθηση απαιτείται'}</p>

@@ -30,6 +30,7 @@ import {
   hasUserLocationCached,
   type UserLocation,
 } from '@/lib/geolocation';
+import { uploadImageToSupabase } from '@/lib/supabase/images';
 
 interface Product {
   id: number;
@@ -109,6 +110,8 @@ export default function ConsumerDashboard() {
   const [savingProfile, setSavingProfile] = useState(false);
   const [emailConfirmedAt, setEmailConfirmedAt] = useState<string | null>(null);
   const [showEmailVerificationWarning, setShowEmailVerificationWarning] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -422,6 +425,17 @@ export default function ConsumerDashboard() {
       setUserName(resolvedUsername || resolvedFullName || session.user.email || 'Καταναλωτής');
       setBuyerPhone((session.user.user_metadata?.phone as string | undefined) ?? '');
       setEmailConfirmedAt(session.user.email_confirmed_at ?? null);
+
+      const { data: profileData } = await supabase
+        .from('consumer_profiles')
+        .select('avatar_url')
+        .eq('user_id', session.user.id)
+        .maybeSingle();
+
+      if (profileData?.avatar_url) {
+        setAvatarUrl(profileData.avatar_url);
+      }
+
       await Promise.all([fetchProducts(), fetchRequests(session.user.id)]);
       setLoading(false);
     };
@@ -550,6 +564,33 @@ export default function ConsumerDashboard() {
     }
 
     setSubmitting(false);
+  };
+
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !buyerId) return;
+
+    setUploadingAvatar(true);
+    setErrorMsg('');
+
+    try {
+      const { publicUrl } = await uploadImageToSupabase(supabase, 'avatars', buyerId, file);
+      const { error } = await supabase.from('consumer_profiles').upsert({
+        user_id: buyerId,
+        avatar_url: publicUrl,
+      });
+
+      if (error) throw error;
+
+      setAvatarUrl(publicUrl);
+      setSuccessMsg('Το avatar αποθηκεύτηκε στο Supabase.');
+      window.setTimeout(() => setSuccessMsg(''), 4000);
+    } catch (err) {
+      console.error('Σφάλμα upload avatar:', err);
+      setErrorMsg('Δεν ήταν δυνατή η αποστολή της φωτογραφίας.');
+    } finally {
+      setUploadingAvatar(false);
+    }
   };
 
   const handleLogout = async () => {
@@ -1028,6 +1069,21 @@ export default function ConsumerDashboard() {
             <h2 className="mb-5 text-xl font-semibold text-stone-800">Το Προφίλ μου</h2>
             {!editingProfile ? (
               <div className="space-y-4">
+                <div className="flex items-center gap-4 rounded-lg border border-stone-200 bg-stone-50 p-4">
+                  <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border border-stone-300 bg-white">
+                    {avatarUrl ? (
+                      <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+                    ) : (
+                      <span className="text-lg font-semibold text-stone-700">
+                        {(userName ?? buyerEmail ?? 'U').charAt(0).toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+                  <label className="cursor-pointer rounded-lg border border-emerald-300 bg-white px-3 py-2 text-sm font-semibold text-emerald-700">
+                    <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={handleAvatarUpload} />
+                    {uploadingAvatar ? 'Αποστολή...' : 'Αλλαγή φωτογραφίας'}
+                  </label>
+                </div>
                 <div className="rounded-lg border border-stone-200 bg-stone-50 p-4">
                   <p className="text-xs font-semibold text-stone-600 mb-1">Ονοματεπώνυμο</p>
                   <p className="text-base text-stone-900">{userName || 'Επανόθηση απαιτείται'}</p>
