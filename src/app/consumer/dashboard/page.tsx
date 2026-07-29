@@ -113,6 +113,7 @@ export default function ConsumerDashboard() {
   const [showEmailVerificationWarning, setShowEmailVerificationWarning] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [showAvatarPreview, setShowAvatarPreview] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -620,8 +621,6 @@ export default function ConsumerDashboard() {
       if (error) throw error;
 
       setAvatarUrl(publicUrl);
-      setSuccessMsg('Το avatar αποθηκεύτηκε στο Supabase.');
-      window.setTimeout(() => setSuccessMsg(''), 4000);
     } catch (err) {
       console.error('Σφάλμα upload avatar:', err);
       setErrorMsg('Δεν ήταν δυνατή η αποστολή της φωτογραφίας.');
@@ -1108,6 +1107,27 @@ export default function ConsumerDashboard() {
             )}
           </section>
 
+          {showAvatarPreview && avatarUrl && (
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+              role="dialog"
+              aria-modal="true"
+              onClick={() => setShowAvatarPreview(false)}
+            >
+              <div className="relative max-h-[90vh] max-w-[90vw] rounded-2xl bg-white p-3 shadow-xl" onClick={(e) => e.stopPropagation()}>
+                <button
+                  type="button"
+                  onClick={() => setShowAvatarPreview(false)}
+                  className="absolute right-2 top-2 rounded-full bg-white/90 p-2 text-stone-700 shadow-sm transition hover:bg-white"
+                  aria-label="Κλείσιμο προεπισκόπησης"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+                <img src={avatarUrl} alt="Προεπισκόπηση φωτογραφίας προφίλ" className="max-h-[80vh] max-w-full rounded-xl object-contain" />
+              </div>
+            </div>
+          )}
+
           <section id="profile" className={activeTab !== 'profile' ? 'hidden' : 'rounded-lg border border-stone-200 bg-white p-6 shadow-sm'}>
             <h2 className="mb-5 text-xl font-semibold text-stone-800">Το Προφίλ μου</h2>
             {!editingProfile ? (
@@ -1115,7 +1135,14 @@ export default function ConsumerDashboard() {
                 <div className="flex items-center gap-4 rounded-lg border border-stone-200 bg-stone-50 p-4">
                   <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border border-stone-300 bg-white">
                     {avatarUrl ? (
-                      <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => setShowAvatarPreview(true)}
+                        className="h-full w-full"
+                        aria-label="Προεπισκόπηση φωτογραφίας προφίλ"
+                      >
+                        <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+                      </button>
                     ) : (
                       <span className="text-lg font-semibold text-stone-700">
                         {(userName ?? buyerEmail ?? 'U').charAt(0).toUpperCase()}
