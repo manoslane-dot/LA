@@ -892,8 +892,7 @@ export default function ConsumerDashboard() {
             </button>
           </div>
           <section id="overview" className="hidden border-b border-stone-200 pb-7 sm:block">
-            <p className="text-xs font-bold tracking-wide text-emerald-700">ΠΙΝΑΚΑΣ ΕΛΕΓΧΟΥ</p>
-            <h2 className="mt-2 text-3xl font-bold text-stone-900">Διαθέσιμα προϊόντα</h2>
+            <h2 className="text-3xl font-bold text-stone-900">Διαθέσιμα προϊόντα</h2>
             <p className="mt-2 text-sm text-stone-600">Ανακάλυψε φρέσκα προϊόντα και δες την κατάσταση των αιτημάτων σου.</p>
           </section>
 

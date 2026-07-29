@@ -899,8 +899,7 @@ export default function FarmerDashboard() {
           </div>
           <section id="overview" className={`hidden border-b border-stone-200 pb-7 flex-col gap-5 sm:flex sm:flex-row sm:items-end sm:justify-between${activeTab !== 'overview' ? ' hidden' : ''}`}>
             <div>
-              <p className="text-xs font-bold tracking-wide text-emerald-700">ΠΙΝΑΚΑΣ ΕΛΕΓΧΟΥ</p>
-              <h2 className="mt-2 text-3xl font-bold text-stone-900">Τα προϊόντα μου</h2>
+              <h2 className="text-3xl font-bold text-stone-900">Τα προϊόντα μου</h2>
               <p className="mt-2 text-sm text-stone-600">Παρακολούθησε την παραγωγή σου και διαχειρίσου τις καταχωρήσεις σου.</p>
             </div>
             <a href="#new-product" className="inline-flex items-center justify-center gap-2 rounded-md bg-emerald-700 hover:bg-emerald-800 text-white px-4 py-2.5 text-sm font-semibold transition-colors"><Plus className="h-4 w-4" />Νέο προϊόν</a>
