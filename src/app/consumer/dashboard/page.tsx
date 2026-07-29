@@ -654,60 +654,113 @@ export default function ConsumerDashboard() {
 
       <aside
         id="consumer-sidebar"
-        className={`fixed left-0 top-0 z-50 h-full w-64 border-r border-stone-200 bg-white shadow-2xl transition-transform duration-200 sm:hidden ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}
-        aria-label="Κινητή πλοήγηση"
+        className={`fixed inset-0 z-50 bg-white transition-transform duration-200 sm:hidden ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}
+        aria-label="Μενού λογαριασμού"
       >
-        <div className="flex items-center justify-between border-b border-stone-200 px-4 py-4">
-          <div>
-            <p className="text-sm font-semibold text-emerald-900">AgroDirect</p>
-            <p className="text-xs text-stone-500">Χώρος καταναλωτή</p>
-          </div>
-          <button
-            type="button"
-            onClick={() => setMobileMenuOpen(false)}
-            className="rounded-md p-2 text-stone-600 transition hover:bg-stone-100"
-            aria-label="Κλείσιμο μενού"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-        <nav className="space-y-2 px-3 py-4">
+        <div className="flex h-full flex-col overflow-y-auto">
+          <header className="flex items-center justify-between border-b border-stone-200 px-5 py-5">
+            <Link href="/" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2.5">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-700 text-white">
+                <Leaf className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-lg font-bold text-emerald-900">AgroDirect</p>
+                <p className="text-xs text-stone-500">Χώρος καταναλωτή</p>
+              </div>
+            </Link>
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(false)}
+              className="rounded-md p-2 text-stone-600 transition hover:bg-stone-100"
+              aria-label="Κλείσιμο μενού"
+            >
+              <X className="h-6 w-6" />
+            </button>
+          </header>
+
           <button
             type="button"
             onClick={() => {
               setActiveTab('profile');
               setMobileMenuOpen(false);
             }}
-            className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition ${activeTab === 'profile' ? 'bg-emerald-50 text-emerald-800' : 'text-stone-700 hover:bg-stone-100 hover:text-emerald-700'}`}
+            className="flex items-center gap-4 border-b border-stone-200 px-5 py-5 text-left"
           >
-            <User className="h-4 w-4" /> Προφίλ μου
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-xl font-bold text-emerald-800">
+              {(userName ?? buyerEmail ?? 'Χ').charAt(0).toUpperCase()}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-base font-semibold text-stone-900">{userName ?? 'Ο λογαριασμός μου'}</p>
+              <p className="mt-1 truncate text-sm text-stone-500">{buyerEmail ?? 'Στοιχεία λογαριασμού'}</p>
+            </div>
+            <ChevronDown className="h-5 w-5 -rotate-90 text-stone-400" />
           </button>
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTab('products');
-              setMobileMenuOpen(false);
-            }}
-            className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition ${activeTab === 'products' ? 'bg-emerald-50 text-emerald-800' : 'text-stone-700 hover:bg-stone-100 hover:text-emerald-700'}`}
-          >
-            <ShoppingBag className="h-4 w-4" /> Διαθέσιμα προϊόντα
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTab('requests');
-              setMobileMenuOpen(false);
-            }}
-            className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition ${activeTab === 'requests' ? 'bg-emerald-50 text-emerald-800' : 'text-stone-700 hover:bg-stone-100 hover:text-emerald-700'}`}
-          >
-            <ClipboardList className="h-4 w-4" /> Τα αιτήματά μου
-            {requests.filter((request) => request.status === 'pending' || request.status === 'confirmed').length > 0 && (
-              <span className="ml-auto rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">
-                {requests.filter((request) => request.status === 'pending' || request.status === 'confirmed').length}
-              </span>
-            )}
-          </button>
-        </nav>
+
+          <nav className="flex-1 px-4 py-4" aria-label="Κύρια πλοήγηση κινητού">
+            <p className="px-3 pb-2 text-xs font-semibold uppercase tracking-wide text-stone-400">Λογαριασμός</p>
+            <ul className="space-y-1">
+              <li>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveTab('profile');
+                    setMobileMenuOpen(false);
+                  }}
+                  className={`flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-base font-medium transition ${activeTab === 'profile' ? 'bg-emerald-50 text-emerald-800' : 'text-stone-700 hover:bg-stone-100 hover:text-emerald-700'}`}
+                >
+                  <User className="h-5 w-5" /> Προφίλ μου
+                  <ChevronDown className="ml-auto h-5 w-5 -rotate-90 text-stone-400" />
+                </button>
+              </li>
+            </ul>
+
+            <div className="my-4 border-t border-stone-100" />
+            <p className="px-3 pb-2 text-xs font-semibold uppercase tracking-wide text-stone-400">Αγορά</p>
+            <ul className="space-y-1">
+              <li>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveTab('products');
+                    setMobileMenuOpen(false);
+                  }}
+                  className={`flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-base font-medium transition ${activeTab === 'products' ? 'bg-emerald-50 text-emerald-800' : 'text-stone-700 hover:bg-stone-100 hover:text-emerald-700'}`}
+                >
+                  <ShoppingBag className="h-5 w-5" /> Διαθέσιμα προϊόντα
+                  <ChevronDown className="ml-auto h-5 w-5 -rotate-90 text-stone-400" />
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveTab('requests');
+                    setMobileMenuOpen(false);
+                  }}
+                  className={`flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-base font-medium transition ${activeTab === 'requests' ? 'bg-emerald-50 text-emerald-800' : 'text-stone-700 hover:bg-stone-100 hover:text-emerald-700'}`}
+                >
+                  <ClipboardList className="h-5 w-5" /> Τα αιτήματά μου
+                  {requests.filter((request) => request.status === 'pending' || request.status === 'confirmed').length > 0 && (
+                    <span className="ml-auto rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">
+                      {requests.filter((request) => request.status === 'pending' || request.status === 'confirmed').length}
+                    </span>
+                  )}
+                  <ChevronDown className="h-5 w-5 -rotate-90 text-stone-400" />
+                </button>
+              </li>
+            </ul>
+          </nav>
+
+          <div className="border-t border-stone-200 p-4">
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-base font-medium text-rose-700 transition hover:bg-rose-50"
+            >
+              <LogOut className="h-5 w-5" /> Αποσύνδεση
+            </button>
+          </div>
+        </div>
       </aside>
 
       {/* Main Content */}
