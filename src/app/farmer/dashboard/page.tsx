@@ -657,62 +657,70 @@ export default function FarmerDashboard() {
         <div className="fixed inset-0 z-40 bg-stone-950/40 sm:hidden" onClick={() => setMobileMenuOpen(false)} />
       )}
 
-      <aside className={`fixed inset-y-0 right-0 z-50 w-72 max-w-[85vw] border-l border-stone-200 bg-white shadow-2xl transition-transform duration-200 sm:hidden ${mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}>
-        <div className="flex items-center justify-between border-b border-stone-200 px-4 py-4">
-          <div>
-            <p className="text-sm font-semibold text-stone-900">Αγρότης</p>
-            <p className="text-xs text-stone-500">Πλοήγηση στο dashboard</p>
+      <aside id="logo-sidebar" className={`fixed left-0 top-0 z-50 h-full w-64 -translate-x-full border-r border-stone-200 bg-white shadow-2xl transition-transform duration-200 sm:hidden ${mobileMenuOpen ? 'translate-x-0' : ''}`} aria-label="Sidebar">
+        <div className="h-full overflow-y-auto border-b border-stone-200 px-3 py-4">
+          <div className="mb-5 flex items-center justify-between px-2.5">
+            <div>
+              <p className="text-sm font-semibold text-stone-900">AgroDirect</p>
+              <p className="text-xs text-stone-500">Χώρος αγρότη</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(false)}
+              className="rounded-md p-2 text-stone-600 transition hover:bg-stone-100"
+              aria-label="Κλείσιμο κινητού μενού"
+            >
+              <X className="h-5 w-5" />
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={() => setMobileMenuOpen(false)}
-            className="rounded-md p-2 text-stone-600 transition hover:bg-stone-100"
-            aria-label="Κλείσιμο κινητού μενού"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
 
-        <nav className="space-y-2 px-3 py-4" aria-label="Κινητή πλοήγηση">
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTab('profile');
-              setMobileMenuOpen(false);
-            }}
-            className={`flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-sm font-medium transition ${activeTab === 'profile' ? 'bg-emerald-50 text-emerald-800' : 'text-stone-700 hover:bg-stone-100'}`}
-          >
-            <User className="h-4 w-4" />
-            Το Προφίλ μου
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTab('overview');
-              setMobileMenuOpen(false);
-            }}
-            className={`flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-sm font-medium transition ${activeTab === 'overview' ? 'bg-emerald-50 text-emerald-800' : 'text-stone-700 hover:bg-stone-100'}`}
-          >
-            <Package className="h-4 w-4" />
-            Διαθέσιμα προϊόντα
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTab('requests');
-              setMobileMenuOpen(false);
-            }}
-            className={`flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-sm font-medium transition ${activeTab === 'requests' ? 'bg-emerald-50 text-emerald-800' : 'text-stone-700 hover:bg-stone-100'}`}
-          >
-            <ClipboardList className="h-4 w-4" />
-            Τα αιτήματά μου
-            {requests.filter((r) => r.status === 'pending').length > 0 && (
-              <span className="ml-auto rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">
-                {requests.filter((r) => r.status === 'pending').length}
-              </span>
-            )}
-          </button>
-        </nav>
+          <ul className="space-y-2 font-medium">
+            <li>
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab('profile');
+                  setMobileMenuOpen(false);
+                }}
+                className={`flex w-full items-center rounded-lg px-2 py-2.5 text-left text-sm transition ${activeTab === 'profile' ? 'bg-emerald-50 text-emerald-800' : 'text-stone-700 hover:bg-stone-100 hover:text-emerald-700'}`}
+              >
+                <User className="mr-3 h-4 w-4" />
+                Το Προφίλ μου
+              </button>
+            </li>
+            <li>
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab('overview');
+                  setMobileMenuOpen(false);
+                }}
+                className={`flex w-full items-center rounded-lg px-2 py-2.5 text-left text-sm transition ${activeTab === 'overview' ? 'bg-emerald-50 text-emerald-800' : 'text-stone-700 hover:bg-stone-100 hover:text-emerald-700'}`}
+              >
+                <Package className="mr-3 h-4 w-4" />
+                Διαθέσιμα προϊόντα
+              </button>
+            </li>
+            <li>
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab('requests');
+                  setMobileMenuOpen(false);
+                }}
+                className={`flex w-full items-center rounded-lg px-2 py-2.5 text-left text-sm transition ${activeTab === 'requests' ? 'bg-emerald-50 text-emerald-800' : 'text-stone-700 hover:bg-stone-100 hover:text-emerald-700'}`}
+              >
+                <ClipboardList className="mr-3 h-4 w-4" />
+                Τα αιτήματά μου
+                {requests.filter((r) => r.status === 'pending').length > 0 && (
+                  <span className="ml-auto rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">
+                    {requests.filter((r) => r.status === 'pending').length}
+                  </span>
+                )}
+              </button>
+            </li>
+          </ul>
+        </div>
       </aside>
 
       {/* Main Content */}
@@ -723,13 +731,18 @@ export default function FarmerDashboard() {
           <p className="hidden lg:block text-sm text-stone-500">Πίνακας ελέγχου αγρότη</p>
           <div className="flex items-center gap-2">
             <button
+              data-drawer-target="logo-sidebar"
+              data-drawer-toggle="logo-sidebar"
+              aria-controls="logo-sidebar"
               type="button"
               onClick={() => setMobileMenuOpen(true)}
-              className="inline-flex items-center gap-2 rounded-md border border-stone-300 px-3 py-2 text-sm font-semibold text-stone-700 transition hover:bg-stone-100 sm:hidden"
+              className="inline-flex items-center rounded-md border border-stone-300 bg-transparent p-2 text-stone-700 transition hover:bg-stone-100 focus:outline-none focus:ring-2 focus:ring-emerald-200 sm:hidden"
               aria-label="Άνοιγμα κινητού μενού"
             >
-              <Menu className="h-4 w-4" />
-              Μενού
+              <span className="sr-only">Open sidebar</span>
+              <svg className="h-6 w-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                <path stroke="currentColor" strokeLinecap="round" strokeWidth="2" d="M5 7h14M5 12h14M5 17h10" />
+              </svg>
             </button>
             <div className="relative" ref={notificationRef}>
               <button
