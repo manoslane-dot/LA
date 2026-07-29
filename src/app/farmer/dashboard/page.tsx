@@ -93,6 +93,7 @@ export default function FarmerDashboard() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [productImages, setProductImages] = useState<File[]>([]);
+  const [productImagesByProductId, setProductImagesByProductId] = useState<Record<number, Array<{ image_url: string; image_path: string; sort_order: number }>>>({});
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [notificationCount, setNotificationCount] = useState(0);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
@@ -177,14 +178,50 @@ export default function FarmerDashboard() {
     return () => window.removeEventListener('storage', handleNotificationStorage);
   }, [userId]);
 
+  const fetchProductImages = useCallback(async (productIds: number[]) => {
+    if (productIds.length === 0) {
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('product_images')
+        .select('product_id, image_url, image_path, sort_order')
+        .in('product_id', productIds)
+        .order('sort_order', { ascending: true })
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        console.warn('Σφάλμα φόρτωσης εικόνων προϊόντων:', error.message);
+        return;
+      }
+
+      const mappedImages: Record<number, Array<{ image_url: string; image_path: string; sort_order: number }>> = {};
+      for (const image of (data ?? []) as Array<{ product_id: number; image_url: string; image_path: string; sort_order: number }>) {
+        const productId = Number(image.product_id);
+        if (!Number.isFinite(productId)) continue;
+        if (!mappedImages[productId]) {
+          mappedImages[productId] = [];
+        }
+        mappedImages[productId].push(image);
+      }
+
+      setProductImagesByProductId((prev) => ({ ...prev, ...mappedImages }));
+    } catch (err) {
+      console.warn('Exception loading product images:', err);
+    }
+  }, [supabase]);
+
   const fetchProducts = useCallback(async (farmerId: string) => {
     const { data, error } = await supabase.from('products').select('*').eq('farmer_id', farmerId);
     if (error) {
       console.error('Error fetching products:', error.message);
     } else if (data) {
-      setProducts(data as Product[]);
+      const nextProducts = data as Product[];
+      setProducts(nextProducts);
+      void fetchProductImages(nextProducts.map((product) => product.id));
     }
-  }, [supabase]);
+  }, [fetchProductImages, supabase]);
 
   const fetchRequests = useCallback(async (farmerId: string) => {
     const { data, error } = await supabase
@@ -1107,11 +1144,18 @@ export default function FarmerDashboard() {
                 <p className="text-gray-500 text-sm">Δεν έχετε καταχωρήσει προϊόντα προς πώληση.</p>
               ) : (
                 <ul className="divide-y divide-gray-200">
-                  {products.map((prod) => (
-                    <li key={prod.id} className="py-3">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <p className="font-medium text-gray-800">{prod.title}</p>
+                  {products.map((prod) => {
+                    const productImages = productImagesByProductId[prod.id] ?? [];
+                    return (
+                      <li key={prod.id} className="py-3">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0 flex-1">
+                            {productImages.length > 0 && (
+                              <div className="mb-3 overflow-hidden rounded-md border border-stone-200">
+                                <img src={productImages[0].image_url} alt={prod.title} className="h-28 w-full object-cover" />
+                              </div>
+                            )}
+                            <p className="font-medium text-gray-800">{prod.title}</p>
                           <p className="text-xs text-gray-500">Ποσότητα: {prod.quantity} {getUnitLabel(prod.unit, prod.quantity)}</p>
                           {editingPriceId === prod.id ? (
                             <div className="mt-2 flex items-center gap-2">
@@ -1145,32 +1189,33 @@ export default function FarmerDashboard() {
                           ) : (
                             <p className="mt-1 text-sm font-semibold text-emerald-700">Τιμή: {prod.price.toFixed(2)} €</p>
                           )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="hidden sm:inline px-2.5 py-1 text-xs font-semibold text-emerald-800 bg-emerald-50 rounded-full">
+                              {prod.status}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleStartPriceEdit(prod)}
+                              className="rounded-md p-2 text-stone-400 transition-colors hover:bg-emerald-50 hover:text-emerald-700"
+                              title="Αλλαγή τιμής"
+                              aria-label={`Αλλαγή τιμής για ${prod.title}`}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteProduct(prod.id)}
+                              aria-label={`Διαγραφή ${prod.title}`}
+                              title="Διαγραφή προϊόντος"
+                              className="text-stone-400 hover:text-red-700 p-2 hover:bg-red-50 rounded-md transition-colors"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span className="hidden sm:inline px-2.5 py-1 text-xs font-semibold text-emerald-800 bg-emerald-50 rounded-full">
-                            {prod.status}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => handleStartPriceEdit(prod)}
-                            className="rounded-md p-2 text-stone-400 transition-colors hover:bg-emerald-50 hover:text-emerald-700"
-                            title="Αλλαγή τιμής"
-                            aria-label={`Αλλαγή τιμής για ${prod.title}`}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteProduct(prod.id)}
-                            aria-label={`Διαγραφή ${prod.title}`}
-                            title="Διαγραφή προϊόντος"
-                            className="text-stone-400 hover:text-red-700 p-2 hover:bg-red-50 rounded-md transition-colors"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </div>
-                      </div>
-                    </li>
-                  ))}
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
             </div>

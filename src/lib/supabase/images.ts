@@ -85,10 +85,23 @@ export async function uploadImageToSupabase(
     throw new Error('Δεν δημιουργήθηκε αρχείο στο Supabase Storage');
   }
 
-  const { data: publicData } = supabase.storage.from(bucket).getPublicUrl(path);
+  let publicUrl = path;
+
+  try {
+    const { data: signedData, error: signedError } = await supabase.storage.from(bucket).createSignedUrl(path, 60 * 60 * 24 * 7);
+    if (!signedError && signedData?.signedUrl) {
+      publicUrl = signedData.signedUrl;
+    } else {
+      const { data: publicData } = supabase.storage.from(bucket).getPublicUrl(path);
+      publicUrl = publicData.publicUrl;
+    }
+  } catch {
+    const { data: publicData } = supabase.storage.from(bucket).getPublicUrl(path);
+    publicUrl = publicData.publicUrl;
+  }
 
   return {
     path,
-    publicUrl: publicData.publicUrl,
+    publicUrl,
   };
 }

@@ -88,6 +88,7 @@ export default function ConsumerDashboard() {
   const [farmerProfiles, setFarmerProfiles] = useState<Record<string, { contact_phone: string | null; full_name: string | null }>>({});
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [farmerServiceAreas, setFarmerServiceAreas] = useState<Record<string, string[]>>({});
+  const [productImagesByProductId, setProductImagesByProductId] = useState<Record<number, Array<{ image_url: string; image_path: string; sort_order: number }>>>({});
   const [loadingLocation, setLoadingLocation] = useState(false);
   const [useDistance, setUseDistance] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -235,6 +236,40 @@ export default function ConsumerDashboard() {
     return () => window.removeEventListener('storage', handleNotificationStorage);
   }, [buyerId]);
 
+  const fetchProductImages = useCallback(async (productIds: number[]) => {
+    if (productIds.length === 0) {
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('product_images')
+        .select('product_id, image_url, image_path, sort_order')
+        .in('product_id', productIds)
+        .order('sort_order', { ascending: true })
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        console.warn('Σφάλμα φόρτωσης εικόνων προϊόντων:', error.message);
+        return;
+      }
+
+      const mappedImages: Record<number, Array<{ image_url: string; image_path: string; sort_order: number }>> = {};
+      for (const image of (data ?? []) as Array<{ product_id: number; image_url: string; image_path: string; sort_order: number }>) {
+        const productId = Number(image.product_id);
+        if (!Number.isFinite(productId)) continue;
+        if (!mappedImages[productId]) {
+          mappedImages[productId] = [];
+        }
+        mappedImages[productId].push(image);
+      }
+
+      setProductImagesByProductId((prev) => ({ ...prev, ...mappedImages }));
+    } catch (err) {
+      console.warn('Exception loading product images:', err);
+    }
+  }, [supabase]);
+
   const fetchProducts = useCallback(async () => {
     try {
       const { data, error } = await supabase
@@ -252,13 +287,15 @@ export default function ConsumerDashboard() {
         return;
       }
 
-      setProducts((data ?? []) as Product[]);
+      const nextProducts = (data ?? []) as Product[];
+      setProducts(nextProducts);
       setErrorMsg('');
+      void fetchProductImages(nextProducts.map((product) => product.id));
     } catch (err) {
       console.error('Exception loading products:', err);
       setErrorMsg('Σφάλμα κατά τη φόρτωση προϊόντων.');
     }
-  }, [supabase]);
+  }, [fetchProductImages, supabase]);
 
   const fetchRequests = useCallback(async (userId: string) => {
     try {
@@ -991,8 +1028,14 @@ export default function ConsumerDashboard() {
                 <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 {filteredAndSortedProducts.map((item) => {
                   const itemDistance = (item as any).distance_km;
+                  const productImages = productImagesByProductId[item.id] ?? [];
                   return (
                     <article key={item.id} className="rounded-lg border border-emerald-200 bg-white p-4 flex flex-col">
+                      {productImages.length > 0 && (
+                        <div className="mb-3 overflow-hidden rounded-md border border-stone-200">
+                          <img src={productImages[0].image_url} alt={item.title} className="h-36 w-full object-cover" />
+                        </div>
+                      )}
                       <div className="mb-2 flex items-start justify-between gap-3">
                         <h3 className="text-base font-bold text-stone-900">{item.title}</h3>
                         <span className="rounded-full bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-800">{item.status}</span>
