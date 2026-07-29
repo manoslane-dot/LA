@@ -893,7 +893,7 @@ export default function ConsumerDashboard() {
           </div>
           <section id="overview" className="border-b border-stone-200 pb-7">
             <p className="text-xs font-bold tracking-wide text-emerald-700">ΠΙΝΑΚΑΣ ΕΛΕΓΧΟΥ</p>
-            <h2 className="mt-2 text-3xl font-bold text-stone-900">Καλώς ήρθες, {userName ?? buyerEmail}</h2>
+            <h2 className="mt-2 text-3xl font-bold text-stone-900">Διαθέσιμα προϊόντα</h2>
             <p className="mt-2 text-sm text-stone-600">Ανακάλυψε φρέσκα προϊόντα και δες την κατάσταση των αιτημάτων σου.</p>
           </section>
 
@@ -901,7 +901,7 @@ export default function ConsumerDashboard() {
           {errorMsg && !selectedProduct && <div className="rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{errorMsg}</div>}
 
           <section id="products" className={activeTab !== 'products' ? 'hidden' : ''}>
-            <h2 className="mb-4 text-xl font-semibold text-stone-800">Dιαθέσιμα προϊόντα</h2>
+            <h2 className="mb-4 text-xl font-semibold text-stone-800">Διαθέσιμα προϊόντα</h2>
             
             {/* Search και Filter */}
             <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center">

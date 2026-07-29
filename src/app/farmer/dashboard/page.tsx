@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Bell, CircleDollarSign, ClipboardList, LayoutDashboard, Leaf, LogOut, Mail, Menu, Package, Pencil, Phone, Plus, Settings, ShoppingBag, Trash2, User, X } from 'lucide-react';
+import { Bell, ChevronDown, CircleDollarSign, ClipboardList, LayoutDashboard, Leaf, LogOut, Mail, Menu, Package, Pencil, Phone, Plus, Settings, ShoppingBag, Trash2, User, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { formatGreekPhoneInput } from '@/lib/auth/contactInfo';
 import { sanitizePhoneForTel } from '@/lib/serviceAreas';
@@ -657,13 +657,18 @@ export default function FarmerDashboard() {
         <div className="fixed inset-0 z-40 bg-stone-950/40 sm:hidden" onClick={() => setMobileMenuOpen(false)} />
       )}
 
-      <aside id="logo-sidebar" className={`fixed left-0 top-0 z-50 h-full w-64 -translate-x-full border-r border-stone-200 bg-white shadow-2xl transition-transform duration-200 sm:hidden ${mobileMenuOpen ? 'translate-x-0' : ''}`} aria-label="Sidebar">
-        <div className="h-full overflow-y-auto border-b border-stone-200 px-3 py-4">
-          <div className="mb-5 flex items-center justify-between px-2.5">
-            <div>
-              <p className="text-sm font-semibold text-stone-900">AgroDirect</p>
-              <p className="text-xs text-stone-500">Χώρος αγρότη</p>
-            </div>
+      <aside id="logo-sidebar" className={`fixed inset-0 z-50 bg-white transition-transform duration-200 sm:hidden ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`} aria-label="Sidebar">
+        <div className="flex h-full flex-col overflow-y-auto">
+          <header className="flex items-center justify-between border-b border-stone-200 px-5 py-5">
+            <Link href="/" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2.5">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-700 text-white">
+                <Leaf className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-lg font-bold text-emerald-900">AgroDirect</p>
+                <p className="text-xs text-stone-500">Χώρος αγρότη</p>
+              </div>
+            </Link>
             <button
               type="button"
               onClick={() => setMobileMenuOpen(false)}
@@ -672,54 +677,93 @@ export default function FarmerDashboard() {
             >
               <X className="h-5 w-5" />
             </button>
-          </div>
+          </header>
 
-          <ul className="space-y-2 font-medium">
-            <li>
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveTab('profile');
-                  setMobileMenuOpen(false);
-                }}
-                className={`flex w-full items-center rounded-lg px-2 py-2.5 text-left text-sm transition ${activeTab === 'profile' ? 'bg-emerald-50 text-emerald-800' : 'text-stone-700 hover:bg-stone-100 hover:text-emerald-700'}`}
-              >
-                <User className="mr-3 h-4 w-4" />
-                Το Προφίλ μου
-              </button>
-            </li>
-            <li>
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveTab('overview');
-                  setMobileMenuOpen(false);
-                }}
-                className={`flex w-full items-center rounded-lg px-2 py-2.5 text-left text-sm transition ${activeTab === 'overview' ? 'bg-emerald-50 text-emerald-800' : 'text-stone-700 hover:bg-stone-100 hover:text-emerald-700'}`}
-              >
-                <Package className="mr-3 h-4 w-4" />
-                Διαθέσιμα προϊόντα
-              </button>
-            </li>
-            <li>
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveTab('requests');
-                  setMobileMenuOpen(false);
-                }}
-                className={`flex w-full items-center rounded-lg px-2 py-2.5 text-left text-sm transition ${activeTab === 'requests' ? 'bg-emerald-50 text-emerald-800' : 'text-stone-700 hover:bg-stone-100 hover:text-emerald-700'}`}
-              >
-                <ClipboardList className="mr-3 h-4 w-4" />
-                Τα αιτήματά μου
-                {requests.filter((r) => r.status === 'pending').length > 0 && (
-                  <span className="ml-auto rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">
-                    {requests.filter((r) => r.status === 'pending').length}
-                  </span>
-                )}
-              </button>
-            </li>
-          </ul>
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('profile');
+              setMobileMenuOpen(false);
+            }}
+            className="flex items-center gap-4 border-b border-stone-200 px-5 py-5 text-left"
+          >
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-xl font-bold text-emerald-800">
+              {(userName ?? userEmail ?? 'Α').charAt(0).toUpperCase()}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-base font-semibold text-stone-900">{userName ?? 'Ο λογαριασμός μου'}</p>
+              <p className="mt-1 truncate text-sm text-stone-500">{userEmail ?? 'Στοιχεία λογαριασμού'}</p>
+            </div>
+            <ChevronDown className="h-5 w-5 -rotate-90 text-stone-400" />
+          </button>
+
+          <nav className="flex-1 px-4 py-4" aria-label="Κύρια πλοήγηση κινητού">
+            <p className="px-3 pb-2 text-xs font-semibold uppercase tracking-wide text-stone-400">Λογαριασμός</p>
+            <ul className="space-y-1">
+              <li>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveTab('profile');
+                    setMobileMenuOpen(false);
+                  }}
+                  className={`flex w-full items-center rounded-lg px-3 py-3 text-left text-base font-medium transition ${activeTab === 'profile' ? 'bg-emerald-50 text-emerald-800' : 'text-stone-700 hover:bg-stone-100 hover:text-emerald-700'}`}
+                >
+                  <User className="mr-3 h-5 w-5" />
+                  Το Προφίλ μου
+                  <ChevronDown className="ml-auto h-5 w-5 -rotate-90 text-stone-400" />
+                </button>
+              </li>
+            </ul>
+
+            <div className="my-4 border-t border-stone-100" />
+            <p className="px-3 pb-2 text-xs font-semibold uppercase tracking-wide text-stone-400">Προϊόντα</p>
+            <ul className="space-y-1">
+              <li>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveTab('overview');
+                    setMobileMenuOpen(false);
+                  }}
+                  className={`flex w-full items-center rounded-lg px-3 py-3 text-left text-base font-medium transition ${activeTab === 'overview' ? 'bg-emerald-50 text-emerald-800' : 'text-stone-700 hover:bg-stone-100 hover:text-emerald-700'}`}
+                >
+                  <Package className="mr-3 h-5 w-5" />
+                  Τα προϊόντα μου
+                  <ChevronDown className="ml-auto h-5 w-5 -rotate-90 text-stone-400" />
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveTab('requests');
+                    setMobileMenuOpen(false);
+                  }}
+                  className={`flex w-full items-center rounded-lg px-3 py-3 text-left text-base font-medium transition ${activeTab === 'requests' ? 'bg-emerald-50 text-emerald-800' : 'text-stone-700 hover:bg-stone-100 hover:text-emerald-700'}`}
+                >
+                  <ClipboardList className="mr-3 h-5 w-5" />
+                  Τα αιτήματά μου
+                  {requests.filter((r) => r.status === 'pending').length > 0 && (
+                    <span className="ml-auto rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">
+                      {requests.filter((r) => r.status === 'pending').length}
+                    </span>
+                  )}
+                  <ChevronDown className="ml-auto h-5 w-5 -rotate-90 text-stone-400" />
+                </button>
+              </li>
+            </ul>
+          </nav>
+
+          <div className="border-t border-stone-200 p-4">
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-base font-medium text-rose-700 transition hover:bg-rose-50"
+            >
+              <LogOut className="h-5 w-5" /> Αποσύνδεση
+            </button>
+          </div>
         </div>
       </aside>
 
@@ -856,7 +900,7 @@ export default function FarmerDashboard() {
           <section id="overview" className={`border-b border-stone-200 pb-7 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between${activeTab !== 'overview' ? ' hidden' : ''}`}>
             <div>
               <p className="text-xs font-bold tracking-wide text-emerald-700">ΠΙΝΑΚΑΣ ΕΛΕΓΧΟΥ</p>
-              <h2 className="mt-2 text-3xl font-bold text-stone-900">Καλώς ήρθες, {userName ?? userEmail}</h2>
+              <h2 className="mt-2 text-3xl font-bold text-stone-900">Τα προϊόντα μου</h2>
               <p className="mt-2 text-sm text-stone-600">Παρακολούθησε την παραγωγή σου και διαχειρίσου τις καταχωρήσεις σου.</p>
             </div>
             <a href="#new-product" className="inline-flex items-center justify-center gap-2 rounded-md bg-emerald-700 hover:bg-emerald-800 text-white px-4 py-2.5 text-sm font-semibold transition-colors"><Plus className="h-4 w-4" />Νέο προϊόν</a>
