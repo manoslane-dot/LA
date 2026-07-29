@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Bell, CircleDollarSign, ClipboardList, LayoutDashboard, Leaf, LogOut, Mail, Package, Pencil, Phone, Plus, Settings, ShoppingBag, Trash2, User } from 'lucide-react';
+import { Bell, CircleDollarSign, ClipboardList, LayoutDashboard, Leaf, LogOut, Mail, Menu, Package, Pencil, Phone, Plus, Settings, ShoppingBag, Trash2, User, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { formatGreekPhoneInput } from '@/lib/auth/contactInfo';
 import { sanitizePhoneForTel } from '@/lib/serviceAreas';
@@ -82,6 +82,7 @@ export default function FarmerDashboard() {
   const [userId, setUserId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'requests' | 'profile'>('overview');  // Profile info shown in overview header
   const [profileSubTab, setProfileSubTab] = useState<'profile' | 'dashboard' | 'settings' | 'contacts'>('profile');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [editingProfile, setEditingProfile] = useState(false);
   const [profileForm, setProfileForm] = useState({ fullName: '', email: '', phone: '' });
   const [savingProfile, setSavingProfile] = useState(false);
@@ -652,6 +653,68 @@ export default function FarmerDashboard() {
         </nav>
       </aside>
 
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-40 bg-stone-950/40 lg:hidden" onClick={() => setMobileMenuOpen(false)} />
+      )}
+
+      <aside className={`fixed inset-y-0 right-0 z-50 w-72 max-w-[85vw] border-l border-stone-200 bg-white shadow-2xl transition-transform duration-200 lg:hidden ${mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+        <div className="flex items-center justify-between border-b border-stone-200 px-4 py-4">
+          <div>
+            <p className="text-sm font-semibold text-stone-900">Αγρότης</p>
+            <p className="text-xs text-stone-500">Πλοήγηση στο dashboard</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen(false)}
+            className="rounded-md p-2 text-stone-600 transition hover:bg-stone-100"
+            aria-label="Κλείσιμο κινητού μενού"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <nav className="space-y-2 px-3 py-4" aria-label="Κινητή πλοήγηση">
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('profile');
+              setMobileMenuOpen(false);
+            }}
+            className={`flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-sm font-medium transition ${activeTab === 'profile' ? 'bg-emerald-50 text-emerald-800' : 'text-stone-700 hover:bg-stone-100'}`}
+          >
+            <User className="h-4 w-4" />
+            Το Προφίλ μου
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('overview');
+              setMobileMenuOpen(false);
+            }}
+            className={`flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-sm font-medium transition ${activeTab === 'overview' ? 'bg-emerald-50 text-emerald-800' : 'text-stone-700 hover:bg-stone-100'}`}
+          >
+            <Package className="h-4 w-4" />
+            Διαθέσιμα προϊόντα
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('requests');
+              setMobileMenuOpen(false);
+            }}
+            className={`flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-sm font-medium transition ${activeTab === 'requests' ? 'bg-emerald-50 text-emerald-800' : 'text-stone-700 hover:bg-stone-100'}`}
+          >
+            <ClipboardList className="h-4 w-4" />
+            Τα αιτήματά μου
+            {requests.filter((r) => r.status === 'pending').length > 0 && (
+              <span className="ml-auto rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">
+                {requests.filter((r) => r.status === 'pending').length}
+              </span>
+            )}
+          </button>
+        </nav>
+      </aside>
+
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
         {/* Top Header */}
@@ -659,6 +722,14 @@ export default function FarmerDashboard() {
           <Link href="/" className="flex items-center gap-2 lg:hidden"><Leaf className="h-5 w-5 text-emerald-700" /><span className="font-bold text-emerald-900">AgroDirect</span></Link>
           <p className="hidden lg:block text-sm text-stone-500">Πίνακας ελέγχου αγρότη</p>
           <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(true)}
+              className="inline-flex items-center justify-center rounded-md border border-stone-300 p-2 text-stone-700 transition hover:bg-stone-100 lg:hidden"
+              aria-label="Άνοιγμα κινητού μενού"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
             <div className="relative" ref={notificationRef}>
               <button
                 type="button"
