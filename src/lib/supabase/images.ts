@@ -69,7 +69,7 @@ export async function uploadImageToSupabase(
   const compressedFile = await compressAndNormalizeImage(file);
 
   const extension = compressedFile.name.split('.').pop() || 'webp';
-  const path = `${bucket}/${userId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${extension}`;
+  const path = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${extension}`;
 
   const { data, error } = await supabase.storage.from(bucket).upload(path, compressedFile, {
     cacheControl: '3600',
