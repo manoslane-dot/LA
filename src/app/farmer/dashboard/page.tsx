@@ -105,6 +105,7 @@ export default function FarmerDashboard() {
   const [prodPrice, setProdPrice] = useState('');
   const [prodUnit, setProdUnit] = useState('κιλό');
   const [submittingProd, setSubmittingProd] = useState(false);
+  const [showNewProductForm, setShowNewProductForm] = useState(false);
   const [editingPriceId, setEditingPriceId] = useState<number | null>(null);
   const [priceDraft, setPriceDraft] = useState('');
   const [updatingPrice, setUpdatingPrice] = useState(false);
@@ -904,7 +905,13 @@ export default function FarmerDashboard() {
               )}
             </div>
             {activeTab === 'overview' && (
-              <a href="#new-product" className="inline-flex items-center justify-center gap-2 rounded-md bg-emerald-700 hover:bg-emerald-800 text-white px-4 py-2.5 text-sm font-semibold transition-colors"><Plus className="h-4 w-4" />Νέο προϊόν</a>
+              <button
+                type="button"
+                onClick={() => setShowNewProductForm((prev) => !prev)}
+                className="inline-flex items-center justify-center gap-2 rounded-md bg-emerald-700 hover:bg-emerald-800 text-white px-4 py-2.5 text-sm font-semibold transition-colors"
+              >
+                <Plus className="h-4 w-4" />Νέο προϊόν
+              </button>
             )}
           </section>
 
@@ -928,10 +935,11 @@ export default function FarmerDashboard() {
           
           {/* Grid για Προϊόντα Προς Πώληση */}
           <div className={`grid grid-cols-1 md:grid-cols-2 gap-8${activeTab !== 'overview' ? ' hidden' : ''}`}>
-            <div id="new-product" className="bg-white p-6 rounded-lg shadow-sm border border-stone-200">
-              <h3 className="flex items-center gap-2 text-lg font-bold text-stone-900 mb-2"><Plus className="h-5 w-5 text-emerald-700" />Καταχώρηση νέου προϊόντος</h3>
-              <p className="text-sm text-stone-500 mb-5">Δημοσίευσε ένα προϊόν για τους αγοραστές σου.</p>
-              <form onSubmit={handleAddProduct} className="space-y-4">
+            {showNewProductForm && activeTab === 'overview' && (
+              <div id="new-product" className="bg-white p-6 rounded-lg shadow-sm border border-stone-200">
+                <h3 className="flex items-center gap-2 text-lg font-bold text-stone-900 mb-2"><Plus className="h-5 w-5 text-emerald-700" />Καταχώρηση νέου προϊόντος</h3>
+                <p className="text-sm text-stone-500 mb-5">Δημοσίευσε ένα προϊόν για τους αγοραστές σου.</p>
+                <form onSubmit={handleAddProduct} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Τίτλος Προϊόντος</label>
                   <input
@@ -990,8 +998,9 @@ export default function FarmerDashboard() {
                 >
                   <Plus className="h-4 w-4" />{submittingProd ? 'Αποθήκευση...' : 'Δημοσίευση προϊόντος'}
                 </button>
-              </form>
-            </div>
+                </form>
+              </div>
+            )}
 
             <div id="products" className="bg-white p-6 rounded-lg shadow-sm border border-stone-200">
               <h3 className="flex items-center gap-2 text-lg font-bold text-stone-900 mb-2"><Package className="h-5 w-5 text-emerald-700" />Τα προϊόντα μου</h3>
