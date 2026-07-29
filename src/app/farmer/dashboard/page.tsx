@@ -93,6 +93,8 @@ export default function FarmerDashboard() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [showAvatarPreview, setShowAvatarPreview] = useState(false);
+  const [selectedProductImage, setSelectedProductImage] = useState<string | null>(null);
+  const [showProductImagePreview, setShowProductImagePreview] = useState(false);
   const [productImages, setProductImages] = useState<File[]>([]);
   const [productImagesByProductId, setProductImagesByProductId] = useState<Record<number, Array<{ image_url: string; image_path: string; sort_order: number }>>>({});
   const [totalRevenue, setTotalRevenue] = useState(0);
@@ -1152,9 +1154,17 @@ export default function FarmerDashboard() {
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0 flex-1">
                             {productImages.length > 0 && (
-                              <div className="mb-3 overflow-hidden rounded-md border border-stone-200">
-                                <img src={productImages[0].image_url} alt={prod.title} className="h-28 w-full object-cover" />
-                              </div>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSelectedProductImage(productImages[0].image_url);
+                                  setShowProductImagePreview(true);
+                                }}
+                                className="mb-3 flex h-44 w-full items-center justify-center overflow-hidden rounded-md border border-stone-200 bg-stone-50"
+                                aria-label={`Προεπισκόπηση εικόνας για ${prod.title}`}
+                              >
+                                <img src={productImages[0].image_url} alt={prod.title} className="max-h-full max-w-full object-contain p-2" />
+                              </button>
                             )}
                             <p className="font-medium text-gray-800">{prod.title}</p>
                           <p className="text-xs text-gray-500">Ποσότητα: {prod.quantity} {getUnitLabel(prod.unit, prod.quantity)}</p>
@@ -1688,6 +1698,27 @@ export default function FarmerDashboard() {
               </div>
             );
           })()}
+        </div>
+      )}
+
+      {showProductImagePreview && selectedProductImage && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setShowProductImagePreview(false)}
+        >
+          <div className="relative max-h-[90vh] max-w-[90vw] rounded-2xl bg-white p-3 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              onClick={() => setShowProductImagePreview(false)}
+              className="absolute right-2 top-2 rounded-full bg-white/90 p-2 text-stone-700 shadow-sm transition hover:bg-white"
+              aria-label="Κλείσιμο προεπισκόπησης προϊόντος"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            <img src={selectedProductImage} alt="Προεπισκόπηση προϊόντος" className="max-h-[80vh] max-w-full rounded-xl object-contain" />
+          </div>
         </div>
       )}
 

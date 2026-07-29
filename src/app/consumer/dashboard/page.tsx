@@ -89,6 +89,8 @@ export default function ConsumerDashboard() {
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [farmerServiceAreas, setFarmerServiceAreas] = useState<Record<string, string[]>>({});
   const [productImagesByProductId, setProductImagesByProductId] = useState<Record<number, Array<{ image_url: string; image_path: string; sort_order: number }>>>({});
+  const [selectedProductImage, setSelectedProductImage] = useState<string | null>(null);
+  const [showProductImagePreview, setShowProductImagePreview] = useState(false);
   const [loadingLocation, setLoadingLocation] = useState(false);
   const [useDistance, setUseDistance] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -1031,9 +1033,17 @@ export default function ConsumerDashboard() {
                   return (
                     <article key={item.id} className="rounded-lg border border-emerald-200 bg-white p-4 flex flex-col">
                       {productImages.length > 0 && (
-                        <div className="mb-3 overflow-hidden rounded-md border border-stone-200">
-                          <img src={productImages[0].image_url} alt={item.title} className="h-36 w-full object-cover" />
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedProductImage(productImages[0].image_url);
+                            setShowProductImagePreview(true);
+                          }}
+                          className="mb-3 flex h-44 w-full items-center justify-center overflow-hidden rounded-md border border-stone-200 bg-stone-50"
+                          aria-label={`Προεπισκόπηση εικόνας για ${item.title}`}
+                        >
+                          <img src={productImages[0].image_url} alt={item.title} className="max-h-full max-w-full object-contain p-2" />
+                        </button>
                       )}
                       <div className="mb-2 flex items-start justify-between gap-3">
                         <h3 className="text-base font-bold text-stone-900">{item.title}</h3>
