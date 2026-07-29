@@ -100,7 +100,7 @@ export default function ConsumerDashboard() {
   const [requestedQuantity, setRequestedQuantity] = useState('1');
   const [message, setMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [activeTab, setActiveTab] = useState<'products' | 'requests' | 'profile'>('profile');
+  const [activeTab, setActiveTab] = useState<'products' | 'requests' | 'profile'>('products');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortType, setSortType] = useState<'newest' | 'price_low' | 'price_high'>('newest');
@@ -891,7 +891,7 @@ export default function ConsumerDashboard() {
               )}
             </button>
           </div>
-          <section id="overview" className="border-b border-stone-200 pb-7">
+          <section id="overview" className="hidden border-b border-stone-200 pb-7 sm:block">
             <p className="text-xs font-bold tracking-wide text-emerald-700">ΠΙΝΑΚΑΣ ΕΛΕΓΧΟΥ</p>
             <h2 className="mt-2 text-3xl font-bold text-stone-900">Διαθέσιμα προϊόντα</h2>
             <p className="mt-2 text-sm text-stone-600">Ανακάλυψε φρέσκα προϊόντα και δες την κατάσταση των αιτημάτων σου.</p>
