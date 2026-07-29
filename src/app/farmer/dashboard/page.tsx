@@ -80,7 +80,7 @@ export default function FarmerDashboard() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'requests' | 'profile'>('overview');  // Profile info shown in overview header
+  const [activeTab, setActiveTab] = useState<'overview' | 'products' | 'requests' | 'profile'>('overview');  // Profile info shown in overview header
   const [profileSubTab, setProfileSubTab] = useState<'profile' | 'dashboard' | 'settings' | 'contacts'>('profile');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [editingProfile, setEditingProfile] = useState(false);
@@ -643,7 +643,10 @@ export default function FarmerDashboard() {
             <User className="h-4 w-4" /> Το Προφίλ μου
           </button>
           <button type="button" onClick={() => setActiveTab('overview')} className={`w-full flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-colors ${activeTab === 'overview' ? 'bg-emerald-50 font-semibold text-emerald-800' : 'font-medium text-stone-600 hover:bg-stone-100 hover:text-stone-900'}`}>
-            <LayoutDashboard className="h-4 w-4" /> Επισκόπηση &amp; Προϊόντα
+            <LayoutDashboard className="h-4 w-4" /> Επισκόπηση
+          </button>
+          <button type="button" onClick={() => setActiveTab('products')} className={`w-full flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-colors ${activeTab === 'products' ? 'bg-emerald-50 font-semibold text-emerald-800' : 'font-medium text-stone-600 hover:bg-stone-100 hover:text-stone-900'}`}>
+            <Package className="h-4 w-4" /> Προϊόντα
           </button>
           <button type="button" onClick={() => setActiveTab('requests')} className={`w-full flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-colors ${activeTab === 'requests' ? 'bg-emerald-50 font-semibold text-emerald-800' : 'font-medium text-stone-600 hover:bg-stone-100 hover:text-stone-900'}`}>
             <ClipboardList className="h-4 w-4" /> Αιτήματα πελατών
@@ -729,8 +732,22 @@ export default function FarmerDashboard() {
                   }}
                   className={`flex w-full items-center rounded-lg px-3 py-3 text-left text-base font-medium transition ${activeTab === 'overview' ? 'bg-emerald-50 text-emerald-800' : 'text-stone-700 hover:bg-stone-100 hover:text-emerald-700'}`}
                 >
+                  <LayoutDashboard className="mr-3 h-5 w-5" />
+                  Επισκόπηση
+                  <ChevronDown className="ml-auto h-5 w-5 -rotate-90 text-stone-400" />
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveTab('products');
+                    setMobileMenuOpen(false);
+                  }}
+                  className={`flex w-full items-center rounded-lg px-3 py-3 text-left text-base font-medium transition ${activeTab === 'products' ? 'bg-emerald-50 text-emerald-800' : 'text-stone-700 hover:bg-stone-100 hover:text-emerald-700'}`}
+                >
                   <Package className="mr-3 h-5 w-5" />
-                  Τα προϊόντα μου
+                  Προϊόντα
                   <ChevronDown className="ml-auto h-5 w-5 -rotate-90 text-stone-400" />
                 </button>
               </li>
@@ -889,7 +906,10 @@ export default function FarmerDashboard() {
               <User className="h-4 w-4" /> Το Προφίλ μου
             </button>
             <button type="button" onClick={() => setActiveTab('overview')} className={`px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors ${activeTab === 'overview' ? 'border-emerald-700 text-emerald-800' : 'border-transparent text-stone-500 hover:text-stone-900'}`}>
-              Επισκόπηση &amp; Προϊόντα
+              Επισκόπηση
+            </button>
+            <button type="button" onClick={() => setActiveTab('products')} className={`px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors ${activeTab === 'products' ? 'border-emerald-700 text-emerald-800' : 'border-transparent text-stone-500 hover:text-stone-900'}`}>
+              Προϊόντα
             </button>
             <button type="button" onClick={() => setActiveTab('requests')} className={`px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors flex items-center gap-2 ${activeTab === 'requests' ? 'border-emerald-700 text-emerald-800' : 'border-transparent text-stone-500 hover:text-stone-900'}`}>
               Αιτήματα πελατών
@@ -939,7 +959,7 @@ export default function FarmerDashboard() {
           </section>
           
           {/* Grid για Προϊόντα Προς Πώληση */}
-          <div className={`grid grid-cols-1 md:grid-cols-2 gap-8${activeTab !== 'overview' ? ' hidden' : ''}`}>
+          <div className={`grid grid-cols-1 md:grid-cols-2 gap-8${activeTab !== 'products' ? ' hidden' : ''}`}>
             {showNewProductForm && activeTab === 'overview' && (
               <div id="new-product" className="bg-white p-6 rounded-lg shadow-sm border border-stone-200">
                 <h3 className="flex items-center gap-2 text-lg font-bold text-stone-900 mb-2"><Plus className="h-5 w-5 text-emerald-700" />Καταχώρηση νέου προϊόντος</h3>
