@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ShoppingBag, ClipboardList, LogOut, Leaf, Phone, Search, ChevronDown, User, Mail, MapPin, Bell } from 'lucide-react';
+import { ShoppingBag, ClipboardList, LogOut, Leaf, Phone, Search, ChevronDown, User, Mail, MapPin, Bell, Menu, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { formatGreekPhoneInput, isPhoneValid, normalizePhone } from '@/lib/auth/contactInfo';
 import { sanitizePhoneForTel } from '@/lib/serviceAreas';
@@ -101,6 +101,7 @@ export default function ConsumerDashboard() {
   const [message, setMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState<'products' | 'requests' | 'profile'>('profile');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortType, setSortType] = useState<'newest' | 'price_low' | 'price_high'>('newest');
   const [editingProfile, setEditingProfile] = useState(false);
@@ -647,6 +648,68 @@ export default function ConsumerDashboard() {
         </nav>
       </aside>
 
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-40 bg-stone-950/40 sm:hidden" onClick={() => setMobileMenuOpen(false)} />
+      )}
+
+      <aside
+        id="consumer-sidebar"
+        className={`fixed left-0 top-0 z-50 h-full w-64 border-r border-stone-200 bg-white shadow-2xl transition-transform duration-200 sm:hidden ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}
+        aria-label="Κινητή πλοήγηση"
+      >
+        <div className="flex items-center justify-between border-b border-stone-200 px-4 py-4">
+          <div>
+            <p className="text-sm font-semibold text-emerald-900">AgroDirect</p>
+            <p className="text-xs text-stone-500">Χώρος καταναλωτή</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen(false)}
+            className="rounded-md p-2 text-stone-600 transition hover:bg-stone-100"
+            aria-label="Κλείσιμο μενού"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        <nav className="space-y-2 px-3 py-4">
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('profile');
+              setMobileMenuOpen(false);
+            }}
+            className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition ${activeTab === 'profile' ? 'bg-emerald-50 text-emerald-800' : 'text-stone-700 hover:bg-stone-100 hover:text-emerald-700'}`}
+          >
+            <User className="h-4 w-4" /> Προφίλ μου
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('products');
+              setMobileMenuOpen(false);
+            }}
+            className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition ${activeTab === 'products' ? 'bg-emerald-50 text-emerald-800' : 'text-stone-700 hover:bg-stone-100 hover:text-emerald-700'}`}
+          >
+            <ShoppingBag className="h-4 w-4" /> Διαθέσιμα προϊόντα
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('requests');
+              setMobileMenuOpen(false);
+            }}
+            className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition ${activeTab === 'requests' ? 'bg-emerald-50 text-emerald-800' : 'text-stone-700 hover:bg-stone-100 hover:text-emerald-700'}`}
+          >
+            <ClipboardList className="h-4 w-4" /> Τα αιτήματά μου
+            {requests.filter((request) => request.status === 'pending' || request.status === 'confirmed').length > 0 && (
+              <span className="ml-auto rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">
+                {requests.filter((request) => request.status === 'pending' || request.status === 'confirmed').length}
+              </span>
+            )}
+          </button>
+        </nav>
+      </aside>
+
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
         {/* Top Header */}
@@ -654,6 +717,18 @@ export default function ConsumerDashboard() {
           <Link href="/" className="flex items-center gap-2 lg:hidden"><Leaf className="h-5 w-5 text-emerald-700" /><span className="font-bold text-emerald-900">AgroDirect</span></Link>
           <p className="hidden lg:block text-sm text-stone-500">Πίνακας ελέγχου καταναλωτή</p>
           <div className="flex items-center gap-2">
+            <button
+              data-drawer-target="consumer-sidebar"
+              data-drawer-toggle="consumer-sidebar"
+              aria-controls="consumer-sidebar"
+              type="button"
+              onClick={() => setMobileMenuOpen(true)}
+              className="inline-flex items-center rounded-md border border-stone-300 bg-transparent p-2 text-stone-700 transition hover:bg-stone-100 focus:outline-none focus:ring-2 focus:ring-emerald-200 sm:hidden"
+              aria-label="Άνοιγμα κινητού μενού"
+            >
+              <span className="sr-only">Άνοιγμα sidebar</span>
+              <Menu className="h-6 w-6" />
+            </button>
             <div className="relative" ref={notificationRef}>
               <button
                 type="button"
@@ -749,7 +824,7 @@ export default function ConsumerDashboard() {
         {/* Dashboard Body */}
         <main className="p-4 sm:p-8 flex-1 space-y-8 max-w-7xl w-full mx-auto">
           {/* Καρτέλες πλοήγησης */}
-          <div className="flex border-b border-stone-200 -mt-4 sm:-mt-8 -mx-4 sm:-mx-8 px-4 sm:px-8">
+          <div className="hidden border-b border-stone-200 -mt-4 sm:-mt-8 -mx-4 sm:-mx-8 px-4 sm:px-8 sm:flex">
             <button type="button" onClick={() => setActiveTab('profile')} className={`px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors flex items-center gap-2 ${activeTab === 'profile' ? 'border-emerald-700 text-emerald-800' : 'border-transparent text-stone-500 hover:text-stone-900'}`}>
               <User className="h-4 w-4" /> Προφίλ μου
             </button>
