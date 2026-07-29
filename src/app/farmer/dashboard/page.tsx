@@ -654,10 +654,10 @@ export default function FarmerDashboard() {
       </aside>
 
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-40 bg-stone-950/40 lg:hidden" onClick={() => setMobileMenuOpen(false)} />
+        <div className="fixed inset-0 z-40 bg-stone-950/40 sm:hidden" onClick={() => setMobileMenuOpen(false)} />
       )}
 
-      <aside className={`fixed inset-y-0 right-0 z-50 w-72 max-w-[85vw] border-l border-stone-200 bg-white shadow-2xl transition-transform duration-200 lg:hidden ${mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+      <aside className={`fixed inset-y-0 right-0 z-50 w-72 max-w-[85vw] border-l border-stone-200 bg-white shadow-2xl transition-transform duration-200 sm:hidden ${mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}>
         <div className="flex items-center justify-between border-b border-stone-200 px-4 py-4">
           <div>
             <p className="text-sm font-semibold text-stone-900">Αγρότης</p>
@@ -725,10 +725,11 @@ export default function FarmerDashboard() {
             <button
               type="button"
               onClick={() => setMobileMenuOpen(true)}
-              className="inline-flex items-center justify-center rounded-md border border-stone-300 p-2 text-stone-700 transition hover:bg-stone-100 lg:hidden"
+              className="inline-flex items-center gap-2 rounded-md border border-stone-300 px-3 py-2 text-sm font-semibold text-stone-700 transition hover:bg-stone-100 sm:hidden"
               aria-label="Άνοιγμα κινητού μενού"
             >
-              <Menu className="h-5 w-5" />
+              <Menu className="h-4 w-4" />
+              Μενού
             </button>
             <div className="relative" ref={notificationRef}>
               <button
