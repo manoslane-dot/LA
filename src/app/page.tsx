@@ -49,27 +49,50 @@ export default function Home() {
 
         <div className="mx-auto flex max-w-7xl flex-col px-5 pb-16 pt-24 sm:px-8 sm:pt-28 lg:px-10 lg:pt-36">
           <div className="max-w-3xl">
-            <div className="mb-6 flex w-fit items-center gap-2 rounded-full border border-white/30 bg-white/10 px-3 py-1.5 text-sm font-semibold backdrop-blur-sm">
+            <div className="mb-5 flex w-fit items-center gap-2 rounded-full border border-white/30 bg-white/10 px-3 py-1.5 text-sm font-semibold backdrop-blur-sm shadow-lg shadow-black/10">
               <MapPin size={16} className="text-[#ffd47d]" />
               Από την ελληνική γη, απευθείας σε εσάς
             </div>
-            <h1 className="max-w-3xl text-5xl font-bold leading-[1.03] tracking-normal sm:text-6xl lg:text-7xl">
+            <h1 className="max-w-3xl text-4xl font-bold leading-[1.03] tracking-tight sm:text-5xl lg:text-7xl">
               Απευθείας από τον παραγωγό στο τραπέζι σας.
             </h1>
-            <p className="mt-6 max-w-2xl text-lg leading-8 text-white/85 sm:text-xl">
+            <p className="mt-5 max-w-2xl text-base leading-8 text-white/85 sm:mt-6 sm:text-lg sm:text-xl">
               Ανακαλύψτε φρέσκα, τοπικά προϊόντα κορυφαίας ποιότητας. Στηρίζετε τους ανθρώπους της γης και απολαμβάνετε αυθεντική γεύση χωρίς μεσάζοντες.
             </p>
-            <div className="mt-9">
+
+            <div className="mt-7 flex flex-col gap-3 sm:mt-9 sm:flex-row sm:items-center">
               <Link
                 href="/auth/role"
-                className="inline-flex items-center justify-center rounded-md bg-[#e9a83a] px-6 py-4 font-bold text-[#173b2a] transition hover:bg-[#f5bd5c]"
+                className="inline-flex items-center justify-center rounded-xl bg-[#e9a83a] px-6 py-4 text-base font-bold text-[#173b2a] shadow-lg shadow-[#0d261b]/20 transition hover:bg-[#f5bd5c]"
               >
                 Είσοδος στην πλατφόρμα
               </Link>
+              <div className="inline-flex items-center justify-center rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-white/90 backdrop-blur-sm">
+                <Sprout size={16} className="mr-2 text-[#ffd47d]" />
+                Άμεση σύνδεση παραγωγού και πελάτη
+              </div>
+            </div>
+
+            <div className="mt-6 rounded-[24px] border border-white/20 bg-white/12 p-4 shadow-2xl shadow-black/20 backdrop-blur-xl sm:mt-8 sm:p-5">
+              <div className="flex items-center gap-2 text-sm font-semibold text-[#ffd47d]">
+                <span className="h-2.5 w-2.5 rounded-full bg-[#ffd47d]" />
+                Γιατί οι άνθρωποι το αγαπούν
+              </div>
+              <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                {[
+                  'Εύκολη παραγγελία',
+                  'Διαφάνεια τιμής',
+                  'Άμεση επικοινωνία',
+                ].map((item) => (
+                  <div key={item} className="rounded-xl border border-white/15 bg-[#143c2b]/40 px-3 py-2.5 text-sm font-medium text-white/90">
+                    {item}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
 
-          <div className="mt-14 flex w-fit items-center gap-3 rounded-md border border-white/20 bg-[#143c2b]/60 px-4 py-3 backdrop-blur-sm">
+          <div className="mt-8 flex w-full max-w-xl items-center gap-3 rounded-[20px] border border-white/20 bg-[#143c2b]/70 px-4 py-3 shadow-xl shadow-black/15 backdrop-blur-sm sm:mt-10 sm:w-fit sm:max-w-none">
             <div className="flex -space-x-2">
               {['Μ', 'Γ', 'Ε', 'Κ'].map((initial, index) => (
                 <span key={initial} className={`grid h-8 w-8 place-items-center rounded-full border-2 border-[#143c2b] text-xs font-bold ${['bg-[#d97746]', 'bg-[#78a08c]', 'bg-[#cf8f51]', 'bg-[#b8605f]'][index]}`}>
