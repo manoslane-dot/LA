@@ -932,18 +932,6 @@ export default function ConsumerDashboard() {
 
         {/* Dashboard Body */}
         <main className="p-4 sm:p-8 flex-1 space-y-8 max-w-7xl w-full mx-auto">
-          {/* Καρτέλες πλοήγησης */}
-          <div className="hidden border-b border-stone-200 -mt-4 sm:-mt-8 -mx-4 sm:-mx-8 px-4 sm:px-8 sm:flex">
-            <button type="button" onClick={() => setActiveTab('products')} className={`px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors ${activeTab === 'products' ? 'border-emerald-700 text-emerald-800' : 'border-transparent text-stone-500 hover:text-stone-900'}`}>
-              Διαθέσιμα Προϊόντα
-            </button>
-            <button type="button" onClick={() => setActiveTab('requests')} className={`px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors flex items-center gap-2 ${activeTab === 'requests' ? 'border-emerald-700 text-emerald-800' : 'border-transparent text-stone-500 hover:text-stone-900'}`}>
-              Τα αιτήματά μου
-              {requests.filter((r) => r.status === 'pending' || r.status === 'confirmed').length > 0 && (
-                <span className="rounded-full bg-stone-100 px-1.5 py-0.5 text-xs font-semibold text-stone-700">{requests.filter((r) => r.status === 'pending' || r.status === 'confirmed').length}</span>
-              )}
-            </button>
-          </div>
           <section id="overview" className="hidden border-b border-stone-200 pb-2 sm:block" />
 
           {successMsg && <div className="rounded-md border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">{successMsg}</div>}
