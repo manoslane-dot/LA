@@ -1026,12 +1026,12 @@ export default function ConsumerDashboard() {
                   Εμφανίζονται {filteredAndSortedProducts.length} προϊόντα
                   {useDistance && userLocation ? ' (ταξινομημένα κατά απόσταση)' : ''}
                 </p>
-                <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="grid grid-cols-2 gap-3 sm:gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 {filteredAndSortedProducts.map((item) => {
                   const itemDistance = (item as any).distance_km;
                   const productImages = productImagesByProductId[item.id] ?? [];
                   return (
-                    <article key={item.id} className="rounded-lg border border-emerald-200 bg-white p-4 flex flex-col">
+                    <article key={item.id} className="flex flex-col rounded-lg border border-emerald-200 bg-white p-3 sm:p-4">
                       {productImages.length > 0 && (
                         <button
                           type="button"
@@ -1039,10 +1039,10 @@ export default function ConsumerDashboard() {
                             setSelectedProductImage(productImages[0].image_url);
                             setShowProductImagePreview(true);
                           }}
-                          className="mb-3 flex h-44 w-full items-center justify-center overflow-hidden rounded-md border border-stone-200 bg-stone-50"
+                          className="mb-3 aspect-square w-full overflow-hidden rounded-md border border-stone-200 bg-stone-50"
                           aria-label={`Προεπισκόπηση εικόνας για ${item.title}`}
                         >
-                          <img src={productImages[0].image_url} alt={item.title} className="max-h-full max-w-full object-contain p-2" />
+                          <img src={productImages[0].image_url} alt={item.title} className="h-full w-full object-cover" loading="lazy" />
                         </button>
                       )}
                       <div className="mb-2 flex items-start justify-between gap-3">
