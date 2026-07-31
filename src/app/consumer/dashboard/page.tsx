@@ -1016,7 +1016,7 @@ export default function ConsumerDashboard() {
                                 setSelectedProductImage(productImages[0].image_url);
                                 setShowProductImagePreview(true);
                               }}
-                              className="mb-3 aspect-square w-full overflow-hidden rounded-md border border-stone-200 bg-white"
+                              className="mb-2 aspect-square w-full overflow-hidden rounded-md border border-stone-200 bg-white"
                               aria-label={`Προεπισκόπηση εικόνας για ${item.title}`}
                             >
                               <img src={productImages[0].image_url} alt={item.title} className="h-full w-full object-cover" loading="lazy" />
@@ -1038,7 +1038,7 @@ export default function ConsumerDashboard() {
                             Διαθέσιμη ποσότητα: <strong>{item.quantity} {getUnitLabel(item.unit, item.quantity)}</strong>
                           </p>
                           <div className="mt-auto">
-                            <button type="button" onClick={() => openRequestForm(item)} className="w-full rounded-md bg-emerald-700 px-2 py-1.25 text-[10px] font-bold text-white transition-colors hover:bg-emerald-800 sm:text-[11px]">
+                            <button type="button" onClick={() => openRequestForm(item)} className="w-full rounded-md bg-emerald-700 px-3 py-2 text-[10px] font-bold text-white transition-colors hover:bg-emerald-800 sm:px-3.5 sm:py-2.5 sm:text-[11px]">
                               Αποστολή αιτήματος
                             </button>
                           </div>
