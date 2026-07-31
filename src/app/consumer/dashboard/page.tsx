@@ -937,7 +937,7 @@ export default function ConsumerDashboard() {
         </header>
 
         {/* Dashboard Body */}
-        <main className="p-4 sm:p-8 flex-1 space-y-8 max-w-7xl w-full mx-auto">
+        <main className="flex-1 w-full space-y-8 px-4 py-4 sm:px-0 sm:py-8">
           <section id="overview" className="hidden border-b border-stone-200 pb-2 sm:block" />
 
           {successMsg && <div className="rounded-md border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">{successMsg}</div>}
