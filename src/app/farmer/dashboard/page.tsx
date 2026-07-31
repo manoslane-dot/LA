@@ -1247,10 +1247,10 @@ export default function FarmerDashboard() {
                                   setSelectedProductImage(productImages[0].image_url);
                                   setShowProductImagePreview(true);
                                 }}
-                                className="mb-3 flex h-44 w-full items-center justify-center overflow-hidden rounded-md border border-stone-200 bg-stone-50"
+                                className="mb-3 aspect-square w-full overflow-hidden rounded-md border border-stone-200 bg-stone-50"
                                 aria-label={`Προεπισκόπηση εικόνας για ${prod.title}`}
                               >
-                                <img src={productImages[0].image_url} alt={prod.title} className="max-h-full max-w-full object-contain p-2" />
+                                <img src={productImages[0].image_url} alt={prod.title} className="h-full w-full object-cover" loading="lazy" />
                               </button>
                             )}
                             <p className="font-medium text-gray-800">{prod.title}</p>
