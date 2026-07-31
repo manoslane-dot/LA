@@ -120,6 +120,8 @@ export default function ConsumerDashboard() {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [selectedNotificationId, setSelectedNotificationId] = useState<string | null>(null);
+  const [showCoordinateOverlay, setShowCoordinateOverlay] = useState(false);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const notificationRef = useRef<HTMLDivElement | null>(null);
 
   const markAllNotificationsAsRead = useCallback(() => {
@@ -238,6 +240,19 @@ export default function ConsumerDashboard() {
     window.addEventListener('storage', handleNotificationStorage);
     return () => window.removeEventListener('storage', handleNotificationStorage);
   }, [buyerId]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const handleMouseMove = (event: MouseEvent) => {
+      setMousePosition({ x: event.clientX, y: event.clientY });
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
 
   const fetchProductImages = useCallback(async (productIds: number[]) => {
     if (productIds.length === 0) {
@@ -698,8 +713,51 @@ export default function ConsumerDashboard() {
     return sorted;
   })();
 
+  const gridSize = 50;
+  const gridMarks = Array.from({ length: 24 }, (_, index) => index * gridSize);
+
   return (
     <div className="min-h-screen bg-stone-50 text-stone-900 flex">
+      {showCoordinateOverlay && (
+        <>
+          <div className="pointer-events-none fixed inset-0 z-[60] overflow-hidden" aria-hidden="true">
+            <div
+              className="absolute inset-0 opacity-70"
+              style={{
+                backgroundImage: `linear-gradient(to right, rgba(15, 23, 42, 0.16) 1px, transparent 1px), linear-gradient(to bottom, rgba(15, 23, 42, 0.16) 1px, transparent 1px)`,
+                backgroundSize: `${gridSize}px ${gridSize}px`,
+              }}
+            />
+            <div className="absolute inset-0 text-[10px] font-mono uppercase tracking-wide text-stone-500/70">
+              {gridMarks.map((value) => (
+                <div key={`x-${value}`} className="absolute top-0 h-full border-l border-stone-400/25" style={{ left: value }} />
+              ))}
+              {gridMarks.map((value) => (
+                <div key={`y-${value}`} className="absolute left-0 w-full border-t border-stone-400/25" style={{ top: value }} />
+              ))}
+              {gridMarks.map((value) => (
+                <div key={`label-x-${value}`} className="absolute top-2" style={{ left: value + 2 }}>
+                  {value}
+                </div>
+              ))}
+              {gridMarks.map((value) => (
+                <div key={`label-y-${value}`} className="absolute left-2" style={{ top: value + 2 }}>
+                  {value}
+                </div>
+              ))}
+            </div>
+            <div
+              className="pointer-events-none absolute h-5 w-5 rounded-full border border-emerald-500/70"
+              style={{ left: mousePosition.x, top: mousePosition.y, transform: 'translate(-50%, -50%)' }}
+            />
+          </div>
+          <div className="pointer-events-none fixed right-4 top-4 z-[80] rounded-lg border border-stone-300 bg-white/90 px-3 py-2 text-[11px] font-mono shadow-lg backdrop-blur">
+            <div className="text-[10px] font-semibold uppercase tracking-[0.25em] text-stone-500">Mouse</div>
+            <div className="mt-1 text-stone-700">X: {mousePosition.x}px</div>
+            <div className="text-stone-700">Y: {mousePosition.y}px</div>
+          </div>
+        </>
+      )}
       {/* Sidebar */}
       <aside data-section="sidebar" data-coords="0,0" className="w-64 shrink-0 border-r border-stone-200 bg-white hidden lg:block">
         <div className="p-6 border-b border-stone-100">
@@ -832,6 +890,14 @@ export default function ConsumerDashboard() {
           <Link href="/" className="flex items-center gap-2 lg:hidden"><Leaf className="h-5 w-5 text-emerald-700" /><span className="font-bold text-emerald-900">AgroDirect</span></Link>
           <p className="hidden lg:block text-sm text-stone-500">Πίνακας ελέγχου καταναλωτή</p>
           <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowCoordinateOverlay((prev) => !prev)}
+              className={`inline-flex items-center rounded-md border px-3 py-2 text-sm font-medium transition-colors ${showCoordinateOverlay ? 'border-emerald-600 bg-emerald-50 text-emerald-700' : 'border-stone-300 bg-white text-stone-700 hover:bg-stone-100'}`}
+            >
+              <span className="mr-2 h-2.5 w-2.5 rounded-full bg-current" />
+              {showCoordinateOverlay ? 'Overlay ON' : 'Overlay OFF'}
+            </button>
             <button
               data-drawer-target="consumer-sidebar"
               data-drawer-toggle="consumer-sidebar"
