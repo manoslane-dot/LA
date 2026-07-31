@@ -712,6 +712,9 @@ export default function ConsumerDashboard() {
           </Link>
         </div>
         <nav className="mt-5 px-3 space-y-1" aria-label="Κύρια πλοήγηση">
+          <button type="button" onClick={() => setActiveTab('profile')} className={`w-full flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-colors ${activeTab === 'profile' ? 'bg-emerald-50 font-semibold text-emerald-800' : 'font-medium text-stone-600 hover:bg-stone-100 hover:text-stone-900'}`}>
+            <User className="h-4 w-4" /> Το Προφίλ μου
+          </button>
           <button type="button" onClick={() => setActiveTab('products')} className={`w-full flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-colors ${activeTab === 'products' ? 'bg-emerald-50 font-semibold text-emerald-800' : 'font-medium text-stone-600 hover:bg-stone-100 hover:text-stone-900'}`}>
             <ShoppingBag className="h-4 w-4" /> Διαθέσιμα Προϊόντα
           </button>
@@ -720,9 +723,6 @@ export default function ConsumerDashboard() {
             {requests.filter((r) => r.status === 'pending' || r.status === 'confirmed').length > 0 && (
               <span className="ml-auto rounded-full bg-amber-100 px-1.5 py-0.5 text-xs font-semibold text-amber-800">{requests.filter((r) => r.status === 'pending' || r.status === 'confirmed').length}</span>
             )}
-          </button>
-          <button type="button" onClick={() => setActiveTab('profile')} className={`w-full flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-colors ${activeTab === 'profile' ? 'bg-emerald-50 font-semibold text-emerald-800' : 'font-medium text-stone-600 hover:bg-stone-100 hover:text-stone-900'}`}>
-            <User className="h-4 w-4" /> Το Προφίλ μου
           </button>
         </nav>
       </aside>
