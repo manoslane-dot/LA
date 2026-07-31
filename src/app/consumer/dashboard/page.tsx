@@ -107,7 +107,7 @@ export default function ConsumerDashboard() {
   const [activeTab, setActiveTab] = useState<'products' | 'requests' | 'profile'>('products');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortType, setSortType] = useState<'newest' | 'price_low' | 'price_high'>('newest');
+  const [sortType, setSortType] = useState<'newest' | 'price_low' | 'price_high'>('price_low');
   const [editingProfile, setEditingProfile] = useState(false);
   const [profileForm, setProfileForm] = useState({ fullName: '', email: '', phone: '' });
   const [savingProfile, setSavingProfile] = useState(false);
@@ -1327,6 +1327,33 @@ export default function ConsumerDashboard() {
                   <X className="h-5 w-5" />
                 </button>
                 <img src={avatarUrl} alt="Προεπισκόπηση φωτογραφίας προφίλ" className="max-h-[80vh] max-w-full rounded-xl object-contain" />
+              </div>
+            </div>
+          )}
+
+          {showProductImagePreview && selectedProductImage && (
+            <div
+              className="fixed inset-0 z-[60] flex items-center justify-center bg-black/75 p-4"
+              role="dialog"
+              aria-modal="true"
+              onClick={() => {
+                setShowProductImagePreview(false);
+                setSelectedProductImage(null);
+              }}
+            >
+              <div className="relative max-h-[90vh] max-w-[90vw] rounded-2xl bg-white p-3 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowProductImagePreview(false);
+                    setSelectedProductImage(null);
+                  }}
+                  className="absolute right-2 top-2 rounded-full bg-white/90 p-2 text-stone-700 shadow-sm transition hover:bg-white"
+                  aria-label="Κλείσιμο μεγέθυνσης εικόνας"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+                <img src={selectedProductImage} alt="Μεγέθυνση φωτογραφίας προϊόντος" className="max-h-[80vh] max-w-full rounded-xl object-contain" />
               </div>
             </div>
           )}
