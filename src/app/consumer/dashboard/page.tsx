@@ -1074,7 +1074,7 @@ export default function ConsumerDashboard() {
                       const itemDistance = (item as any).distance_km;
                       const productImages = productImagesByProductId[item.id] ?? [];
                       return (
-                        <article key={item.id} className="flex flex-col items-start rounded-lg border border-stone-200 bg-stone-50 p-2 shadow-sm sm:p-2.5">
+                        <article key={item.id} className="flex w-[594px] max-w-full flex-col items-start rounded-lg border border-stone-200 bg-stone-50 p-2 shadow-sm sm:p-2.5 lg:w-[594px]">
                           {productImages.length > 0 && (
                             <button
                               type="button"
