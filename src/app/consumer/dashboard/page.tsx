@@ -1030,12 +1030,12 @@ export default function ConsumerDashboard() {
                   Εμφανίζονται {filteredAndSortedProducts.length} προϊόντα
                   {useDistance && userLocation ? ' (ταξινομημένα κατά απόσταση)' : ''}
                 </p>
-                <div className="grid grid-cols-2 gap-2 sm:gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="grid grid-cols-2 gap-1.5 sm:gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
                 {filteredAndSortedProducts.map((item) => {
                   const itemDistance = (item as any).distance_km;
                   const productImages = productImagesByProductId[item.id] ?? [];
                   return (
-                    <article key={item.id} className="flex flex-col rounded-lg border border-emerald-200 bg-white p-2 sm:p-2.5">
+                    <article key={item.id} className="flex flex-col rounded-lg border border-emerald-200 bg-white p-1.5 sm:p-2">
                       {productImages.length > 0 && (
                         <button
                           type="button"
@@ -1050,7 +1050,7 @@ export default function ConsumerDashboard() {
                         </button>
                       )}
                       <div className="mb-2 flex items-start justify-between gap-2">
-                        <h3 className="text-xs sm:text-sm font-bold text-stone-900">{item.title}</h3>
+                        <h3 className="text-[11px] sm:text-xs font-bold text-stone-900">{item.title}</h3>
                         <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-800">{item.status}</span>
                       </div>
                       {useDistance && itemDistance !== null && (
@@ -1059,13 +1059,13 @@ export default function ConsumerDashboard() {
                           {formatDistance(itemDistance)}
                         </p>
                       )}
-                      <p className="mb-2 text-[11px] sm:text-xs text-stone-600">
+                      <p className="mb-2 text-[10px] sm:text-[11px] text-stone-600">
                         Τιμή: <strong className="text-emerald-700">{item.price} EUR / {item.unit}</strong>
                         <br />
                         Διαθέσιμη ποσότητα: <strong>{item.quantity} {getUnitLabel(item.unit, item.quantity)}</strong>
                       </p>
                       <div className="mt-auto">
-                        <button type="button" onClick={() => openRequestForm(item)} className="w-full rounded-md bg-emerald-700 px-2.5 py-1.5 text-[11px] sm:text-xs font-bold text-white transition-colors hover:bg-emerald-800">Αποστολή αιτήματος</button>
+                        <button type="button" onClick={() => openRequestForm(item)} className="w-full rounded-md bg-emerald-700 px-2 py-1.25 text-[10px] sm:text-[11px] font-bold text-white transition-colors hover:bg-emerald-800">Αποστολή αιτήματος</button>
                       </div>
                     </article>
                   );
