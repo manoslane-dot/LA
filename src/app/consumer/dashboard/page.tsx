@@ -765,8 +765,12 @@ export default function ConsumerDashboard() {
             }}
             className="flex items-center gap-4 border-b border-stone-200 px-5 py-5 text-left"
           >
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-xl font-bold text-emerald-800">
-              {(userName ?? buyerEmail ?? 'Χ').charAt(0).toUpperCase()}
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border border-stone-200 bg-emerald-100 text-xl font-bold text-emerald-800">
+              {avatarUrl ? (
+                <img src={avatarUrl} alt="Φωτογραφία προφίλ" className="h-full w-full object-cover" />
+              ) : (
+                (userName ?? buyerEmail ?? 'Χ').charAt(0).toUpperCase()
+              )}
             </div>
             <div className="min-w-0 flex-1">
               <p className="truncate text-base font-semibold text-stone-900">{userName ?? 'Ο λογαριασμός μου'}</p>
