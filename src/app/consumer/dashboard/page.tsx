@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ShoppingBag, ClipboardList, LogOut, Leaf, Phone, Search, ChevronDown, Mail, MapPin, Bell, Menu, X } from 'lucide-react';
+import { ShoppingBag, ClipboardList, LogOut, Leaf, Phone, Search, ChevronDown, User, Mail, MapPin, Bell, Menu, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { formatGreekPhoneInput, isPhoneValid, normalizePhone } from '@/lib/auth/contactInfo';
 import { sanitizePhoneForTel } from '@/lib/serviceAreas';
@@ -104,7 +104,7 @@ export default function ConsumerDashboard() {
   const [requestedQuantity, setRequestedQuantity] = useState('1');
   const [message, setMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [activeTab, setActiveTab] = useState<'products' | 'requests'>('products');
+  const [activeTab, setActiveTab] = useState<'products' | 'requests' | 'profile'>('products');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortType, setSortType] = useState<'newest' | 'price_low' | 'price_high'>('newest');
@@ -721,6 +721,9 @@ export default function ConsumerDashboard() {
               <span className="ml-auto rounded-full bg-amber-100 px-1.5 py-0.5 text-xs font-semibold text-amber-800">{requests.filter((r) => r.status === 'pending' || r.status === 'confirmed').length}</span>
             )}
           </button>
+          <button type="button" onClick={() => setActiveTab('profile')} className={`w-full flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-colors ${activeTab === 'profile' ? 'bg-emerald-50 font-semibold text-emerald-800' : 'font-medium text-stone-600 hover:bg-stone-100 hover:text-stone-900'}`}>
+            <User className="h-4 w-4" /> Το Προφίλ μου
+          </button>
         </nav>
       </aside>
 
@@ -786,6 +789,19 @@ export default function ConsumerDashboard() {
                     </span>
                   )}
                   <ChevronDown className="h-5 w-5 -rotate-90 text-stone-400" />
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveTab('profile');
+                    setMobileMenuOpen(false);
+                  }}
+                  className={`flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-base font-medium transition ${activeTab === 'profile' ? 'bg-emerald-50 text-emerald-800' : 'text-stone-700 hover:bg-stone-100 hover:text-emerald-700'}`}
+                >
+                  <User className="h-5 w-5" /> Το προφίλ μου
+                  <ChevronDown className="ml-auto h-5 w-5 -rotate-90 text-stone-400" />
                 </button>
               </li>
             </ul>
@@ -1072,6 +1088,150 @@ export default function ConsumerDashboard() {
                   );
                 })}
               </ul>
+            )}
+          </section>
+
+          <section id="profile" className={activeTab !== 'profile' ? 'hidden' : 'rounded-lg border border-stone-200 bg-white p-6 shadow-sm'}>
+            <h2 className="mb-5 text-xl font-semibold text-stone-800">Το Προφίλ μου</h2>
+            {!editingProfile ? (
+              <div className="space-y-4">
+                <div className="flex items-center gap-4 rounded-lg border border-stone-200 bg-stone-50 p-4">
+                  <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border border-stone-300 bg-white">
+                    {avatarUrl ? (
+                      <button
+                        type="button"
+                        onClick={() => setShowAvatarPreview(true)}
+                        className="h-full w-full"
+                        aria-label="Προεπισκόπηση φωτογραφίας προφίλ"
+                      >
+                        <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+                      </button>
+                    ) : (
+                      <span className="text-lg font-semibold text-stone-700">
+                        {(userName ?? buyerEmail ?? 'U').charAt(0).toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+                  <label className="cursor-pointer rounded-lg border border-emerald-300 bg-white px-3 py-2 text-sm font-semibold text-emerald-700">
+                    <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={handleAvatarUpload} />
+                    {uploadingAvatar ? 'Αποστολή...' : 'Αλλαγή φωτογραφίας'}
+                  </label>
+                </div>
+                <div className="rounded-lg border border-stone-200 bg-stone-50 p-4">
+                  <p className="text-xs font-semibold text-stone-600 mb-1">Ονοματεπώνυμο</p>
+                  <p className="text-base text-stone-900">{userName || 'Επανόθηση απαιτείται'}</p>
+                </div>
+                <div className="rounded-lg border border-stone-200 bg-stone-50 p-4">
+                  <p className="text-xs font-semibold text-stone-600 mb-1">Email</p>
+                  <p className="text-base text-stone-900">{buyerEmail || 'Επανόθηση απαιτείται'}</p>
+                </div>
+                <div className="rounded-lg border border-stone-200 bg-stone-50 p-4">
+                  <p className="text-xs font-semibold text-stone-600 mb-1">Κινητό τηλέφωνο</p>
+                  <p className="text-base text-stone-900">{buyerPhone || 'Επανόθηση απαιτείται'}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setProfileForm({ fullName: userName || '', email: buyerEmail || '', phone: buyerPhone || '' });
+                    setEditingProfile(true);
+                  }}
+                  className="w-full rounded-lg bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-800"
+                >
+                  Επεξεργασία Προφίλ
+                </button>
+              </div>
+            ) : (
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+
+                  if (!emailConfirmedAt) {
+                    setShowEmailVerificationWarning(true);
+                    return;
+                  }
+
+                  setSavingProfile(true);
+                  const trimmedFullName = profileForm.fullName.trim();
+                  const updateData: Record<string, string> = {
+                    full_name: trimmedFullName,
+                    phone: profileForm.phone.trim(),
+                  };
+
+                  if (!validateUsername(trimmedFullName)) {
+                    updateData.username = trimmedFullName;
+                  }
+
+                  const { error } = await supabase.auth.updateUser({
+                    data: updateData,
+                  });
+                  if (error) {
+                    alert('Σφάλμα αποθήκευσης: ' + error.message);
+                  } else {
+                    setUserName(trimmedFullName);
+                    setBuyerPhone(profileForm.phone.trim());
+                    setEditingProfile(false);
+                  }
+                  setSavingProfile(false);
+                }}
+                className="space-y-4"
+              >
+                <label className="block text-sm font-semibold text-stone-700">
+                  <span className="inline-flex items-center gap-2 mb-1.5">
+                    <User className="h-4 w-4 text-emerald-700" /> Ονοματεπώνυμο
+                  </span>
+                  <input
+                    type="text"
+                    required
+                    value={profileForm.fullName}
+                    onChange={(e) => setProfileForm({ ...profileForm, fullName: e.target.value })}
+                    className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                    placeholder="π.χ. Γιάννης Παπαδόπουλος"
+                  />
+                </label>
+                <label className="block text-sm font-semibold text-stone-700">
+                  <span className="inline-flex items-center gap-2 mb-1.5">
+                    <Mail className="h-4 w-4 text-emerald-700" /> Email
+                  </span>
+                  <input
+                    type="email"
+                    disabled
+                    value={profileForm.email}
+                    className="w-full rounded-lg border border-stone-300 bg-stone-100 px-3 py-2.5 text-sm text-stone-600 cursor-not-allowed"
+                  />
+                  <p className="mt-1 text-xs text-stone-500">Το email δεν μπορεί να αλλάξει</p>
+                </label>
+                <label className="block text-sm font-semibold text-stone-700">
+                  <span className="inline-flex items-center gap-2 mb-1.5">
+                    <Phone className="h-4 w-4 text-emerald-700" /> Κινητό τηλέφωνο
+                  </span>
+                  <input
+                    type="tel"
+                    required
+                    value={profileForm.phone}
+                    onChange={(e) => {
+                      setProfileForm({ ...profileForm, phone: formatGreekPhoneInput(e.target.value) });
+                    }}
+                    className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-stone-400 focus:ring-2 focus:ring-emerald-100"
+                    placeholder="π.χ. +30 69 12345678"
+                  />
+                </label>
+                <div className="flex gap-3">
+                  <button
+                    type="submit"
+                    disabled={savingProfile}
+                    className="flex-1 rounded-lg bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:bg-emerald-400"
+                  >
+                    {savingProfile ? 'Αποθήκευση...' : 'Αποθήκευση'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditingProfile(false)}
+                    className="flex-1 rounded-lg border border-stone-300 px-4 py-2.5 text-sm font-semibold text-stone-700 transition hover:bg-stone-100"
+                  >
+                    Ακύρωση
+                  </button>
+                </div>
+              </form>
             )}
           </section>
 
