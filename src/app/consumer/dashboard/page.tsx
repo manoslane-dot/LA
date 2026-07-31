@@ -1016,15 +1016,15 @@ export default function ConsumerDashboard() {
                                 setSelectedProductImage(productImages[0].image_url);
                                 setShowProductImagePreview(true);
                               }}
-                              className="mb-2 aspect-square w-[80%] max-w-full overflow-hidden rounded-md border border-stone-200 bg-white"
+                              className="mb-2 aspect-square w-[74%] max-w-full overflow-hidden rounded-md border border-stone-200 bg-white"
                               aria-label={`Προεπισκόπηση εικόνας για ${item.title}`}
                             >
                               <img src={productImages[0].image_url} alt={item.title} className="h-full w-full object-cover" loading="lazy" />
                             </button>
                           )}
                           <div className="mb-1.5 flex w-full items-center justify-center gap-2">
-                            <h3 className="text-[12px] font-bold text-stone-900 sm:text-xs">{item.title}</h3>
-                            <span className="shrink-0 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-medium text-emerald-800">{item.status}</span>
+                            <h3 className="text-sm font-bold text-stone-900 sm:text-[13px]">{item.title}</h3>
+                            <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-800">{item.status}</span>
                           </div>
                           {useDistance && itemDistance !== null && (
                             <p className="mb-2 flex items-center gap-1 text-xs font-semibold text-emerald-700">
@@ -1032,7 +1032,7 @@ export default function ConsumerDashboard() {
                               {formatDistance(itemDistance)}
                             </p>
                           )}
-                          <p className="mb-2 text-[11px] leading-5 text-stone-600 sm:text-[11px]">
+                          <p className="mb-3 text-sm text-stone-600 sm:text-[13px]">
                             Τιμή: <strong className="text-emerald-700">{item.price} EUR / {item.unit}</strong>
                             <br />
                             Διαθέσιμη ποσότητα: <strong>{item.quantity} {getUnitLabel(item.unit, item.quantity)}</strong>
