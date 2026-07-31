@@ -1074,7 +1074,7 @@ export default function ConsumerDashboard() {
                       const itemDistance = (item as any).distance_km;
                       const productImages = productImagesByProductId[item.id] ?? [];
                       return (
-                        <article key={item.id} className="flex h-[495px] w-[370px] max-w-full flex-col justify-between rounded-lg border border-stone-200 bg-white p-3 shadow-sm transition-shadow duration-200 hover:shadow-md sm:p-3.5 lg:h-[495px] lg:w-[370px]">
+                        <article key={item.id} className="flex h-[495px] w-[370px] max-w-full flex-col items-start justify-between rounded-lg border border-stone-200 bg-white p-3 shadow-sm transition-shadow duration-200 hover:shadow-md sm:p-3.5 lg:h-[495px] lg:w-[370px]">
                           {productImages.length > 0 && (
                             <button
                               type="button"
@@ -1082,7 +1082,7 @@ export default function ConsumerDashboard() {
                                 setSelectedProductImage(productImages[0].image_url);
                                 setShowProductImagePreview(true);
                               }}
-                              className="mb-2.5 aspect-square w-full max-w-[320px] overflow-hidden self-center rounded-md border border-stone-200 bg-stone-100 lg:w-[320px]"
+                              className="mb-2.5 aspect-square w-full max-w-[320px] overflow-hidden self-start rounded-md border border-stone-200 bg-stone-100 lg:w-[320px]"
                               aria-label={`Προεπισκόπηση εικόνας για ${item.title}`}
                             >
                               <img src={productImages[0].image_url} alt={item.title} className="h-full w-full object-cover" loading="lazy" />
