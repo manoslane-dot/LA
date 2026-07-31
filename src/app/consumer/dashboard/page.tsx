@@ -711,16 +711,16 @@ export default function ConsumerDashboard() {
             </div>
           </Link>
         </div>
-        <nav className="mt-4 px-2 space-y-1" aria-label="Κύρια πλοήγηση">
-          <button type="button" onClick={() => setActiveTab('profile')} className={`flex w-full items-center gap-3 rounded-md px-2.5 py-2 text-sm transition-colors ${activeTab === 'profile' ? 'bg-emerald-50 font-semibold text-emerald-800' : 'font-medium text-stone-600 hover:bg-stone-100 hover:text-stone-900'}`}>
+        <nav className="mt-4 space-y-1" aria-label="Κύρια πλοήγηση">
+          <button type="button" onClick={() => setActiveTab('profile')} className={`flex w-full items-center gap-3 rounded-md px-1.5 py-2 text-sm transition-colors ${activeTab === 'profile' ? 'bg-emerald-50 font-semibold text-emerald-800' : 'font-medium text-stone-600 hover:bg-stone-100 hover:text-stone-900'}`}>
             <User className="h-4 w-4 shrink-0" />
             <span className="flex-1 text-left">Το Προφίλ μου</span>
           </button>
-          <button type="button" onClick={() => setActiveTab('products')} className={`flex w-full items-center gap-3 rounded-md px-2.5 py-2 text-sm transition-colors ${activeTab === 'products' ? 'bg-emerald-50 font-semibold text-emerald-800' : 'font-medium text-stone-600 hover:bg-stone-100 hover:text-stone-900'}`}>
+          <button type="button" onClick={() => setActiveTab('products')} className={`flex w-full items-center gap-3 rounded-md px-1.5 py-2 text-sm transition-colors ${activeTab === 'products' ? 'bg-emerald-50 font-semibold text-emerald-800' : 'font-medium text-stone-600 hover:bg-stone-100 hover:text-stone-900'}`}>
             <ShoppingBag className="h-4 w-4 shrink-0" />
             <span className="flex-1 text-left">Διαθέσιμα Προϊόντα</span>
           </button>
-          <button type="button" onClick={() => setActiveTab('requests')} className={`flex w-full items-center gap-3 rounded-md px-2.5 py-2 text-sm transition-colors ${activeTab === 'requests' ? 'bg-emerald-50 font-semibold text-emerald-800' : 'font-medium text-stone-600 hover:bg-stone-100 hover:text-stone-900'}`}>
+          <button type="button" onClick={() => setActiveTab('requests')} className={`flex w-full items-center gap-3 rounded-md px-1.5 py-2 text-sm transition-colors ${activeTab === 'requests' ? 'bg-emerald-50 font-semibold text-emerald-800' : 'font-medium text-stone-600 hover:bg-stone-100 hover:text-stone-900'}`}>
             <ClipboardList className="h-4 w-4 shrink-0" />
             <span className="flex-1 text-left">Τα Αιτήματά μου</span>
             {requests.filter((r) => r.status === 'pending' || r.status === 'confirmed').length > 0 && (
@@ -760,7 +760,7 @@ export default function ConsumerDashboard() {
             </button>
           </header>
 
-          <nav className="flex-1 px-4 py-4" aria-label="Κύρια πλοήγηση κινητού">
+          <nav className="flex-1 px-2 py-3" aria-label="Κύρια πλοήγηση κινητού">
             <p className="px-3 pb-2 text-xs font-semibold uppercase tracking-wide text-stone-400">Αγορά</p>
             <ul className="space-y-1">
               <li>
@@ -770,7 +770,7 @@ export default function ConsumerDashboard() {
                     setActiveTab('profile');
                     setMobileMenuOpen(false);
                   }}
-                  className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-base font-medium transition ${activeTab === 'profile' ? 'bg-emerald-50 text-emerald-800' : 'text-stone-700 hover:bg-stone-100 hover:text-emerald-700'}`}
+                  className={`flex w-full items-center gap-3 rounded-lg px-2 py-2.5 text-left text-base font-medium transition ${activeTab === 'profile' ? 'bg-emerald-50 text-emerald-800' : 'text-stone-700 hover:bg-stone-100 hover:text-emerald-700'}`}
                 >
                   <User className="h-5 w-5 shrink-0" />
                   <span className="flex-1 text-left">Το προφίλ μου</span>
@@ -784,7 +784,7 @@ export default function ConsumerDashboard() {
                     setActiveTab('products');
                     setMobileMenuOpen(false);
                   }}
-                  className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-base font-medium transition ${activeTab === 'products' ? 'bg-emerald-50 text-emerald-800' : 'text-stone-700 hover:bg-stone-100 hover:text-emerald-700'}`}
+                  className={`flex w-full items-center gap-3 rounded-lg px-2 py-2.5 text-left text-base font-medium transition ${activeTab === 'products' ? 'bg-emerald-50 text-emerald-800' : 'text-stone-700 hover:bg-stone-100 hover:text-emerald-700'}`}
                 >
                   <ShoppingBag className="h-5 w-5 shrink-0" />
                   <span className="flex-1 text-left">Διαθέσιμα προϊόντα</span>
@@ -798,7 +798,7 @@ export default function ConsumerDashboard() {
                     setActiveTab('requests');
                     setMobileMenuOpen(false);
                   }}
-                  className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-base font-medium transition ${activeTab === 'requests' ? 'bg-emerald-50 text-emerald-800' : 'text-stone-700 hover:bg-stone-100 hover:text-emerald-700'}`}
+                  className={`flex w-full items-center gap-3 rounded-lg px-2 py-2.5 text-left text-base font-medium transition ${activeTab === 'requests' ? 'bg-emerald-50 text-emerald-800' : 'text-stone-700 hover:bg-stone-100 hover:text-emerald-700'}`}
                 >
                   <ClipboardList className="h-5 w-5 shrink-0" />
                   <span className="flex-1 text-left">Τα αιτήματά μου</span>
