@@ -945,7 +945,7 @@ export default function ConsumerDashboard() {
 
           <section id="products" className={activeTab !== 'products' ? 'hidden' : ''}>
             <div className="mx-auto max-w-6xl">
-            <h2 className="mb-4 text-xl font-semibold text-stone-800">Διαθέσιμα προϊόντα</h2>
+            <h2 className="mb-3 text-xl font-semibold text-stone-800">Διαθέσιμα προϊόντα</h2>
             
             {/* Search και Filter */}
             <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center">
