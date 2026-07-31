@@ -1132,7 +1132,7 @@ export default function FarmerDashboard() {
           </section>
           
           {/* Grid για Προϊόντα Προς Πώληση */}
-          <div className={`grid grid-cols-1 md:grid-cols-2 gap-8${activeTab !== 'products' ? ' hidden' : ''}`}>
+          <div className={`grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-2${activeTab !== 'products' ? ' hidden' : ''}`}>
             {showNewProductForm && activeTab === 'products' && (
               <div id="new-product" className="bg-white p-6 rounded-lg shadow-sm border border-stone-200">
                 <h3 className="flex items-center gap-2 text-lg font-bold text-stone-900 mb-2"><Plus className="h-5 w-5 text-emerald-700" />Καταχώρηση νέου προϊόντος</h3>
@@ -1233,11 +1233,11 @@ export default function FarmerDashboard() {
               {products.length === 0 ? (
                 <p className="text-gray-500 text-sm">Δεν έχετε καταχωρήσει προϊόντα προς πώληση.</p>
               ) : (
-                <ul className="divide-y divide-gray-200">
+                <div className="space-y-4">
                   {products.map((prod) => {
                     const productImages = productImagesByProductId[prod.id] ?? [];
                     return (
-                      <li key={prod.id} className="py-3">
+                      <div key={prod.id} className="rounded-lg border border-stone-200 bg-white p-4">
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0 flex-1">
                             {productImages.length > 0 && (
@@ -1311,10 +1311,10 @@ export default function FarmerDashboard() {
                             </button>
                           </div>
                         </div>
-                      </li>
+                      </div>
                     );
                   })}
-                </ul>
+                </div>
               )}
             </div>
           </div>
