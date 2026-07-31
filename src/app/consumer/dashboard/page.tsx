@@ -937,22 +937,25 @@ export default function ConsumerDashboard() {
         </header>
 
         {/* Dashboard Body */}
-        <main className="flex-1 w-full space-y-8 px-4 py-2 sm:px-6 sm:py-4 lg:px-10 lg:py-4">
+        <main className="flex-1 w-full space-y-8 px-4 py-2 sm:px-8 sm:py-4 lg:px-8 lg:py-4">
           <section id="overview" className="hidden border-b border-stone-200 pb-2 sm:block" />
 
           {successMsg && <div className="rounded-md border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">{successMsg}</div>}
           {errorMsg && !selectedProduct && <div className="rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{errorMsg}</div>}
 
           <section id="products" className={activeTab !== 'products' ? 'hidden' : ''}>
-            <div className="mx-auto mt-2 max-w-6xl rounded-xl border border-stone-200 bg-white p-4 shadow-sm sm:p-6">
-              <div className="mb-5 flex flex-col gap-3 border-b border-stone-100 pb-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <h2 className="text-xl font-semibold text-stone-800">Διαθέσιμα προϊόντα</h2>
-                  <p className="mt-1 text-sm text-stone-500">Περιηγηθείτε στα διαθέσιμα προϊόντα και στείλτε αίτημα απευθείας.</p>
+            <div className="mx-auto mt-2 max-w-6xl rounded-xl border border-stone-200 bg-white shadow-sm">
+              <div className="border-b border-stone-100 px-4 pb-4 pt-4 sm:px-6 sm:pt-6">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <h2 className="text-xl font-semibold text-stone-800">Διαθέσιμα προϊόντα</h2>
+                    <p className="mt-1 text-sm text-stone-500">Περιηγηθείτε στα διαθέσιμα προϊόντα και στείλτε αίτημα απευθείας.</p>
+                  </div>
                 </div>
               </div>
 
-              <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center">
+              <div className="px-4 pb-4 pt-4 sm:px-6 sm:pb-6 sm:pt-5">
+                <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
                   <input
@@ -992,16 +995,16 @@ export default function ConsumerDashboard() {
                 </div>
               </div>
 
-              {filteredAndSortedProducts.length === 0 ? (
-                <p className="text-sm text-stone-500">{searchTerm ? 'Δεν βρέθηκαν προϊόντα με αυτό το όνομα.' : 'Δεν υπάρχουν διαθέσιμα προίόντα αυτή τη στιγμή.'}</p>
-              ) : (
-                <>
-                  <p className="mb-3 text-xs text-stone-500">
-                    Εμφανίζονται {filteredAndSortedProducts.length} προϊόντα
-                    {useDistance && userLocation ? ' (ταξινομημένα κατά απόσταση)' : ''}
-                  </p>
-                  <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-2 sm:gap-2.5 lg:grid-cols-3">
-                    {filteredAndSortedProducts.map((item) => {
+                {filteredAndSortedProducts.length === 0 ? (
+                  <p className="text-sm text-stone-500">{searchTerm ? 'Δεν βρέθηκαν προϊόντα με αυτό το όνομα.' : 'Δεν υπάρχουν διαθέσιμα προίόντα αυτή τη στιγμή.'}</p>
+                ) : (
+                  <>
+                    <p className="mb-3 text-xs text-stone-500">
+                      Εμφανίζονται {filteredAndSortedProducts.length} προϊόντα
+                      {useDistance && userLocation ? ' (ταξινομημένα κατά απόσταση)' : ''}
+                    </p>
+                    <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-2 sm:gap-2.5 lg:grid-cols-3">
+                      {filteredAndSortedProducts.map((item) => {
                       const itemDistance = (item as any).distance_km;
                       const productImages = productImagesByProductId[item.id] ?? [];
                       return (
@@ -1041,10 +1044,11 @@ export default function ConsumerDashboard() {
                           </div>
                         </article>
                       );
-                    })}
-                  </div>
-                </>
-              )}
+                      })}
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           </section>
 
