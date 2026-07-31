@@ -944,100 +944,107 @@ export default function ConsumerDashboard() {
           {errorMsg && !selectedProduct && <div className="rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{errorMsg}</div>}
 
           <section id="products" className={activeTab !== 'products' ? 'hidden' : ''}>
-            <div className="mx-auto max-w-6xl">
-            <h2 className="mb-3 text-xl font-semibold text-stone-800">Διαθέσιμα προϊόντα</h2>
-            
-            {/* Search και Filter */}
-            <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
-                <input
-                  type="text"
-                  placeholder="Αναζήτησε προίόντα (π.χ. Τομάτες, Μήλα)"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full rounded-lg border border-stone-300 bg-white pl-10 pr-3 py-2.5 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
-                />
-              </div>
-              
-              {/* Location Button */}
-              <button
-                onClick={handleRequestLocation}
-                disabled={loadingLocation}
-                className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold text-sm transition-colors ${
-                  useDistance
-                    ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 hover:bg-emerald-200'
-                    : 'bg-white text-stone-700 border border-stone-300 hover:bg-stone-50'
-                }`}
-              >
-                <MapPin className="h-4 w-4" />
-                {loadingLocation ? 'Φόρτωση...' : useDistance ? '📍 Ταξινόμηση κατά απόσταση' : '📍 Εύρεση κοντά'}
-              </button>
-
-              <div className="relative">
-                <select
-                  value={sortType}
-                  onChange={(e) => setSortType(e.target.value as typeof sortType)}
-                  disabled={useDistance}
-                  className="appearance-none rounded-lg border border-stone-300 bg-white pl-3 pr-10 py-2.5 text-sm text-stone-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 cursor-pointer disabled:opacity-60"
-                >
-                  <option value="newest">Φίλτρο</option>
-                  <option value="price_low">Χαμηλότερη τιμή</option>
-                  <option value="price_high">Υψηλότερη τιμή</option>
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
-              </div>
-            </div>
-
-            {filteredAndSortedProducts.length === 0 ? <p className="text-sm text-stone-500">{searchTerm ? 'Δεν βρέθηκαν προϊόντα με αυτό το όνομα.' : 'Δεν υπάρχουν διαθέσιμα προίόντα αυτή τη στιγμή.'}</p> : (
-              <>
-                <p className="mb-3 text-xs text-stone-500">
-                  Εμφανίζονται {filteredAndSortedProducts.length} προϊόντα
-                  {useDistance && userLocation ? ' (ταξινομημένα κατά απόσταση)' : ''}
-                </p>
-                <div className="grid grid-cols-2 gap-1.5 sm:gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
-                {filteredAndSortedProducts.map((item) => {
-                  const itemDistance = (item as any).distance_km;
-                  const productImages = productImagesByProductId[item.id] ?? [];
-                  return (
-                    <article key={item.id} className="flex flex-col rounded-lg border border-emerald-200 bg-white p-1.5 sm:p-2">
-                      {productImages.length > 0 && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setSelectedProductImage(productImages[0].image_url);
-                            setShowProductImagePreview(true);
-                          }}
-                          className="mb-3 aspect-square w-full overflow-hidden rounded-md border border-stone-200 bg-stone-50"
-                          aria-label={`Προεπισκόπηση εικόνας για ${item.title}`}
-                        >
-                          <img src={productImages[0].image_url} alt={item.title} className="h-full w-full object-cover" loading="lazy" />
-                        </button>
-                      )}
-                      <div className="mb-2 flex items-start justify-between gap-2">
-                        <h3 className="text-[11px] sm:text-xs font-bold text-stone-900">{item.title}</h3>
-                        <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-800">{item.status}</span>
-                      </div>
-                      {useDistance && itemDistance !== null && (
-                        <p className="mb-2 text-xs text-emerald-700 font-semibold flex items-center gap-1">
-                          <MapPin className="h-3 w-3" />
-                          {formatDistance(itemDistance)}
-                        </p>
-                      )}
-                      <p className="mb-2 text-[10px] sm:text-[11px] text-stone-600">
-                        Τιμή: <strong className="text-emerald-700">{item.price} EUR / {item.unit}</strong>
-                        <br />
-                        Διαθέσιμη ποσότητα: <strong>{item.quantity} {getUnitLabel(item.unit, item.quantity)}</strong>
-                      </p>
-                      <div className="mt-auto">
-                        <button type="button" onClick={() => openRequestForm(item)} className="w-full rounded-md bg-emerald-700 px-2 py-1.25 text-[10px] sm:text-[11px] font-bold text-white transition-colors hover:bg-emerald-800">Αποστολή αιτήματος</button>
-                      </div>
-                    </article>
-                  );
-                })}
+            <div className="mx-auto max-w-6xl rounded-xl border border-stone-200 bg-white p-4 shadow-sm sm:p-6">
+              <div className="mb-5 flex flex-col gap-3 border-b border-stone-100 pb-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h2 className="text-xl font-semibold text-stone-800">Διαθέσιμα προϊόντα</h2>
+                  <p className="mt-1 text-sm text-stone-500">Περιηγηθείτε στα διαθέσιμα προϊόντα και στείλτε αίτημα απευθείας.</p>
                 </div>
-              </>
-            )}
+              </div>
+
+              <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
+                  <input
+                    type="text"
+                    placeholder="Αναζήτησε προίόντα (π.χ. Τομάτες, Μήλα)"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full rounded-lg border border-stone-300 bg-white pl-10 pr-3 py-2.5 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                  />
+                </div>
+
+                <button
+                  onClick={handleRequestLocation}
+                  disabled={loadingLocation}
+                  className={`inline-flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-semibold transition-colors ${
+                    useDistance
+                      ? 'border-emerald-300 bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
+                      : 'border-stone-300 bg-white text-stone-700 hover:bg-stone-50'
+                  }`}
+                >
+                  <MapPin className="h-4 w-4" />
+                  {loadingLocation ? 'Φόρτωση...' : useDistance ? '📍 Ταξινόμηση κατά απόσταση' : '📍 Εύρεση κοντά'}
+                </button>
+
+                <div className="relative">
+                  <select
+                    value={sortType}
+                    onChange={(e) => setSortType(e.target.value as typeof sortType)}
+                    disabled={useDistance}
+                    className="cursor-pointer appearance-none rounded-lg border border-stone-300 bg-white py-2.5 pl-3 pr-10 text-sm text-stone-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 disabled:opacity-60"
+                  >
+                    <option value="newest">Φίλτρο</option>
+                    <option value="price_low">Χαμηλότερη τιμή</option>
+                    <option value="price_high">Υψηλότερη τιμή</option>
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
+                </div>
+              </div>
+
+              {filteredAndSortedProducts.length === 0 ? (
+                <p className="text-sm text-stone-500">{searchTerm ? 'Δεν βρέθηκαν προϊόντα με αυτό το όνομα.' : 'Δεν υπάρχουν διαθέσιμα προίόντα αυτή τη στιγμή.'}</p>
+              ) : (
+                <>
+                  <p className="mb-3 text-xs text-stone-500">
+                    Εμφανίζονται {filteredAndSortedProducts.length} προϊόντα
+                    {useDistance && userLocation ? ' (ταξινομημένα κατά απόσταση)' : ''}
+                  </p>
+                  <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-2 sm:gap-2.5 lg:grid-cols-3">
+                    {filteredAndSortedProducts.map((item) => {
+                      const itemDistance = (item as any).distance_km;
+                      const productImages = productImagesByProductId[item.id] ?? [];
+                      return (
+                        <article key={item.id} className="flex flex-col rounded-lg border border-stone-200 bg-stone-50 p-2 shadow-sm sm:p-2.5">
+                          {productImages.length > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedProductImage(productImages[0].image_url);
+                                setShowProductImagePreview(true);
+                              }}
+                              className="mb-3 aspect-square w-full overflow-hidden rounded-md border border-stone-200 bg-white"
+                              aria-label={`Προεπισκόπηση εικόνας για ${item.title}`}
+                            >
+                              <img src={productImages[0].image_url} alt={item.title} className="h-full w-full object-cover" loading="lazy" />
+                            </button>
+                          )}
+                          <div className="mb-2 flex items-start justify-between gap-2">
+                            <h3 className="text-[11px] font-bold text-stone-900 sm:text-xs">{item.title}</h3>
+                            <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-800">{item.status}</span>
+                          </div>
+                          {useDistance && itemDistance !== null && (
+                            <p className="mb-2 flex items-center gap-1 text-xs font-semibold text-emerald-700">
+                              <MapPin className="h-3 w-3" />
+                              {formatDistance(itemDistance)}
+                            </p>
+                          )}
+                          <p className="mb-2 text-[10px] text-stone-600 sm:text-[11px]">
+                            Τιμή: <strong className="text-emerald-700">{item.price} EUR / {item.unit}</strong>
+                            <br />
+                            Διαθέσιμη ποσότητα: <strong>{item.quantity} {getUnitLabel(item.unit, item.quantity)}</strong>
+                          </p>
+                          <div className="mt-auto">
+                            <button type="button" onClick={() => openRequestForm(item)} className="w-full rounded-md bg-emerald-700 px-2 py-1.25 text-[10px] font-bold text-white transition-colors hover:bg-emerald-800 sm:text-[11px]">
+                              Αποστολή αιτήματος
+                            </button>
+                          </div>
+                        </article>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
             </div>
           </section>
 
