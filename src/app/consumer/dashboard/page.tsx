@@ -1024,7 +1024,7 @@ export default function ConsumerDashboard() {
                           )}
                           <div className="mb-2 flex items-start justify-between gap-2">
                             <h3 className="text-sm font-bold text-stone-900 sm:text-[13px]">{item.title}</h3>
-                            <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-800">{item.status}</span>
+                            <span className="ml-2 shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-800">{item.status}</span>
                           </div>
                           {useDistance && itemDistance !== null && (
                             <p className="mb-2 flex items-center gap-1 text-xs font-semibold text-emerald-700">
