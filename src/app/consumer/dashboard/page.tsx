@@ -1074,7 +1074,7 @@ export default function ConsumerDashboard() {
                       const itemDistance = (item as any).distance_km;
                       const productImages = productImagesByProductId[item.id] ?? [];
                       return (
-                        <article key={item.id} className="flex h-[495px] w-[370px] max-w-full flex-col items-start rounded-lg border border-stone-200 bg-stone-50 p-2 shadow-sm sm:p-2.5 lg:h-[495px] lg:w-[370px]">
+                        <article key={item.id} className="flex h-[495px] w-[370px] max-w-full flex-col justify-between rounded-lg border border-stone-200 bg-stone-50 p-3 shadow-sm sm:p-3.5 lg:h-[495px] lg:w-[370px]">
                           {productImages.length > 0 && (
                             <button
                               type="button"
@@ -1082,13 +1082,13 @@ export default function ConsumerDashboard() {
                                 setSelectedProductImage(productImages[0].image_url);
                                 setShowProductImagePreview(true);
                               }}
-                              className="mb-2 aspect-square w-full max-w-[360px] overflow-hidden rounded-md border border-stone-200 bg-white lg:w-[360px]"
+                              className="mb-3 aspect-square w-full max-w-[340px] overflow-hidden self-center rounded-md border border-stone-200 bg-white lg:w-[340px]"
                               aria-label={`Προεπισκόπηση εικόνας για ${item.title}`}
                             >
                               <img src={productImages[0].image_url} alt={item.title} className="h-full w-full object-cover" loading="lazy" />
                             </button>
                           )}
-                          <div className="mb-1 flex w-full items-start gap-2 px-2 sm:px-2.5">
+                          <div className="mb-2 flex w-full items-start justify-between gap-2 px-1">
                             <h3 className="text-left text-sm font-bold text-stone-900 sm:text-[13px]">{item.title}</h3>
                             <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-800">{item.status}</span>
                           </div>
@@ -1098,13 +1098,13 @@ export default function ConsumerDashboard() {
                               {formatDistance(itemDistance)}
                             </p>
                           )}
-                          <p className="mb-2 w-full px-2 text-left text-sm leading-5 text-stone-600 sm:px-2.5 sm:text-[13px]">
+                          <p className="mb-3 w-full px-1 text-left text-sm leading-5 text-stone-600 sm:text-[13px]">
                             Τιμή: <strong className="text-emerald-700">{item.price} EUR / {item.unit}</strong>
                             <br />
                             Διαθέσιμη ποσότητα: <strong>{item.quantity} {getUnitLabel(item.unit, item.quantity)}</strong>
                           </p>
-                          <div className="mt-auto">
-                            <button type="button" onClick={() => openRequestForm(item)} className="w-full rounded-md bg-emerald-700 px-2 py-2 text-[10px] font-bold text-white transition-colors hover:bg-emerald-800 sm:px-2.5 sm:py-2 sm:text-[11px]">
+                          <div className="mt-auto w-full">
+                            <button type="button" onClick={() => openRequestForm(item)} className="w-full rounded-md bg-emerald-700 px-2 py-2.5 text-[10px] font-bold text-white transition-colors hover:bg-emerald-800 sm:px-2.5 sm:py-2.5 sm:text-[11px]">
                               Αποστολή αιτήματος
                             </button>
                           </div>
