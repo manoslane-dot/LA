@@ -1069,12 +1069,12 @@ export default function ConsumerDashboard() {
                       Εμφανίζονται {filteredAndSortedProducts.length} προϊόντα
                       {useDistance && userLocation ? ' (ταξινομημένα κατά απόσταση)' : ''}
                     </p>
-                    <div data-section="products-grid" data-coords="1,1.2" className="grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 lg:gap-5">
+                    <div data-section="products-grid" data-coords="1,1.2" className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-2.5 lg:grid-cols-3 lg:gap-3">
                       {filteredAndSortedProducts.map((item) => {
                       const itemDistance = (item as any).distance_km;
                       const productImages = productImagesByProductId[item.id] ?? [];
                       return (
-                        <article key={item.id} className="flex h-[495px] w-[370px] max-w-full flex-col justify-between rounded-lg border border-stone-200 bg-stone-50 p-3 shadow-sm sm:p-3.5 lg:h-[495px] lg:w-[370px]">
+                        <article key={item.id} className="flex h-[495px] w-[370px] max-w-full flex-col justify-between rounded-lg border border-stone-200 bg-white p-3 shadow-sm transition-shadow duration-200 hover:shadow-md sm:p-3.5 lg:h-[495px] lg:w-[370px]">
                           {productImages.length > 0 && (
                             <button
                               type="button"
@@ -1082,13 +1082,13 @@ export default function ConsumerDashboard() {
                                 setSelectedProductImage(productImages[0].image_url);
                                 setShowProductImagePreview(true);
                               }}
-                              className="mb-3 aspect-square w-full max-w-[340px] overflow-hidden self-center rounded-md border border-stone-200 bg-white lg:w-[340px]"
+                              className="mb-2.5 aspect-square w-full max-w-[320px] overflow-hidden self-center rounded-md border border-stone-200 bg-stone-100 lg:w-[320px]"
                               aria-label={`Προεπισκόπηση εικόνας για ${item.title}`}
                             >
                               <img src={productImages[0].image_url} alt={item.title} className="h-full w-full object-cover" loading="lazy" />
                             </button>
                           )}
-                          <div className="mb-2 flex w-full items-start justify-between gap-2 px-1">
+                          <div className="mb-1.5 flex w-full items-start justify-between gap-2 px-1">
                             <h3 className="text-left text-sm font-bold text-stone-900 sm:text-[13px]">{item.title}</h3>
                             <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-800">{item.status}</span>
                           </div>
@@ -1098,7 +1098,7 @@ export default function ConsumerDashboard() {
                               {formatDistance(itemDistance)}
                             </p>
                           )}
-                          <p className="mb-3 w-full px-1 text-left text-sm leading-5 text-stone-600 sm:text-[13px]">
+                          <p className="mb-2.5 w-full px-1 text-left text-sm leading-5 text-stone-600 sm:text-[13px]">
                             Τιμή: <strong className="text-emerald-700">{item.price} EUR / {item.unit}</strong>
                             <br />
                             Διαθέσιμη ποσότητα: <strong>{item.quantity} {getUnitLabel(item.unit, item.quantity)}</strong>
