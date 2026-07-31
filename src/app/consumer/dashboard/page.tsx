@@ -937,14 +937,14 @@ export default function ConsumerDashboard() {
         </header>
 
         {/* Dashboard Body */}
-        <main className="flex-1 w-full space-y-8 px-4 py-2 sm:px-8 sm:py-4 lg:px-8 lg:py-4">
+        <main className="flex-1 w-full space-y-8 px-0 py-2 sm:px-0 sm:py-4 lg:px-0 lg:py-4">
           <section id="overview" className="hidden border-b border-stone-200 pb-2 sm:block" />
 
           {successMsg && <div className="rounded-md border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">{successMsg}</div>}
           {errorMsg && !selectedProduct && <div className="rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{errorMsg}</div>}
 
           <section id="products" className={activeTab !== 'products' ? 'hidden' : ''}>
-            <div className="mx-auto mt-2 max-w-6xl rounded-xl border border-stone-200 bg-white shadow-sm">
+            <div className="mx-0 mt-0 rounded-none border-x-0 border-b-0 border-t border-stone-200 bg-white shadow-none sm:mx-0 sm:rounded-none sm:border-x-0 sm:border-b-0 sm:border-t sm:shadow-none">
               <div className="border-b border-stone-100 px-4 pb-4 pt-4 sm:px-6 sm:pt-6">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
