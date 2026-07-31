@@ -1166,10 +1166,10 @@ export default function ConsumerDashboard() {
 
           <section id="profile" className={activeTab !== 'profile' ? 'hidden' : 'rounded-lg border border-stone-200 bg-white p-6 shadow-sm'}>
             <div className="mx-auto max-w-6xl">
-            <h2 className="mb-5 text-xl font-semibold text-stone-800">Το Προφίλ μου</h2>
+            <h2 className="mb-5 text-left text-xl font-semibold text-stone-800">Το Προφίλ μου</h2>
             {!editingProfile ? (
-              <div className="space-y-4">
-                <div className="flex items-center gap-4 rounded-lg border border-stone-200 bg-stone-50 p-4">
+              <div className="space-y-4 text-left">
+                <div className="flex items-start gap-4 rounded-lg border border-stone-200 bg-stone-50 p-4">
                   <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border border-stone-300 bg-white">
                     {avatarUrl ? (
                       <button
@@ -1186,21 +1186,21 @@ export default function ConsumerDashboard() {
                       </span>
                     )}
                   </div>
-                  <label className="cursor-pointer rounded-lg border border-emerald-300 bg-white px-3 py-2 text-sm font-semibold text-emerald-700">
+                  <label className="cursor-pointer rounded-lg border border-emerald-300 bg-white px-3 py-2 text-sm font-semibold text-emerald-700 text-left">
                     <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={handleAvatarUpload} />
                     {uploadingAvatar ? 'Αποστολή...' : 'Αλλαγή φωτογραφίας'}
                   </label>
                 </div>
-                <div className="rounded-lg border border-stone-200 bg-stone-50 p-4">
-                  <p className="text-xs font-semibold text-stone-600 mb-1">Ονοματεπώνυμο</p>
+                <div className="rounded-lg border border-stone-200 bg-stone-50 p-4 text-left">
+                  <p className="mb-1 text-left text-xs font-semibold text-stone-600">Ονοματεπώνυμο</p>
                   <p className="text-base text-stone-900">{userName || 'Επανόθηση απαιτείται'}</p>
                 </div>
-                <div className="rounded-lg border border-stone-200 bg-stone-50 p-4">
-                  <p className="text-xs font-semibold text-stone-600 mb-1">Email</p>
+                <div className="rounded-lg border border-stone-200 bg-stone-50 p-4 text-left">
+                  <p className="mb-1 text-left text-xs font-semibold text-stone-600">Email</p>
                   <p className="text-base text-stone-900">{buyerEmail || 'Επανόθηση απαιτείται'}</p>
                 </div>
-                <div className="rounded-lg border border-stone-200 bg-stone-50 p-4">
-                  <p className="text-xs font-semibold text-stone-600 mb-1">Κινητό τηλέφωνο</p>
+                <div className="rounded-lg border border-stone-200 bg-stone-50 p-4 text-left">
+                  <p className="mb-1 text-left text-xs font-semibold text-stone-600">Κινητό τηλέφωνο</p>
                   <p className="text-base text-stone-900">{buyerPhone || 'Επανόθηση απαιτείται'}</p>
                 </div>
                 <button
