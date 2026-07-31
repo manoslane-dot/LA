@@ -1008,7 +1008,7 @@ export default function ConsumerDashboard() {
                       const itemDistance = (item as any).distance_km;
                       const productImages = productImagesByProductId[item.id] ?? [];
                       return (
-                        <article key={item.id} className="flex flex-col items-center rounded-lg border border-stone-200 bg-stone-50 p-2 text-center shadow-sm sm:p-2.5">
+                        <article key={item.id} className="flex flex-col rounded-lg border border-stone-200 bg-stone-50 p-2 shadow-sm sm:p-2.5">
                           {productImages.length > 0 && (
                             <button
                               type="button"
@@ -1022,17 +1022,17 @@ export default function ConsumerDashboard() {
                               <img src={productImages[0].image_url} alt={item.title} className="h-full w-full object-cover" loading="lazy" />
                             </button>
                           )}
-                          <div className="mb-1 flex w-full items-center justify-center gap-2">
-                            <h3 className="text-sm font-bold text-stone-900 sm:text-[13px]">{item.title}</h3>
+                          <div className="mb-1 flex w-full items-start justify-between gap-2">
+                            <h3 className="text-left text-sm font-bold text-stone-900 sm:text-[13px]">{item.title}</h3>
                             <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-800">{item.status}</span>
                           </div>
                           {useDistance && itemDistance !== null && (
-                            <p className="mb-2 flex items-center gap-1 text-xs font-semibold text-emerald-700">
+                            <p className="mb-2 flex items-center justify-start gap-1 text-left text-xs font-semibold text-emerald-700">
                               <MapPin className="h-3 w-3" />
                               {formatDistance(itemDistance)}
                             </p>
                           )}
-                          <p className="mb-2 text-sm text-stone-600 sm:text-[13px]">
+                          <p className="mb-2 w-full text-left text-sm text-stone-600 sm:text-[13px]">
                             Τιμή: <strong className="text-emerald-700">{item.price} EUR / {item.unit}</strong>
                             <br />
                             Διαθέσιμη ποσότητα: <strong>{item.quantity} {getUnitLabel(item.unit, item.quantity)}</strong>
