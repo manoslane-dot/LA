@@ -1085,24 +1085,6 @@ export default function FarmerDashboard() {
 
         {/* Dashboard Body */}
         <main className="p-4 sm:p-8 flex-1 space-y-8 max-w-7xl w-full mx-auto">
-          {/* Καρτέλες πλοήγησης */}
-          <div className="hidden border-b border-stone-200 -mt-4 sm:-mt-8 -mx-4 sm:-mx-8 px-4 sm:px-8 sm:flex">
-            <button type="button" onClick={() => setActiveTab('profile')} className={`px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors flex items-center gap-2 ${activeTab === 'profile' ? 'border-emerald-700 text-emerald-800' : 'border-transparent text-stone-500 hover:text-stone-900'}`}>
-              <User className="h-4 w-4" /> Το Προφίλ μου
-            </button>
-            <button type="button" onClick={() => setActiveTab('overview')} className={`px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors ${activeTab === 'overview' ? 'border-emerald-700 text-emerald-800' : 'border-transparent text-stone-500 hover:text-stone-900'}`}>
-              Επισκόπηση
-            </button>
-            <button type="button" onClick={() => setActiveTab('products')} className={`px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors ${activeTab === 'products' ? 'border-emerald-700 text-emerald-800' : 'border-transparent text-stone-500 hover:text-stone-900'}`}>
-              Προϊόντα
-            </button>
-            <button type="button" onClick={() => setActiveTab('requests')} className={`px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors flex items-center gap-2 ${activeTab === 'requests' ? 'border-emerald-700 text-emerald-800' : 'border-transparent text-stone-500 hover:text-stone-900'}`}>
-              Αιτήματα πελατών
-              {requests.filter((r) => r.status === 'pending').length > 0 && (
-                <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-xs font-semibold text-amber-800">{requests.filter((r) => r.status === 'pending').length}</span>
-              )}
-            </button>
-          </div>
           <section id="overview" className={`hidden border-b border-stone-200 pb-2 flex-col gap-2 sm:flex sm:flex-row sm:items-end sm:justify-between${activeTab !== 'overview' ? ' hidden' : ''}`}>
             <div>
               {activeTab === 'overview' && (
