@@ -114,6 +114,14 @@ export default function FarmerDashboard() {
   const [prodUnit, setProdUnit] = useState('κιλό');
   const [submittingProd, setSubmittingProd] = useState(false);
   const [showNewProductForm, setShowNewProductForm] = useState(false);
+  const [editingProductId, setEditingProductId] = useState<number | null>(null);
+  const [editingProductTitle, setEditingProductTitle] = useState('');
+  const [editingProductQuantity, setEditingProductQuantity] = useState('');
+  const [editingProductPrice, setEditingProductPrice] = useState('');
+  const [editingProductUnit, setEditingProductUnit] = useState('κιλό');
+  const [editingProductStatus, setEditingProductStatus] = useState('🟢 Ενεργό / Δημοσιευμένο');
+  const [editingProductImages, setEditingProductImages] = useState<File[]>([]);
+  const [updatingProduct, setUpdatingProduct] = useState(false);
   const [editingPriceId, setEditingPriceId] = useState<number | null>(null);
   const [priceDraft, setPriceDraft] = useState('');
   const [updatingPrice, setUpdatingPrice] = useState(false);
@@ -352,6 +360,81 @@ export default function FarmerDashboard() {
       alert('Δεν ήταν δυνατή η αποστολή της φωτογραφίας.');
     } finally {
       setUploadingAvatar(false);
+    }
+  };
+
+  const resetEditProductState = useCallback(() => {
+    setEditingProductId(null);
+    setEditingProductTitle('');
+    setEditingProductQuantity('');
+    setEditingProductPrice('');
+    setEditingProductUnit('κιλό');
+    setEditingProductStatus('🟢 Ενεργό / Δημοσιευμένο');
+    setEditingProductImages([]);
+  }, []);
+
+  const handleStartEditProduct = (product: Product) => {
+    setEditingProductId(product.id);
+    setEditingProductTitle(product.title);
+    setEditingProductQuantity(String(product.quantity));
+    setEditingProductPrice(String(product.price));
+    setEditingProductUnit(product.unit || 'κιλό');
+    setEditingProductStatus(product.status || '🟢 Ενεργό / Δημοσιευμένο');
+    setEditingProductImages([]);
+  };
+
+  const handleUpdateProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingProductId || !userId) return;
+    if (!editingProductTitle.trim() || !editingProductQuantity || !editingProductPrice) return;
+
+    setUpdatingProduct(true);
+
+    try {
+      const { error: updateError } = await supabase
+        .from('products')
+        .update({
+          title: editingProductTitle.trim(),
+          quantity: parseFloat(editingProductQuantity),
+          price: parseFloat(editingProductPrice),
+          unit: editingProductUnit,
+          status: editingProductStatus,
+        })
+        .eq('id', editingProductId)
+        .eq('farmer_id', userId);
+
+      if (updateError) throw updateError;
+
+      if (editingProductImages.length > 0) {
+        const { error: deleteError } = await supabase
+          .from('product_images')
+          .delete()
+          .eq('product_id', editingProductId);
+
+        if (deleteError) throw deleteError;
+
+        const imageRows = [] as Array<{ product_id: number; image_url: string; image_path: string; sort_order: number }>;
+        for (const [index, file] of editingProductImages.entries()) {
+          const { publicUrl, path } = await uploadImageToSupabase(supabase, 'product-images', userId, file);
+          imageRows.push({
+            product_id: editingProductId,
+            image_url: publicUrl,
+            image_path: path,
+            sort_order: index,
+          });
+        }
+
+        const { error: imageError } = await supabase.from('product_images').insert(imageRows);
+        if (imageError) throw imageError;
+      }
+
+      resetEditProductState();
+      await fetchProducts(userId);
+    } catch (err) {
+      console.error('Σφάλμα ενημέρωσης προϊόντος:', err);
+      alert('Σφάλμα: ' + (err as Error).message);
+    } finally {
+      setUpdatingProduct(false);
     }
   };
 
@@ -1207,10 +1290,10 @@ export default function FarmerDashboard() {
                             </span>
                             <button
                               type="button"
-                              onClick={() => handleStartPriceEdit(prod)}
+                              onClick={() => handleStartEditProduct(prod)}
                               className="rounded-md p-2 text-stone-400 transition-colors hover:bg-emerald-50 hover:text-emerald-700"
-                              title="Αλλαγή τιμής"
-                              aria-label={`Αλλαγή τιμής για ${prod.title}`}
+                              title="Επεξεργασία προϊόντος"
+                              aria-label={`Επεξεργασία προϊόντος ${prod.title}`}
                             >
                               <Pencil className="h-4 w-4" />
                             </button>
@@ -1231,6 +1314,123 @@ export default function FarmerDashboard() {
               )}
             </div>
           </div>
+
+          {editingProductId !== null && (
+            <div className="fixed inset-0 z-[60] flex items-center justify-center bg-stone-950/60 p-3 sm:p-4" role="dialog" aria-modal="true" aria-labelledby="edit-product-title">
+              <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-stone-200 bg-white p-4 shadow-2xl sm:p-6">
+                <div className="mb-4 flex items-start justify-between gap-3">
+                  <div>
+                    <h3 id="edit-product-title" className="text-lg font-bold text-stone-900">Επεξεργασία προϊόντος</h3>
+                    <p className="mt-1 text-sm text-stone-500">Άλλαξε όλα τα πεδία του προϊόντος και αποθήκευσε τις αλλαγές.</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={resetEditProductState}
+                    className="rounded-md p-2 text-stone-400 transition-colors hover:bg-stone-100 hover:text-stone-700"
+                    aria-label="Κλείσιμο επεξεργασίας προϊόντος"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+
+                <form onSubmit={handleUpdateProduct} className="space-y-4">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div className="sm:col-span-2">
+                      <label className="mb-1 block text-sm font-medium text-gray-700">Τίτλος προϊόντος</label>
+                      <input
+                        type="text"
+                        required
+                        value={editingProductTitle}
+                        onChange={(e) => setEditingProductTitle(e.target.value)}
+                        className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-gray-700">Ποσότητα</label>
+                      <input
+                        type="number"
+                        step="any"
+                        required
+                        value={editingProductQuantity}
+                        onChange={(e) => setEditingProductQuantity(e.target.value)}
+                        className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-gray-700">Μονάδα</label>
+                      <select
+                        value={editingProductUnit}
+                        onChange={(e) => setEditingProductUnit(e.target.value)}
+                        className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
+                      >
+                        <option value="κιλό">Κιλό</option>
+                        <option value="τεμάχιο">Τεμάχιο(α)</option>
+                        <option value="λίτρο">Λίτρο(α)</option>
+                        <option value="γραμμάριο">Γραμμάριο(α)</option>
+                        <option value="ματσάκι">Ματσάκι</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-gray-700">Τιμή (€)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        required
+                        value={editingProductPrice}
+                        onChange={(e) => setEditingProductPrice(e.target.value)}
+                        className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-gray-700">Κατάσταση</label>
+                      <select
+                        value={editingProductStatus}
+                        onChange={(e) => setEditingProductStatus(e.target.value)}
+                        className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
+                      >
+                        <option value="🟢 Ενεργό / Δημοσιευμένο">🟢 Ενεργό / Δημοσιευμένο</option>
+                        <option value="🟡 Μερικώς διαθέσιμο">🟡 Μερικώς διαθέσιμο</option>
+                        <option value="🔴 Εκτός αποθέματος">🔴 Εκτός αποθέματος</option>
+                      </select>
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className="mb-1 block text-sm font-medium text-gray-700">Νέες εικόνες προϊόντος (προαιρετικά)</label>
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp"
+                        multiple
+                        onChange={(e) => {
+                          const files = Array.from(e.target.files ?? []).slice(0, 2);
+                          setEditingProductImages(files);
+                        }}
+                        className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                      />
+                      {editingProductImages.length > 0 && (
+                        <p className="mt-2 text-xs text-stone-500">Επιλεγμένες νέες εικόνες: {editingProductImages.length}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                    <button
+                      type="button"
+                      onClick={resetEditProductState}
+                      className="rounded-md border border-stone-300 px-4 py-2 text-sm font-semibold text-stone-700 transition-colors hover:bg-stone-50"
+                    >
+                      Ακύρωση
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={updatingProduct}
+                      className="rounded-md bg-emerald-700 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-emerald-400"
+                    >
+                      {updatingProduct ? 'Αποθήκευση...' : 'Αποθήκευση αλλαγών'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
 
           <section id="requests" className={`rounded-lg border border-stone-200 bg-white p-6 shadow-sm${activeTab !== 'requests' ? ' hidden' : ''}`}>
             <div className="mb-5 flex items-center justify-between gap-4">
