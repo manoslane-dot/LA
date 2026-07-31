@@ -1016,7 +1016,7 @@ export default function ConsumerDashboard() {
                                 setSelectedProductImage(productImages[0].image_url);
                                 setShowProductImagePreview(true);
                               }}
-                              className="mb-2 aspect-square w-[74%] max-w-full overflow-hidden rounded-md border border-stone-200 bg-white"
+                              className="mb-2 aspect-square w-[70%] max-w-full overflow-hidden rounded-md border border-stone-200 bg-white"
                               aria-label={`Προεπισκόπηση εικόνας για ${item.title}`}
                             >
                               <img src={productImages[0].image_url} alt={item.title} className="h-full w-full object-cover" loading="lazy" />
