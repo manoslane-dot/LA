@@ -937,13 +937,14 @@ export default function ConsumerDashboard() {
         </header>
 
         {/* Dashboard Body */}
-        <main className="flex-1 w-full space-y-8 px-4 py-4 sm:px-0 sm:py-8">
+        <main className="flex-1 w-full space-y-8 px-4 py-4 sm:px-6 sm:py-8 lg:px-10">
           <section id="overview" className="hidden border-b border-stone-200 pb-2 sm:block" />
 
           {successMsg && <div className="rounded-md border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">{successMsg}</div>}
           {errorMsg && !selectedProduct && <div className="rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{errorMsg}</div>}
 
           <section id="products" className={activeTab !== 'products' ? 'hidden' : ''}>
+            <div className="mx-auto max-w-6xl">
             <h2 className="mb-4 text-xl font-semibold text-stone-800">Διαθέσιμα προϊόντα</h2>
             
             {/* Search και Filter */}
@@ -1037,6 +1038,7 @@ export default function ConsumerDashboard() {
                 </div>
               </>
             )}
+            </div>
           </section>
 
           <section id="requests" className={`rounded-lg border border-stone-200 bg-white p-6 shadow-sm${activeTab !== 'requests' ? ' hidden' : ''}`}>
@@ -1086,6 +1088,7 @@ export default function ConsumerDashboard() {
           </section>
 
           <section id="profile" className={activeTab !== 'profile' ? 'hidden' : 'rounded-lg border border-stone-200 bg-white p-6 shadow-sm'}>
+            <div className="mx-auto max-w-6xl">
             <h2 className="mb-5 text-xl font-semibold text-stone-800">Το Προφίλ μου</h2>
             {!editingProfile ? (
               <div className="space-y-4">
@@ -1227,6 +1230,7 @@ export default function ConsumerDashboard() {
                 </div>
               </form>
             )}
+            </div>
           </section>
 
           {showAvatarPreview && avatarUrl && (
