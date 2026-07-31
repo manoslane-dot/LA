@@ -1074,7 +1074,7 @@ export default function ConsumerDashboard() {
                       const itemDistance = (item as any).distance_km;
                       const productImages = productImagesByProductId[item.id] ?? [];
                       return (
-                        <article key={item.id} className="flex w-[594px] max-w-full flex-col items-start rounded-lg border border-stone-200 bg-stone-50 p-2 shadow-sm sm:p-2.5 lg:w-[594px]">
+                        <article key={item.id} className="flex w-full max-w-[594px] flex-col items-start rounded-lg border border-stone-200 bg-stone-50 p-2 shadow-sm sm:p-2.5 lg:w-[594px]">
                           {productImages.length > 0 && (
                             <button
                               type="button"
@@ -1082,7 +1082,7 @@ export default function ConsumerDashboard() {
                                 setSelectedProductImage(productImages[0].image_url);
                                 setShowProductImagePreview(true);
                               }}
-                              className="mb-2 aspect-square w-[60%] max-w-full overflow-hidden rounded-md border border-stone-200 bg-white sm:w-[60%]"
+                              className="mb-2 aspect-square w-full max-w-[594px] overflow-hidden rounded-md border border-stone-200 bg-white lg:w-[594px]"
                               aria-label={`Προεπισκόπηση εικόνας για ${item.title}`}
                             >
                               <img src={productImages[0].image_url} alt={item.title} className="h-full w-full object-cover" loading="lazy" />
