@@ -1069,7 +1069,7 @@ export default function ConsumerDashboard() {
                       Εμφανίζονται {filteredAndSortedProducts.length} προϊόντα
                       {useDistance && userLocation ? ' (ταξινομημένα κατά απόσταση)' : ''}
                     </p>
-                    <div data-section="products-grid" data-coords="1,1.2" className="grid grid-cols-2 gap-1.5 sm:grid-cols-2 sm:gap-2.5 lg:grid-cols-3">
+                    <div data-section="products-grid" data-coords="1,1.2" className="grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 lg:gap-5">
                       {filteredAndSortedProducts.map((item) => {
                       const itemDistance = (item as any).distance_km;
                       const productImages = productImagesByProductId[item.id] ?? [];
@@ -1082,7 +1082,7 @@ export default function ConsumerDashboard() {
                                 setSelectedProductImage(productImages[0].image_url);
                                 setShowProductImagePreview(true);
                               }}
-                              className="mb-2 aspect-square w-full max-w-[594px] overflow-hidden rounded-md border border-stone-200 bg-white lg:w-[594px]"
+                              className="mb-2 aspect-square w-full max-w-[360px] overflow-hidden rounded-md border border-stone-200 bg-white lg:w-[360px]"
                               aria-label={`Προεπισκόπηση εικόνας για ${item.title}`}
                             >
                               <img src={productImages[0].image_url} alt={item.title} className="h-full w-full object-cover" loading="lazy" />
