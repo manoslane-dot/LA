@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ShoppingBag, ClipboardList, LogOut, Leaf, Phone, Search, ChevronDown, User, Mail, MapPin, Bell, Menu, X } from 'lucide-react';
+import { ShoppingBag, ClipboardList, LogOut, Leaf, Phone, Search, ChevronDown, User, Mail, MapPin, Bell, Menu, X, ShoppingCart, Plus, Minus, House } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { formatGreekPhoneInput, isPhoneValid, normalizePhone } from '@/lib/auth/contactInfo';
 import { sanitizePhoneForTel } from '@/lib/serviceAreas';
@@ -102,6 +102,7 @@ export default function ConsumerDashboard() {
   const [buyerPhone, setBuyerPhone] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [requestedQuantity, setRequestedQuantity] = useState('1');
+  const [quickQuantities, setQuickQuantities] = useState<Record<number, number>>({});
   const [message, setMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState<'products' | 'requests' | 'profile'>('products');
@@ -512,16 +513,34 @@ export default function ConsumerDashboard() {
     }
   }, []);
 
-  const openRequestForm = (product: Product) => {
+  const openRequestForm = (product: Product, initialQuantity = 1) => {
     if (!product.farmer_id) {
       setErrorMsg('Το προϊόν δεν είναι ακόμη συνδεδεμένο με παραγωγό.');
       return;
     }
 
+    const sanitizedQuantity = Math.max(1, Math.min(initialQuantity, Math.max(1, Math.floor(product.quantity))));
     setSelectedProduct(product);
-    setRequestedQuantity('1');
+    setRequestedQuantity(String(sanitizedQuantity));
     setMessage('');
     setErrorMsg('');
+  };
+
+  const getQuickQuantity = (product: Product) => {
+    const current = quickQuantities[product.id];
+    if (Number.isFinite(current) && current > 0) {
+      return Math.min(current, Math.max(1, Math.floor(product.quantity)));
+    }
+    return 1;
+  };
+
+  const updateQuickQuantity = (product: Product, delta: number) => {
+    setQuickQuantities((prev) => {
+      const maxQuantity = Math.max(1, Math.floor(product.quantity));
+      const base = Number.isFinite(prev[product.id]) ? prev[product.id] : 1;
+      const next = Math.max(1, Math.min(maxQuantity, base + delta));
+      return { ...prev, [product.id]: next };
+    });
   };
 
   const handleNotificationSelect = (notification: NotificationItem) => {
@@ -893,7 +912,7 @@ export default function ConsumerDashboard() {
             <button
               type="button"
               onClick={() => setShowCoordinateOverlay((prev) => !prev)}
-              className={`inline-flex items-center rounded-md border px-3 py-2 text-sm font-medium transition-colors ${showCoordinateOverlay ? 'border-emerald-600 bg-emerald-50 text-emerald-700' : 'border-stone-300 bg-white text-stone-700 hover:bg-stone-100'}`}
+              className={`hidden sm:inline-flex items-center rounded-md border px-3 py-2 text-sm font-medium transition-colors ${showCoordinateOverlay ? 'border-emerald-600 bg-emerald-50 text-emerald-700' : 'border-stone-300 bg-white text-stone-700 hover:bg-stone-100'}`}
             >
               <span className="mr-2 h-2.5 w-2.5 rounded-full bg-current" />
               {showCoordinateOverlay ? 'Overlay ON' : 'Overlay OFF'}
@@ -995,7 +1014,8 @@ export default function ConsumerDashboard() {
             </div>
             <button
               onClick={handleLogout}
-              className="inline-flex items-center gap-2 border border-stone-300 hover:border-red-200 hover:bg-red-50 hover:text-red-700 text-stone-700 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+              className="inline-flex items-center gap-2 border border-stone-300 hover:border-red-200 hover:bg-red-50 hover:text-red-700 text-stone-700 px-2.5 py-2 rounded-md text-sm font-medium transition-colors sm:px-3"
+              aria-label="Αποσύνδεση"
             >
               <LogOut className="h-4 w-4" /><span className="hidden sm:inline">Αποσύνδεση</span>
             </button>
@@ -1003,7 +1023,7 @@ export default function ConsumerDashboard() {
         </header>
 
         {/* Dashboard Body */}
-        <main data-section="dashboard-body" data-coords="1,0" className="flex-1 w-full space-y-8 px-0 py-2 sm:px-0 sm:py-4 lg:px-0 lg:py-4">
+        <main data-section="dashboard-body" data-coords="1,0" className="flex-1 w-full space-y-8 px-0 py-2 pb-24 sm:px-0 sm:py-4 sm:pb-4 lg:px-0 lg:py-4">
           <section id="overview" className="hidden border-b border-stone-200 pb-2 sm:block" />
 
           {successMsg && <div className="rounded-md border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">{successMsg}</div>}
@@ -1073,8 +1093,9 @@ export default function ConsumerDashboard() {
                       {filteredAndSortedProducts.map((item) => {
                       const itemDistance = (item as any).distance_km;
                       const productImages = productImagesByProductId[item.id] ?? [];
+                      const selectedQuickQuantity = getQuickQuantity(item);
                       return (
-                        <article key={item.id} className="flex h-[495px] w-[370px] max-w-full flex-col items-start justify-between rounded-lg border border-stone-200 bg-white p-3 shadow-sm transition-shadow duration-200 hover:shadow-md sm:p-3.5 lg:h-[495px] lg:w-[370px]">
+                        <article key={item.id} className="flex h-full min-h-[320px] w-full max-w-full flex-col rounded-xl border border-stone-200 bg-white p-2.5 shadow-sm transition-shadow duration-200 hover:shadow-md sm:p-3.5 lg:h-[495px] lg:w-[370px]">
                           {productImages.length > 0 && (
                             <button
                               type="button"
@@ -1082,30 +1103,55 @@ export default function ConsumerDashboard() {
                                 setSelectedProductImage(productImages[0].image_url);
                                 setShowProductImagePreview(true);
                               }}
-                              className="mb-2.5 aspect-square w-full max-w-[320px] overflow-hidden self-start rounded-md border border-stone-200 bg-stone-100 lg:w-[320px]"
+                              className="mb-2 aspect-[4/3] w-full overflow-hidden rounded-lg border border-stone-200 bg-stone-100"
                               aria-label={`Προεπισκόπηση εικόνας για ${item.title}`}
                             >
                               <img src={productImages[0].image_url} alt={item.title} className="h-full w-full object-cover" loading="lazy" />
                             </button>
                           )}
-                          <div className="mb-1.5 flex w-full items-start justify-between gap-2 px-1">
-                            <h3 className="text-left text-sm font-bold text-stone-900 sm:text-[13px]">{item.title}</h3>
-                            <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-800">{item.status}</span>
+                          <div className="mb-1 flex w-full items-start justify-between gap-2 px-0.5">
+                            <h3 className="text-left text-base font-bold text-stone-900 sm:text-[13px]">{item.title}</h3>
+                            <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-800">Διαθέσιμο</span>
                           </div>
                           {useDistance && itemDistance !== null && (
-                            <p className="mb-2 flex w-full items-center justify-start gap-1 px-2 text-left text-xs font-semibold text-emerald-700 sm:px-2.5">
+                            <p className="mb-2 flex w-full items-center justify-start gap-1 px-1 text-left text-xs font-semibold text-emerald-700 sm:px-2.5">
                               <MapPin className="h-3 w-3" />
                               {formatDistance(itemDistance)}
                             </p>
                           )}
-                          <p className="mb-2.5 w-full px-1 text-left text-sm leading-5 text-stone-600 sm:text-[13px]">
-                            Τιμή: <strong className="text-emerald-700">{item.price} EUR / {item.unit}</strong>
+                          <p className="mb-2.5 w-full px-0.5 text-left text-sm leading-5 text-stone-600 sm:text-[13px]">
+                            <strong className="text-[17px] text-emerald-700">{item.price.toFixed(2)} EUR / {item.unit}</strong>
                             <br />
                             Διαθέσιμη ποσότητα: <strong>{item.quantity} {getUnitLabel(item.unit, item.quantity)}</strong>
                           </p>
-                          <div className="mt-auto w-full">
-                            <button type="button" onClick={() => openRequestForm(item)} className="w-full rounded-md bg-emerald-700 px-2 py-2.5 text-[10px] font-bold text-white transition-colors hover:bg-emerald-800 sm:px-2.5 sm:py-2.5 sm:text-[11px]">
-                              Αποστολή αιτήματος
+                          <div className="mt-auto flex w-full items-center gap-2">
+                            <div className="flex flex-1 items-center justify-between rounded-xl border border-stone-200 bg-white px-2 py-2">
+                              <button
+                                type="button"
+                                onClick={() => updateQuickQuantity(item, -1)}
+                                className="rounded p-0.5 text-stone-600 transition hover:bg-stone-100"
+                                aria-label={`Μείωση ποσότητας για ${item.title}`}
+                              >
+                                <Minus className="h-4 w-4" />
+                              </button>
+                              <span className="text-sm font-medium text-stone-800">{selectedQuickQuantity} {getUnitLabel(item.unit, selectedQuickQuantity)}</span>
+                              <button
+                                type="button"
+                                onClick={() => updateQuickQuantity(item, 1)}
+                                className="rounded p-0.5 text-stone-600 transition hover:bg-stone-100"
+                                aria-label={`Αύξηση ποσότητας για ${item.title}`}
+                              >
+                                <Plus className="h-4 w-4" />
+                              </button>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => openRequestForm(item, selectedQuickQuantity)}
+                              className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-700 text-white transition-colors hover:bg-emerald-800"
+                              aria-label={`Αίτημα για ${item.title}`}
+                              title="Αποστολή αιτήματος"
+                            >
+                              <ShoppingCart className="h-5 w-5" />
                             </button>
                           </div>
                         </article>
@@ -1360,6 +1406,43 @@ export default function ConsumerDashboard() {
 
         </main>
       </div>
+
+      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-stone-200 bg-white sm:hidden" aria-label="Κάτω πλοήγηση καταναλωτή">
+        <div className="grid h-16 grid-cols-4">
+          <button
+            type="button"
+            onClick={() => setActiveTab('products')}
+            className={`flex flex-col items-center justify-center gap-1 text-xs font-medium ${activeTab === 'products' ? 'text-emerald-700' : 'text-stone-500'}`}
+          >
+            <House className="h-5 w-5" />
+            Αρχική
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('products')}
+            className={`flex flex-col items-center justify-center gap-1 text-xs font-medium ${activeTab === 'products' ? 'text-emerald-700' : 'text-stone-500'}`}
+          >
+            <ShoppingBag className="h-5 w-5" />
+            Τα προϊόντα
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('requests')}
+            className={`flex flex-col items-center justify-center gap-1 text-xs font-medium ${activeTab === 'requests' ? 'text-emerald-700' : 'text-stone-500'}`}
+          >
+            <ClipboardList className="h-5 w-5" />
+            Αιτήματα
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('profile')}
+            className={`flex flex-col items-center justify-center gap-1 text-xs font-medium ${activeTab === 'profile' ? 'text-emerald-700' : 'text-stone-500'}`}
+          >
+            <User className="h-5 w-5" />
+            Προφίλ
+          </button>
+        </div>
+      </nav>
 
       {selectedProduct && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-stone-950/40 p-4" role="dialog" aria-modal="true" aria-labelledby="request-title">
