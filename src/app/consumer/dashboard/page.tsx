@@ -167,6 +167,15 @@ export default function ConsumerDashboard() {
     maximumFractionDigits: 2,
   }).format(value);
 
+  const getValidNormalizedPhone = (value: string) => {
+    const normalizedPhone = normalizePhone(value.trim());
+    if (!normalizedPhone || !isPhoneValid(normalizedPhone)) {
+      return null;
+    }
+
+    return normalizedPhone;
+  };
+
   const handleQuantityChange = (value: string) => {
     if (!selectedProduct) {
       setRequestedQuantity(value);
@@ -572,8 +581,8 @@ export default function ConsumerDashboard() {
     }
 
     const sanitizedPhone = buyerPhone.trim();
-    const normalizedPhone = normalizePhone(sanitizedPhone);
-    if (!normalizedPhone || !isPhoneValid(normalizedPhone)) {
+    const normalizedPhone = getValidNormalizedPhone(sanitizedPhone);
+    if (!normalizedPhone) {
       setErrorMsg('Συμπληρώστε ένα έγκυρο ελληνικό κινητό τηλέφωνο που ξεκινά από 69 και έχει 10 ψηφία.');
       return;
     }
@@ -600,7 +609,7 @@ export default function ConsumerDashboard() {
       farmer_id: selectedProduct.farmer_id,
       buyer_id: buyerId,
       buyer_email: buyerEmail,
-      buyer_phone: sanitizedPhone,
+      buyer_phone: normalizedPhone,
       requested_quantity: quantity,
       unit_at_request: selectedProduct.unit,
       unit_price_at_request: selectedProduct.price,
@@ -621,7 +630,7 @@ export default function ConsumerDashboard() {
       setErrorMsg(`Δεν στάλθηκε το αίτημα: ${error.message}${(error as any).hint ? '\n' + (error as any).hint : ''}`);
     } else {
       const { error: metadataError } = await supabase.auth.updateUser({
-        data: { phone: sanitizedPhone },
+        data: { phone: normalizedPhone },
       });
 
       if (metadataError) {
@@ -636,11 +645,12 @@ export default function ConsumerDashboard() {
       setNotifications(nextNotifications);
       setNotificationCount(getUnreadNotificationCount(nextNotifications));
 
+      setBuyerPhone(normalizedPhone);
       setSelectedProduct(null);
       setSuccessMsg(
         `Το αίτημα για ${selectedProduct.title} στάλθηκε: ${quantity} ${getUnitLabel(selectedProduct.unit, quantity)} με εκτιμώμενο κόστος ${formatCurrency(totalCost)}.`,
       );
-      await fetchRequests(buyerId);
+      await Promise.all([fetchProducts(), fetchRequests(buyerId)]);
       window.setTimeout(() => setSuccessMsg(''), 5000);
     }
 
@@ -1076,14 +1086,10 @@ export default function ConsumerDashboard() {
                   <p className="mt-3 text-sm leading-6 text-white/85">Περιηγηθείτε στα διαθέσιμα προϊόντα και στείλτε αίτημα απευθείας.</p>
                 </div>
                 <div className="absolute -right-3 bottom-0 top-0 flex w-[44%] items-end justify-center">
-                  {featuredProductImage ? (
-                    <img src={featuredProductImage} alt="Προτεινόμενο προϊόν" className="h-[86%] w-full rounded-tl-[32px] object-cover opacity-95" />
-                  ) : (
-                    <div className="relative h-full w-full">
-                      <div className="absolute bottom-2 right-2 h-24 w-24 rounded-full bg-white/20 blur-2xl" />
-                      <Leaf className="absolute bottom-6 right-8 h-20 w-20 text-white/90" />
-                    </div>
-                  )}
+                  <div className="relative h-full w-full">
+                    <div className="absolute bottom-2 right-2 h-24 w-24 rounded-full bg-white/20 blur-2xl" />
+                    <Leaf className="absolute bottom-6 right-8 h-20 w-20 text-white/90" />
+                  </div>
                 </div>
               </div>
 
@@ -1462,6 +1468,16 @@ export default function ConsumerDashboard() {
 
           <section id="profile" className={activeTab !== 'profile' ? 'hidden' : 'rounded-[30px] border border-stone-200 bg-[#fbfcf8] p-6 shadow-[0_20px_40px_rgba(15,23,42,0.05)]'}>
             <div className="mx-auto max-w-6xl">
+            {errorMsg && activeTab === 'profile' && (
+              <div className="mb-4 rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+                {errorMsg}
+              </div>
+            )}
+            {successMsg && activeTab === 'profile' && (
+              <div className="mb-4 rounded-md border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
+                {successMsg}
+              </div>
+            )}
             <h2 className="mb-5 text-left text-2xl font-semibold text-stone-800">Το Προφίλ μου</h2>
             {!editingProfile ? (
               <div className="space-y-4 text-left">
@@ -1521,10 +1537,20 @@ export default function ConsumerDashboard() {
                   }
 
                   setSavingProfile(true);
+                  setErrorMsg('');
                   const trimmedFullName = profileForm.fullName.trim();
+                  const trimmedPhone = profileForm.phone.trim();
+                  const normalizedPhone = getValidNormalizedPhone(trimmedPhone);
+
+                  if (!normalizedPhone) {
+                    setErrorMsg('Συμπληρώστε ένα έγκυρο ελληνικό κινητό τηλέφωνο που ξεκινά από 69 και έχει 10 ψηφία.');
+                    setSavingProfile(false);
+                    return;
+                  }
+
                   const updateData: Record<string, string> = {
                     full_name: trimmedFullName,
-                    phone: profileForm.phone.trim(),
+                    phone: normalizedPhone,
                   };
 
                   if (!validateUsername(trimmedFullName)) {
@@ -1535,11 +1561,13 @@ export default function ConsumerDashboard() {
                     data: updateData,
                   });
                   if (error) {
-                    alert('Σφάλμα αποθήκευσης: ' + error.message);
+                    setErrorMsg('Σφάλμα αποθήκευσης: ' + error.message);
                   } else {
                     setUserName(trimmedFullName);
-                    setBuyerPhone(profileForm.phone.trim());
+                    setBuyerPhone(normalizedPhone);
                     setEditingProfile(false);
+                    setSuccessMsg('Το προφίλ ενημερώθηκε επιτυχώς.');
+                    window.setTimeout(() => setSuccessMsg(''), 5000);
                   }
                   setSavingProfile(false);
                 }}
