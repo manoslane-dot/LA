@@ -1124,7 +1124,7 @@ export default function ConsumerDashboard() {
                     placeholder="Αναζήτησε προϊόντα (π.χ. Τομάτες, Μήλα)"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full rounded-2xl border border-stone-200 bg-white py-3 pl-12 pr-12 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                    className="w-full rounded-2xl border border-stone-200 bg-white py-3 pl-12 pr-12 text-base text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
                   />
                   <SlidersHorizontal className="absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-stone-500" />
                 </div>
@@ -1299,8 +1299,8 @@ export default function ConsumerDashboard() {
 
                   <div className="grid grid-cols-3 gap-2 rounded-[24px] bg-[#f3f8ed] p-4">
                     {mobileTrustHighlights.map(({ icon: Icon, text }) => (
-                      <div key={text} className="flex flex-col items-center gap-2 text-center text-[11px] font-medium leading-4 text-stone-700">
-                        <div className="grid h-11 w-11 place-items-center rounded-full bg-white text-emerald-700 shadow-sm">
+                      <div key={text} className="flex flex-col items-center gap-2 text-center text-xs font-medium leading-4 text-stone-700">
+                        <div className="grid h-12 w-12 place-items-center rounded-full bg-white text-emerald-700 shadow-sm">
                           <Icon className="h-5 w-5" />
                         </div>
                         <p>{text}</p>
@@ -1699,7 +1699,7 @@ export default function ConsumerDashboard() {
       </div>
 
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-stone-200 bg-white sm:hidden" aria-label="Κάτω πλοήγηση καταναλωτή">
-        <div className="grid h-[76px] grid-cols-5 items-end pb-2">
+        <div className="grid h-16 grid-cols-4">
           <button
             type="button"
             onClick={() => setActiveTab('products')}
@@ -1715,21 +1715,6 @@ export default function ConsumerDashboard() {
           >
             <ShoppingBag className="h-5 w-5" />
             Τα προϊόντα
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTab('products');
-              if (typeof window !== 'undefined') {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }
-            }}
-            className="flex flex-col items-center justify-center gap-1 text-xs font-medium text-stone-600"
-          >
-            <span className="-mt-8 grid h-14 w-14 place-items-center rounded-full bg-emerald-600 text-white shadow-[0_16px_30px_rgba(22,163,74,0.3)]">
-              <Plus className="h-6 w-6" />
-            </span>
-            Νέο
           </button>
           <button
             type="button"
@@ -1764,16 +1749,16 @@ export default function ConsumerDashboard() {
                   setBuyerPhone(formatGreekPhoneInput(event.target.value));
                 }}
                 placeholder="π.χ. +30 69 12345678"
-                className="mt-1 w-full rounded-md border border-stone-300 px-3 py-2"
+                className="mt-1 w-full rounded-md border border-stone-300 px-3 py-2 text-base"
               />
             </label>
-            <label className="mb-4 block text-sm font-medium text-stone-700">Ποσότητα ({getUnitLabel(selectedProduct.unit, selectedProduct.quantity)})<input type="number" min="0.01" step="any" max={selectedProduct.quantity} required value={requestedQuantity} onChange={(event) => handleQuantityChange(event.target.value)} className="mt-1 w-full rounded-md border border-stone-300 px-3 py-2" /></label>
+            <label className="mb-4 block text-sm font-medium text-stone-700">Ποσότητα ({getUnitLabel(selectedProduct.unit, selectedProduct.quantity)})<input type="number" min="0.01" step="any" max={selectedProduct.quantity} required value={requestedQuantity} onChange={(event) => handleQuantityChange(event.target.value)} className="mt-1 w-full rounded-md border border-stone-300 px-3 py-2 text-base" /></label>
             <div className="mb-4 rounded-md border border-stone-200 bg-stone-50 px-3 py-2 text-sm text-stone-700">
               Εκτιμώμενο κόστος: {
                 formatCurrency((Number(requestedQuantity) > 0 ? Number(requestedQuantity) : 0) * selectedProduct.price)
               } ({formatCurrency(selectedProduct.price)} / {selectedProduct.unit})
             </div>
-            <label className="mb-5 block text-sm font-medium text-stone-700">Μήνυμα για τον παραγωγό (προαιρετικό)<textarea value={message} onChange={(event) => setMessage(event.target.value)} maxLength={1000} rows={3} className="mt-1 w-full rounded-md border border-stone-300 px-3 py-2" /></label>
+            <label className="mb-5 block text-sm font-medium text-stone-700">Μήνυμα για τον παραγωγό (προαιρετικό)<textarea value={message} onChange={(event) => setMessage(event.target.value)} maxLength={1000} rows={3} className="mt-1 w-full rounded-md border border-stone-300 px-3 py-2 text-base" /></label>
             <button type="submit" disabled={submitting} className="w-full rounded-md bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white disabled:bg-emerald-400">{submitting ? 'Αποστολή...' : 'Στείλε αίτημα'}</button>
           </form>
         </div>
