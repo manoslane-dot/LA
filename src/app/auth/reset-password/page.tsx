@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { KeyRound, Leaf } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
@@ -24,6 +24,55 @@ export default function ResetPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    const initializeRecovery = async () => {
+      try {
+        const {
+          data: { session },
+          error,
+        } = await supabase.auth.getSession();
+
+        if (error) {
+          setErrorMsg(getFriendlyResetPasswordError(error.message));
+          setReady(true);
+          return;
+        }
+
+        if (session) {
+          setReady(true);
+          return;
+        }
+
+        const hash = window.location.hash.replace('#', '');
+        const params = new URLSearchParams(hash);
+        const accessToken = params.get('access_token');
+        const refreshToken = params.get('refresh_token');
+        const type = params.get('type');
+
+        if (accessToken && refreshToken && type === 'recovery') {
+          const { error: exchangeError } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+
+          if (exchangeError) {
+            setErrorMsg(getFriendlyResetPasswordError(exchangeError.message));
+          }
+        } else {
+          setErrorMsg('Το link επαναφοράς δεν είναι ακόμη έγκυρο. Ζητήστε νέο email επαναφοράς.');
+        }
+
+        setReady(true);
+      } catch (err: any) {
+        setErrorMsg(getFriendlyResetPasswordError(err?.message));
+        setReady(true);
+      }
+    };
+
+    void initializeRecovery();
+  }, [supabase]);
 
   const handleResetPassword = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -91,7 +140,8 @@ export default function ResetPasswordPage() {
               required
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
+              disabled={!ready}
+              className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:bg-slate-100"
               placeholder="••••••••"
             />
             <p className="mt-1 text-xs text-slate-500">
@@ -106,14 +156,15 @@ export default function ResetPasswordPage() {
               required
               value={confirmPassword}
               onChange={(event) => setConfirmPassword(event.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
+              disabled={!ready}
+              className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:bg-slate-100"
               placeholder="••••••••"
             />
           </div>
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || !ready}
             className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-70"
           >
             <KeyRound className="h-4 w-4" />
