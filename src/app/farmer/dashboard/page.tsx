@@ -3,9 +3,9 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Bell, CircleDollarSign, ClipboardList, House, LayoutDashboard, Leaf, LogOut, Mail, Package, Pencil, Phone, Plus, Settings, ShoppingBag, Trash2, User, X } from 'lucide-react';
+import { Bell, CircleDollarSign, ClipboardList, House, KeyRound, LayoutDashboard, Leaf, LogOut, Mail, MapPin, Package, Pencil, Phone, Plus, Settings, ShoppingBag, Trash2, User, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
-import { formatGreekPhoneInput } from '@/lib/auth/contactInfo';
+import { formatGreekPhoneInput, isPhoneValid, normalizePhone } from '@/lib/auth/contactInfo';
 import { sanitizePhoneForTel } from '@/lib/serviceAreas';
 import {
   clearLoginPreference,
@@ -74,6 +74,15 @@ const getUnitLabel = (unit: string, quantity: number): string => {
   }
 };
 
+const getValidNormalizedPhone = (value: string) => {
+  const normalizedPhone = normalizePhone(value.trim());
+  if (!normalizedPhone || !isPhoneValid(normalizedPhone)) {
+    return null;
+  }
+
+  return normalizedPhone;
+};
+
 export default function FarmerDashboard() {
   const router = useRouter();
   const supabase = createClient();
@@ -85,9 +94,21 @@ export default function FarmerDashboard() {
   const [profileSubTab, setProfileSubTab] = useState<'profile' | 'dashboard' | 'settings' | 'contacts'>('profile');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [editingProfile, setEditingProfile] = useState(false);
-  const [profileForm, setProfileForm] = useState({ fullName: '', email: '', phone: '' });
+  const [profileForm, setProfileForm] = useState({ fullName: '', email: '', phone: '', address: '', city: '', postalCode: '' });
   const [savingProfile, setSavingProfile] = useState(false);
   const [userPhone, setUserPhone] = useState('');
+  const [userAddress, setUserAddress] = useState('');
+  const [userCity, setUserCity] = useState('');
+  const [userPostalCode, setUserPostalCode] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [sendingPasswordReset, setSendingPasswordReset] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deleteVerificationMethod, setDeleteVerificationMethod] = useState<'password' | 'email'>('password');
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deleteEmailConfirmation, setDeleteEmailConfirmation] = useState('');
+  const [deletingAccount, setDeletingAccount] = useState(false);
   const [emailConfirmedAt, setEmailConfirmedAt] = useState<string | null>(null);
   const [showEmailVerificationWarning, setShowEmailVerificationWarning] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -305,13 +326,19 @@ export default function FarmerDashboard() {
       // Fetch farmer profile for phone and revenue
       const { data: profileData } = await supabase
         .from('farmer_profiles')
-        .select('contact_phone, total_revenue, avatar_url')
+        .select('full_name, contact_phone, total_revenue, avatar_url, address, city, postal_code')
         .eq('user_id', session.user.id)
         .maybeSingle();
       
       if (profileData?.contact_phone) {
         setUserPhone(profileData.contact_phone);
       }
+      if (profileData?.full_name) {
+        setUserName(profileData.full_name);
+      }
+      setUserAddress(typeof profileData?.address === 'string' ? profileData.address : '');
+      setUserCity(typeof profileData?.city === 'string' ? profileData.city : '');
+      setUserPostalCode(typeof profileData?.postal_code === 'string' ? profileData.postal_code : '');
       if (profileData?.avatar_url) {
         setAvatarUrl(profileData.avatar_url);
       }
@@ -698,6 +725,110 @@ export default function FarmerDashboard() {
 
   const handleLogout = async () => {
     clearLoginPreference();
+    await supabase.auth.signOut();
+    router.replace('/auth');
+  };
+
+  const handleSendPasswordReset = async () => {
+    if (!userEmail) {
+      alert('Δεν βρέθηκε email λογαριασμού για επαναφορά κωδικού.');
+      return;
+    }
+
+    setSendingPasswordReset(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(userEmail, {
+      redirectTo: `${window.location.origin}/auth/reset-password`,
+    });
+
+    if (error) {
+      alert('Αποτυχία αποστολής email επαναφοράς: ' + error.message);
+    } else {
+      alert('Στάλθηκε email επαναφοράς κωδικού. Ελέγξτε το inbox σας.');
+    }
+
+    setSendingPasswordReset(false);
+  };
+
+  const handleChangePassword = async (event: React.FormEvent) => {
+    event.preventDefault();
+
+    if (!newPassword || !confirmPassword) {
+      alert('Συμπληρώστε νέο κωδικό και επιβεβαίωση.');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      alert('Η επιβεβαίωση κωδικού δεν ταιριάζει.');
+      return;
+    }
+
+    setChangingPassword(true);
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+
+    if (error) {
+      alert('Αποτυχία αλλαγής κωδικού: ' + error.message);
+    } else {
+      setNewPassword('');
+      setConfirmPassword('');
+      alert('Ο κωδικός άλλαξε επιτυχώς.');
+    }
+
+    setChangingPassword(false);
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!userEmail) {
+      alert('Δεν υπάρχει διαθέσιμο email λογαριασμού.');
+      return;
+    }
+
+    if (deleteVerificationMethod === 'email') {
+      const normalizedInput = deleteEmailConfirmation.trim().toLowerCase();
+      const normalizedEmail = userEmail.trim().toLowerCase();
+      if (!normalizedInput || normalizedInput !== normalizedEmail) {
+        alert('Το email επιβεβαίωσης δεν ταιριάζει.');
+        return;
+      }
+    }
+
+    if (deleteVerificationMethod === 'password' && !deletePassword.trim()) {
+      alert('Συμπληρώστε τον κωδικό σας για επιβεβαίωση.');
+      return;
+    }
+
+    setDeletingAccount(true);
+    const {
+      data: { session },
+      error: sessionError,
+    } = await supabase.auth.getSession();
+
+    if (sessionError || !session?.access_token) {
+      setDeletingAccount(false);
+      alert('Η συνεδρία έληξε. Συνδεθείτε ξανά και δοκιμάστε ξανά.');
+      return;
+    }
+
+    const response = await fetch('/api/account/delete', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({
+        method: deleteVerificationMethod,
+        password: deleteVerificationMethod === 'password' ? deletePassword : undefined,
+        confirmEmail: deleteVerificationMethod === 'email' ? deleteEmailConfirmation : undefined,
+      }),
+    });
+
+    const result = (await response.json()) as { error?: string };
+
+    if (!response.ok) {
+      setDeletingAccount(false);
+      alert(result.error ?? 'Αποτυχία διαγραφής λογαριασμού.');
+      return;
+    }
+
     await supabase.auth.signOut();
     router.replace('/auth');
   };
@@ -1536,15 +1667,36 @@ export default function FarmerDashboard() {
                         <p className="mb-1 text-xs font-semibold text-stone-600">Κινητό τηλέφωνο</p>
                         <p className="text-base text-stone-900">{userPhone || 'Επανόθηση απαιτείται'}</p>
                       </div>
+                      <div className="rounded-lg border border-stone-200 bg-stone-50 p-4">
+                        <p className="mb-1 text-xs font-semibold text-stone-600">Διεύθυνση</p>
+                        <p className="text-base text-stone-900">{userAddress || 'Δεν έχει συμπληρωθεί'}</p>
+                      </div>
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <div className="rounded-lg border border-stone-200 bg-stone-50 p-4">
+                          <p className="mb-1 text-xs font-semibold text-stone-600">Πόλη</p>
+                          <p className="text-base text-stone-900">{userCity || 'Δεν έχει συμπληρωθεί'}</p>
+                        </div>
+                        <div className="rounded-lg border border-stone-200 bg-stone-50 p-4">
+                          <p className="mb-1 text-xs font-semibold text-stone-600">Τ.Κ.</p>
+                          <p className="text-base text-stone-900">{userPostalCode || 'Δεν έχει συμπληρωθεί'}</p>
+                        </div>
+                      </div>
                       <button
                         type="button"
                         onClick={() => {
-                          setProfileForm({ fullName: userName || '', email: userEmail || '', phone: userPhone || '' });
+                          setProfileForm({
+                            fullName: userName || '',
+                            email: userEmail || '',
+                            phone: userPhone || '',
+                            address: userAddress || '',
+                            city: userCity || '',
+                            postalCode: userPostalCode || '',
+                          });
                           setEditingProfile(true);
                         }}
                         className="w-full rounded-lg bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-800"
                       >
-                        Επεξεργασία Προφίλ
+                        Επεξεργασία Προσωπικών Στοιχείων
                       </button>
                     </div>
                   ) : (
@@ -1559,9 +1711,26 @@ export default function FarmerDashboard() {
 
                         setSavingProfile(true);
                         const trimmedFullName = profileForm.fullName.trim();
+                        const normalizedPhone = getValidNormalizedPhone(profileForm.phone.trim());
+                        const trimmedAddress = profileForm.address.trim();
+                        const trimmedCity = profileForm.city.trim();
+                        const trimmedPostalCode = profileForm.postalCode.trim();
+
+                        if (!normalizedPhone) {
+                          alert('Συμπληρώστε ένα έγκυρο ελληνικό κινητό τηλέφωνο που ξεκινά από 69 και έχει 10 ψηφία.');
+                          setSavingProfile(false);
+                          return;
+                        }
+
+                        if (!trimmedAddress || !trimmedCity || !trimmedPostalCode) {
+                          alert('Συμπληρώστε διεύθυνση, πόλη και Τ.Κ. για ολοκληρωμένο προφίλ.');
+                          setSavingProfile(false);
+                          return;
+                        }
+
                         const updateData: Record<string, string> = {
                           full_name: trimmedFullName,
-                          phone: profileForm.phone.trim(),
+                          phone: normalizedPhone,
                         };
 
                         if (!validateUsername(trimmedFullName)) {
@@ -1575,7 +1744,12 @@ export default function FarmerDashboard() {
                         if (!error && userId) {
                           await supabase.from('farmer_profiles').upsert({
                             user_id: userId,
-                            contact_phone: profileForm.phone.trim(),
+                            full_name: trimmedFullName,
+                            contact_phone: normalizedPhone,
+                            address: trimmedAddress,
+                            city: trimmedCity,
+                            postal_code: trimmedPostalCode,
+                            avatar_url: avatarUrl,
                           });
                         }
 
@@ -1583,7 +1757,10 @@ export default function FarmerDashboard() {
                           alert('Σφάλμα αποθήκευσης: ' + error.message);
                         } else {
                           setUserName(trimmedFullName);
-                          setUserPhone(profileForm.phone.trim());
+                          setUserPhone(normalizedPhone);
+                          setUserAddress(trimmedAddress);
+                          setUserCity(trimmedCity);
+                          setUserPostalCode(trimmedPostalCode);
                           setEditingProfile(false);
                         }
                         setSavingProfile(false);
@@ -1630,6 +1807,43 @@ export default function FarmerDashboard() {
                           placeholder="π.χ. +30 69 12345678"
                         />
                       </label>
+                      <label className="block text-sm font-semibold text-stone-700">
+                        <span className="mb-1.5 inline-flex items-center gap-2">
+                          <MapPin className="h-4 w-4 text-emerald-700" /> Διεύθυνση
+                        </span>
+                        <input
+                          type="text"
+                          required
+                          value={profileForm.address}
+                          onChange={(e) => setProfileForm({ ...profileForm, address: e.target.value })}
+                          className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                          placeholder="π.χ. Πατησίων 123"
+                        />
+                      </label>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <label className="block text-sm font-semibold text-stone-700">
+                          <span className="mb-1.5 inline-flex items-center gap-2">Πόλη</span>
+                          <input
+                            type="text"
+                            required
+                            value={profileForm.city}
+                            onChange={(e) => setProfileForm({ ...profileForm, city: e.target.value })}
+                            className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                            placeholder="π.χ. Θεσσαλονίκη"
+                          />
+                        </label>
+                        <label className="block text-sm font-semibold text-stone-700">
+                          <span className="mb-1.5 inline-flex items-center gap-2">Τ.Κ.</span>
+                          <input
+                            type="text"
+                            required
+                            value={profileForm.postalCode}
+                            onChange={(e) => setProfileForm({ ...profileForm, postalCode: e.target.value })}
+                            className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                            placeholder="π.χ. 54621"
+                          />
+                        </label>
+                      </div>
                       <div className="flex gap-3">
                         <button
                           type="submit"
@@ -1648,6 +1862,138 @@ export default function FarmerDashboard() {
                       </div>
                     </form>
                   )}
+
+                  <div className="mt-6 rounded-xl border border-stone-200 bg-white p-4">
+                    <h3 className="flex items-center gap-2 text-base font-semibold text-stone-900">
+                      <KeyRound className="h-4 w-4 text-emerald-700" /> Ασφάλεια
+                    </h3>
+                    <p className="mt-1 text-sm text-stone-600">Αλλαγή κωδικού, επιβεβαίωση κωδικού και επαναφορά μέσω email.</p>
+
+                    <form onSubmit={handleChangePassword} className="mt-4 space-y-3">
+                      <label className="block text-sm font-semibold text-stone-700">
+                        Νέος κωδικός
+                        <input
+                          type="password"
+                          required
+                          value={newPassword}
+                          onChange={(event) => setNewPassword(event.target.value)}
+                          className="mt-1 w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                          placeholder="••••••••"
+                        />
+                      </label>
+                      <label className="block text-sm font-semibold text-stone-700">
+                        Επιβεβαίωση κωδικού
+                        <input
+                          type="password"
+                          required
+                          value={confirmPassword}
+                          onChange={(event) => setConfirmPassword(event.target.value)}
+                          className="mt-1 w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                          placeholder="••••••••"
+                        />
+                      </label>
+
+                      <div className="flex flex-col gap-2 sm:flex-row">
+                        <button
+                          type="submit"
+                          disabled={changingPassword}
+                          className="inline-flex items-center justify-center rounded-lg bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:bg-emerald-400"
+                        >
+                          {changingPassword ? 'Αποθήκευση...' : 'Αλλαγή κωδικού'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void handleSendPasswordReset()}
+                          disabled={sendingPasswordReset}
+                          className="inline-flex items-center justify-center rounded-lg border border-stone-300 px-4 py-2.5 text-sm font-semibold text-stone-700 transition hover:bg-stone-100 disabled:border-stone-200 disabled:text-stone-400"
+                        >
+                          {sendingPasswordReset ? 'Αποστολή...' : 'Επαναφορά μέσω email'}
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+
+                  <div className="mt-6 rounded-xl border border-rose-200 bg-rose-50/60 p-4">
+                    <h3 className="flex items-center gap-2 text-base font-semibold text-rose-800">
+                      <Trash2 className="h-4 w-4" /> Διαγραφή λογαριασμού
+                    </h3>
+                    <p className="mt-1 text-sm text-rose-700">Η ενέργεια είναι μη αναστρέψιμη. Τα στοιχεία του προφίλ και η πρόσβαση θα διαγραφούν οριστικά.</p>
+
+                    {!deleteConfirmOpen ? (
+                      <button
+                        type="button"
+                        onClick={() => setDeleteConfirmOpen(true)}
+                        className="mt-3 inline-flex items-center justify-center rounded-lg bg-rose-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-rose-800"
+                      >
+                        Διαγραφή λογαριασμού
+                      </button>
+                    ) : (
+                      <div className="mt-3 space-y-3 rounded-lg border border-rose-200 bg-white p-3">
+                        <div className="flex gap-3">
+                          <button
+                            type="button"
+                            onClick={() => setDeleteVerificationMethod('password')}
+                            className={`rounded-md px-3 py-2 text-sm font-semibold transition ${deleteVerificationMethod === 'password' ? 'bg-rose-700 text-white' : 'bg-rose-100 text-rose-800 hover:bg-rose-200'}`}
+                          >
+                            Με κωδικό
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setDeleteVerificationMethod('email')}
+                            className={`rounded-md px-3 py-2 text-sm font-semibold transition ${deleteVerificationMethod === 'email' ? 'bg-rose-700 text-white' : 'bg-rose-100 text-rose-800 hover:bg-rose-200'}`}
+                          >
+                            Με email
+                          </button>
+                        </div>
+
+                        {deleteVerificationMethod === 'password' ? (
+                          <label className="block text-sm font-semibold text-stone-700">
+                            Κωδικός επιβεβαίωσης
+                            <input
+                              type="password"
+                              value={deletePassword}
+                              onChange={(event) => setDeletePassword(event.target.value)}
+                              className="mt-1 w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none transition focus:border-rose-400 focus:ring-2 focus:ring-rose-100"
+                              placeholder="Συμπληρώστε τον τρέχοντα κωδικό σας"
+                            />
+                          </label>
+                        ) : (
+                          <label className="block text-sm font-semibold text-stone-700">
+                            Επιβεβαίωση email
+                            <input
+                              type="email"
+                              value={deleteEmailConfirmation}
+                              onChange={(event) => setDeleteEmailConfirmation(event.target.value)}
+                              className="mt-1 w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none transition focus:border-rose-400 focus:ring-2 focus:ring-rose-100"
+                              placeholder="Γράψτε το email του λογαριασμού"
+                            />
+                          </label>
+                        )}
+
+                        <div className="flex flex-col gap-2 sm:flex-row">
+                          <button
+                            type="button"
+                            onClick={() => void handleDeleteAccount()}
+                            disabled={deletingAccount}
+                            className="inline-flex items-center justify-center rounded-lg bg-rose-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-rose-800 disabled:bg-rose-400"
+                          >
+                            {deletingAccount ? 'Διαγραφή...' : 'Οριστική διαγραφή λογαριασμού'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setDeleteConfirmOpen(false);
+                              setDeletePassword('');
+                              setDeleteEmailConfirmation('');
+                            }}
+                            className="inline-flex items-center justify-center rounded-lg border border-stone-300 px-4 py-2.5 text-sm font-semibold text-stone-700 transition hover:bg-stone-100"
+                          >
+                            Ακύρωση
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </>
               )}
 
