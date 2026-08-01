@@ -54,11 +54,11 @@ export function InstallPwaButton() {
     return null;
   }
 
-  if (!isMobileDevice) {
-    return null;
-  }
-
   const handleInstall = async () => {
+    if (!isMobileDevice) {
+      return;
+    }
+
     if (deferredPrompt) {
       deferredPrompt.prompt();
       await deferredPrompt.userChoice;
@@ -85,7 +85,13 @@ export function InstallPwaButton() {
     <button
       type="button"
       onClick={handleInstall}
-      className="inline-flex items-center justify-center rounded-full bg-[#ffd47d] px-4 py-2 text-sm font-semibold text-[#173b2a] transition hover:bg-[#ffe1a8]"
+      disabled={!isMobileDevice}
+      aria-disabled={!isMobileDevice}
+      className={`inline-flex items-center justify-center rounded-full px-4 py-2 text-sm font-semibold transition ${
+        isMobileDevice
+          ? 'bg-[#ffd47d] text-[#173b2a] hover:bg-[#ffe1a8]'
+          : 'cursor-not-allowed bg-[#f0d9a6] text-[#173b2a]/60'
+      }`}
     >
       Εγκατάσταση εφαρμογής
     </button>
