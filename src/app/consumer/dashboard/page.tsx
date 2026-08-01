@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ShoppingBag, ClipboardList, LogOut, Leaf, Phone, Search, ChevronDown, User, Mail, MapPin, Bell, Menu, X, ShoppingCart, Plus, Minus, House } from 'lucide-react';
+import { ShoppingBag, ClipboardList, LogOut, Leaf, Phone, Search, ChevronDown, User, Mail, MapPin, Bell, Menu, X, ShoppingCart, Plus, Minus, House, SlidersHorizontal, LayoutGrid, List, Heart, ShieldCheck, Headphones, Sprout } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { formatGreekPhoneInput, isPhoneValid, normalizePhone } from '@/lib/auth/contactInfo';
 import { sanitizePhoneForTel } from '@/lib/serviceAreas';
@@ -79,6 +79,36 @@ const getUnitLabel = (unit: string, quantity: number): string => {
   }
 };
 
+const mobileCategoryChips = ['Ολα', 'Λαχανικά', 'Φρούτα', 'Πατάτες', 'Κηπευτικά', 'Περισσότερα'];
+
+const mobileTrustHighlights = [
+  { icon: Sprout, text: 'Φρέσκα προϊόντα κατευθείαν από παραγωγούς' },
+  { icon: ShieldCheck, text: 'Ασφαλείς συναλλαγές και προστασία δεδομένων' },
+  { icon: Headphones, text: 'Υποστήριξη όταν τη χρειάζεστε' },
+];
+
+const getMobileProductCategory = (productTitle: string): string => {
+  const normalizedTitle = productTitle.trim().toLowerCase();
+
+  if (normalizedTitle.includes('πατάτ')) {
+    return 'Πατάτες';
+  }
+
+  if (/μήλ|πορτοκ|ροδάκιν|βερικ|καρπούζ|πεπόν|μπανάν|αχλάδ|κεράσ|σταφύλ|φράουλ|λεμόν|μανταρίν/.test(normalizedTitle)) {
+    return 'Φρούτα';
+  }
+
+  if (/μαρούλ|ντομάτ|αγγουρ|πιπερ|κολοκυθ|μελιτζ|λάχαν|κρεμμ|σπανάκ|μπρόκολ|κουνουπ|καρότ|παντζάρ/.test(normalizedTitle)) {
+    return 'Λαχανικά';
+  }
+
+  if (/μαϊνταν|άνηθ|δυόσμ|ρίγαν|βασιλικ|ματσάκ|κηπευτ/.test(normalizedTitle)) {
+    return 'Κηπευτικά';
+  }
+
+  return 'Περισσότερα';
+};
+
 export default function ConsumerDashboard() {
   const router = useRouter();
   const supabase = createClient();
@@ -107,6 +137,8 @@ export default function ConsumerDashboard() {
   const [submitting, setSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState<'products' | 'requests' | 'profile'>('products');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileLayout, setMobileLayout] = useState<'grid' | 'list'>('grid');
+  const [selectedCategory, setSelectedCategory] = useState('Ολα');
   const [searchTerm, setSearchTerm] = useState('');
   const [sortType, setSortType] = useState<'newest' | 'price_low' | 'price_high'>('price_low');
   const [editingProfile, setEditingProfile] = useState(false);
@@ -710,6 +742,10 @@ export default function ConsumerDashboard() {
       filtered = filtered.filter((p) => p.title.toLowerCase().includes(lowerSearch));
     }
 
+    if (selectedCategory !== 'Ολα') {
+      filtered = filtered.filter((product) => getMobileProductCategory(product.title) === selectedCategory);
+    }
+
     // Ταξινόμηση ανά απόσταση (αν έχουμε τοποθεσία) ή ανά τιμή
     const sorted = [...filtered];
     
@@ -731,6 +767,10 @@ export default function ConsumerDashboard() {
 
     return sorted;
   })();
+
+  const featuredProductImage = filteredAndSortedProducts[0]
+    ? productImagesByProductId[filteredAndSortedProducts[0].id]?.[0]?.image_url ?? null
+    : null;
 
   const gridSize = 50;
   const gridMarks = Array.from({ length: 24 }, (_, index) => index * gridSize);
@@ -1057,102 +1097,172 @@ export default function ConsumerDashboard() {
           {errorMsg && !selectedProduct && <div className="rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{errorMsg}</div>}
 
           <section id="products" data-section="products-section" data-coords="1,1" className={activeTab !== 'products' ? 'hidden' : ''}>
-            <div className="mx-0 mt-0 rounded-none border-x-0 border-b-0 border-t border-stone-200 bg-white shadow-none sm:mx-0 sm:rounded-none sm:border-x-0 sm:border-b-0 sm:border-t sm:shadow-none">
-              <div className="border-b border-stone-100 px-4 pb-4 pt-4 sm:px-6 sm:pt-6">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <h2 className="text-xl font-semibold text-stone-800">Διαθέσιμα προϊόντα</h2>
-                    <p className="mt-1 text-sm text-stone-500">Περιηγηθείτε στα διαθέσιμα προϊόντα και στείλτε αίτημα απευθείας.</p>
-                  </div>
+            <div className="space-y-4 bg-[#fcfcf8] px-4 pb-6 pt-4 sm:hidden">
+              <div className="relative overflow-hidden rounded-[28px] bg-[linear-gradient(135deg,#1f6b3d_0%,#2a8f4b_55%,#1f6b3d_100%)] px-5 py-5 text-white shadow-[0_20px_40px_rgba(31,107,61,0.18)]">
+                <div className="max-w-[58%]">
+                  <h2 className="text-[15px] font-bold uppercase tracking-[0.06em] text-white/80">AgroDirect</h2>
+                  <p className="mt-3 text-[30px] font-bold leading-8">Διαθέσιμα προϊόντα</p>
+                  <p className="mt-3 text-sm leading-6 text-white/85">Περιηγηθείτε στα διαθέσιμα προϊόντα και στείλτε αίτημα απευθείας.</p>
+                </div>
+                <div className="absolute -right-3 bottom-0 top-0 flex w-[44%] items-end justify-center">
+                  {featuredProductImage ? (
+                    <img src={featuredProductImage} alt="Προτεινόμενο προϊόν" className="h-[86%] w-full rounded-tl-[32px] object-cover opacity-95" />
+                  ) : (
+                    <div className="relative h-full w-full">
+                      <div className="absolute bottom-2 right-2 h-24 w-24 rounded-full bg-white/20 blur-2xl" />
+                      <Leaf className="absolute bottom-6 right-8 h-20 w-20 text-white/90" />
+                    </div>
+                  )}
                 </div>
               </div>
 
-              <div data-section="products-filters" data-coords="1,1.1" className="px-4 pb-4 pt-4 sm:px-6 sm:pb-6 sm:pt-5">
-                <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
+              <div className="rounded-[22px] border border-stone-200 bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.05)]">
+                <div className="relative">
+                  <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-stone-400" />
                   <input
                     type="text"
-                    placeholder="Αναζήτησε προίόντα (π.χ. Τομάτες, Μήλα)"
+                    placeholder="Αναζήτησε προϊόντα (π.χ. Τομάτες, Μήλα)"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full rounded-lg border border-stone-300 bg-white pl-10 pr-3 py-2.5 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                    className="w-full rounded-2xl border border-stone-200 bg-white py-3 pl-12 pr-12 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
                   />
+                  <SlidersHorizontal className="absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-stone-500" />
                 </div>
 
                 <button
                   onClick={handleRequestLocation}
                   disabled={loadingLocation}
-                  className={`inline-flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-semibold transition-colors ${
+                  className={`mt-4 flex w-full items-center justify-between rounded-2xl border px-4 py-3.5 text-left text-sm font-semibold transition-colors ${
                     useDistance
-                      ? 'border-emerald-300 bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
-                      : 'border-stone-300 bg-white text-stone-700 hover:bg-stone-50'
+                      ? 'border-emerald-300 bg-emerald-50 text-emerald-800'
+                      : 'border-stone-200 bg-white text-stone-800'
                   }`}
                 >
-                  <MapPin className="h-4 w-4" />
-                  {loadingLocation ? 'Φόρτωση...' : useDistance ? '📍 Ταξινόμηση κατά απόσταση' : '📍 Εύρεση κοντά'}
+                  <span className="inline-flex items-center gap-3">
+                    <MapPin className="h-5 w-5" />
+                    {loadingLocation ? 'Φόρτωση...' : 'Εύρεση κοντά μου'}
+                  </span>
+                  <ChevronDown className="h-5 w-5 -rotate-90 text-stone-400" />
                 </button>
 
-                <div className="relative">
-                  <select
-                    value={sortType}
-                    onChange={(e) => setSortType(e.target.value as typeof sortType)}
-                    disabled={useDistance}
-                    className="cursor-pointer appearance-none rounded-lg border border-stone-300 bg-white py-2.5 pl-3 pr-10 text-sm text-stone-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 disabled:opacity-60"
+                <div className="mt-4 grid grid-cols-[1.15fr_1fr_auto] gap-3">
+                  <div className="relative">
+                    <select
+                      value={sortType}
+                      onChange={(e) => setSortType(e.target.value as typeof sortType)}
+                      disabled={useDistance}
+                      className="h-12 w-full appearance-none rounded-2xl border border-stone-200 bg-white py-2 pl-4 pr-10 text-sm font-medium text-stone-800 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 disabled:opacity-60"
+                    >
+                      <option value="price_low">Χαμηλότερη τιμή</option>
+                      <option value="price_high">Υψηλότερη τιμή</option>
+                      <option value="newest">Πιο πρόσφατα</option>
+                    </select>
+                    <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
+                  </div>
+                  <button
+                    type="button"
+                    className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl border border-stone-200 bg-white px-4 text-sm font-medium text-stone-800"
                   >
-                    <option value="newest">Φίλτρο</option>
-                    <option value="price_low">Χαμηλότερη τιμή</option>
-                    <option value="price_high">Υψηλότερη τιμή</option>
-                  </select>
-                  <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
+                    <SlidersHorizontal className="h-4 w-4" />
+                    Φίλτρα
+                  </button>
+                  <div className="grid grid-cols-2 overflow-hidden rounded-2xl border border-stone-200 bg-white">
+                    <button
+                      type="button"
+                      onClick={() => setMobileLayout('grid')}
+                      className={`grid place-items-center px-3 ${mobileLayout === 'grid' ? 'bg-emerald-50 text-emerald-700' : 'text-stone-400'}`}
+                      aria-label="Προβολή πλέγματος"
+                    >
+                      <LayoutGrid className="h-5 w-5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setMobileLayout('list')}
+                      className={`grid place-items-center px-3 ${mobileLayout === 'list' ? 'bg-emerald-50 text-emerald-700' : 'text-stone-400'}`}
+                      aria-label="Προβολή λίστας"
+                    >
+                      <List className="h-5 w-5" />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
+                  {mobileCategoryChips.map((chip, index) => (
+                    <button
+                      key={chip}
+                      type="button"
+                      onClick={() => setSelectedCategory(chip)}
+                      className={`shrink-0 rounded-full border px-4 py-2 text-sm font-medium ${selectedCategory === chip || (index === 0 && selectedCategory === 'Ολα') ? 'border-emerald-600 bg-emerald-600 text-white' : 'border-stone-200 bg-white text-stone-700'}`}
+                    >
+                      {chip}
+                    </button>
+                  ))}
                 </div>
               </div>
 
-                {filteredAndSortedProducts.length === 0 ? (
-                  <p className="text-sm text-stone-500">{searchTerm ? 'Δεν βρέθηκαν προϊόντα με αυτό το όνομα.' : 'Δεν υπάρχουν διαθέσιμα προίόντα αυτή τη στιγμή.'}</p>
-                ) : (
-                  <>
-                    <p className="mb-3 text-xs text-stone-500">
-                      Εμφανίζονται {filteredAndSortedProducts.length} προϊόντα
-                      {useDistance && userLocation ? ' (ταξινομημένα κατά απόσταση)' : ''}
-                    </p>
-                    <div data-section="products-grid" data-coords="1,1.2" className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-2.5 lg:grid-cols-3 lg:gap-3">
-                      {filteredAndSortedProducts.map((item) => {
+              {filteredAndSortedProducts.length === 0 ? (
+                <div className="rounded-[22px] border border-stone-200 bg-white px-4 py-6 text-sm text-stone-500 shadow-[0_8px_24px_rgba(15,23,42,0.05)]">
+                  {searchTerm ? 'Δεν βρέθηκαν προϊόντα με αυτό το όνομα.' : 'Δεν υπάρχουν διαθέσιμα προϊόντα αυτή τη στιγμή.'}
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between px-1 text-sm text-stone-500">
+                    <p>Εμφανίζονται {filteredAndSortedProducts.length} προϊόντα</p>
+                    <p className="font-medium text-stone-700">Ταξινόμηση</p>
+                  </div>
+
+                  <div className={`grid gap-3 ${mobileLayout === 'grid' ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                    {filteredAndSortedProducts.map((item) => {
                       const itemDistance = (item as any).distance_km;
                       const productImages = productImagesByProductId[item.id] ?? [];
                       const selectedQuickQuantity = getQuickQuantity(item);
                       return (
-                        <article key={item.id} className="flex h-full min-h-[320px] w-full max-w-full flex-col rounded-xl border border-stone-200 bg-white p-2.5 shadow-sm transition-shadow duration-200 hover:shadow-md sm:p-3.5 lg:h-[495px] lg:w-[370px]">
-                          {productImages.length > 0 && (
+                        <article key={item.id} className={`overflow-hidden rounded-[24px] border border-stone-200 bg-white p-3 shadow-[0_10px_28px_rgba(15,23,42,0.06)] ${mobileLayout === 'list' ? 'flex gap-3' : ''}`}>
+                          <div className={`relative overflow-hidden rounded-[18px] bg-stone-100 ${mobileLayout === 'list' ? 'w-[42%] shrink-0 self-start' : ''}`}>
+                            {productImages.length > 0 ? (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSelectedProductImage(productImages[0].image_url);
+                                  setShowProductImagePreview(true);
+                                }}
+                                className={`block w-full ${mobileLayout === 'list' ? 'aspect-square' : 'aspect-[1.08/1]'}`}
+                                aria-label={`Προεπισκόπηση εικόνας για ${item.title}`}
+                              >
+                                <img src={productImages[0].image_url} alt={item.title} className="h-full w-full object-cover" loading="lazy" />
+                              </button>
+                            ) : (
+                              <div className={`w-full bg-[linear-gradient(135deg,#eff6ef_0%,#d8ead8_100%)] ${mobileLayout === 'list' ? 'aspect-square' : 'aspect-[1.08/1]'}`} />
+                            )}
                             <button
                               type="button"
-                              onClick={() => {
-                                setSelectedProductImage(productImages[0].image_url);
-                                setShowProductImagePreview(true);
-                              }}
-                              className="mb-2 aspect-[4/3] w-full overflow-hidden rounded-lg border border-stone-200 bg-stone-100"
-                              aria-label={`Προεπισκόπηση εικόνας για ${item.title}`}
+                              className={`absolute grid place-items-center rounded-full bg-white/95 text-stone-500 shadow ${mobileLayout === 'list' ? 'right-2 top-2 h-8 w-8' : 'right-3 top-3 h-10 w-10'}`}
+                              aria-label={`Αγαπημένο ${item.title}`}
                             >
-                              <img src={productImages[0].image_url} alt={item.title} className="h-full w-full object-cover" loading="lazy" />
+                              <Heart className={`${mobileLayout === 'list' ? 'h-4 w-4' : 'h-5 w-5'}`} />
                             </button>
-                          )}
-                          <div className="mb-1 flex w-full items-start justify-between gap-2 px-0.5">
-                            <h3 className="text-left text-base font-bold text-stone-900 sm:text-[13px]">{item.title}</h3>
-                            <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-800">Διαθέσιμο</span>
+                            <span className="absolute bottom-3 left-3 inline-flex items-center gap-2 rounded-full bg-white/95 px-3 py-1 text-xs font-semibold text-emerald-700 shadow-sm">
+                              <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
+                              Διαθέσιμο
+                            </span>
                           </div>
-                          {useDistance && itemDistance !== null && (
-                            <p className="mb-2 flex w-full items-center justify-start gap-1 px-1 text-left text-xs font-semibold text-emerald-700 sm:px-2.5">
-                              <MapPin className="h-3 w-3" />
-                              {formatDistance(itemDistance)}
-                            </p>
-                          )}
-                          <p className="mb-2.5 w-full px-0.5 text-left text-sm leading-5 text-stone-600 sm:text-[13px]">
-                            <strong className="text-[17px] text-emerald-700">{item.price.toFixed(2)} EUR / {item.unit}</strong>
-                            <br />
-                            Διαθέσιμη ποσότητα: <strong>{item.quantity} {getUnitLabel(item.unit, item.quantity)}</strong>
-                          </p>
-                          <div className="mt-auto flex w-full items-center gap-2">
-                            <div className="flex flex-1 items-center justify-between rounded-xl border border-stone-200 bg-white px-2 py-2">
+
+                          <div className={`${mobileLayout === 'list' ? 'flex min-w-0 flex-1 flex-col justify-between' : 'pt-3'}`}>
+                            <div className={mobileLayout === 'list' ? 'min-w-0' : ''}>
+                              <h3 className="text-[18px] font-bold leading-6 text-stone-900">{item.title}</h3>
+                            <div className="mt-2 inline-flex rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">{item.status}</div>
+                            <p className="mt-3 text-[17px] font-bold text-emerald-700">{item.price.toFixed(2)} EUR / {item.unit}</p>
+                            <p className="mt-2 text-sm text-stone-600">Διαθέσιμη ποσότητα: <strong>{item.quantity} {getUnitLabel(item.unit, item.quantity)}</strong></p>
+                            {useDistance && itemDistance !== null && (
+                              <p className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-emerald-700">
+                                <MapPin className="h-3.5 w-3.5" />
+                                {formatDistance(itemDistance)}
+                              </p>
+                            )}
+                            </div>
+
+                            <div className={`flex items-center gap-2 ${mobileLayout === 'list' ? 'mt-4' : 'mt-4'}`}>
+                              <div className="flex flex-1 items-center justify-between rounded-2xl border border-stone-200 bg-white px-3 py-2.5">
                               <button
                                 type="button"
                                 onClick={() => updateQuickQuantity(item, -1)}
@@ -1174,7 +1284,155 @@ export default function ConsumerDashboard() {
                             <button
                               type="button"
                               onClick={() => openRequestForm(item, selectedQuickQuantity)}
-                              className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-700 text-white transition-colors hover:bg-emerald-800"
+                              className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-600 text-white transition hover:bg-emerald-700"
+                              aria-label={`Αίτημα για ${item.title}`}
+                              title="Αποστολή αιτήματος"
+                            >
+                              <ShoppingCart className="h-5 w-5" />
+                            </button>
+                            </div>
+                          </div>
+                        </article>
+                      );
+                    })}
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2 rounded-[24px] bg-[#f3f8ed] p-4">
+                    {mobileTrustHighlights.map(({ icon: Icon, text }) => (
+                      <div key={text} className="flex flex-col items-center gap-2 text-center text-[11px] font-medium leading-4 text-stone-700">
+                        <div className="grid h-11 w-11 place-items-center rounded-full bg-white text-emerald-700 shadow-sm">
+                          <Icon className="h-5 w-5" />
+                        </div>
+                        <p>{text}</p>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div className="hidden sm:block space-y-6 rounded-[30px] border border-stone-200 bg-[#fbfcf8] p-6 shadow-[0_20px_40px_rgba(15,23,42,0.05)] lg:p-8">
+              <div className="relative overflow-hidden rounded-[28px] bg-[linear-gradient(135deg,#1f6b3d_0%,#2d8c4a_55%,#1f6b3d_100%)] px-7 py-8 text-white">
+                <div className="max-w-2xl">
+                  <p className="text-sm font-semibold uppercase tracking-[0.16em] text-white/75">Consumer Dashboard</p>
+                  <h2 className="mt-3 text-3xl font-bold tracking-tight lg:text-4xl">Διαθέσιμα προϊόντα</h2>
+                  <p className="mt-3 max-w-xl text-sm leading-7 text-white/85 lg:text-base">Περιηγηθείτε στα διαθέσιμα προϊόντα, συγκρίνετε τιμές και στείλτε αίτημα απευθείας στον παραγωγό χωρίς να χαθεί η ροή που ήδη χρησιμοποιείτε.</p>
+                </div>
+                <div className="pointer-events-none absolute right-0 top-0 hidden h-full w-[28rem] items-end justify-end lg:flex">
+                  {featuredProductImage ? (
+                    <img src={featuredProductImage} alt="Προτεινόμενο προϊόν" className="h-full w-full object-cover opacity-30 mix-blend-screen" />
+                  ) : (
+                    <div className="absolute right-10 top-10 h-40 w-40 rounded-full bg-white/15 blur-3xl" />
+                  )}
+                </div>
+              </div>
+
+              <div data-section="products-filters" data-coords="1,1.1" className="rounded-[24px] border border-stone-200 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.04)] lg:p-6">
+                <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
+                  <input
+                    type="text"
+                    placeholder="Αναζήτησε προίόντα (π.χ. Τομάτες, Μήλα)"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full rounded-2xl border border-stone-200 bg-white pl-10 pr-4 py-3 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                  />
+                </div>
+
+                <button
+                  onClick={handleRequestLocation}
+                  disabled={loadingLocation}
+                  className={`inline-flex items-center gap-2 rounded-2xl border px-4 py-3 text-sm font-semibold transition-colors ${
+                    useDistance
+                      ? 'border-emerald-300 bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
+                      : 'border-stone-200 bg-white text-stone-700 hover:bg-stone-50'
+                  }`}
+                >
+                  <MapPin className="h-4 w-4" />
+                  {loadingLocation ? 'Φόρτωση...' : useDistance ? '📍 Ταξινόμηση κατά απόσταση' : '📍 Εύρεση κοντά'}
+                </button>
+
+                <div className="relative">
+                  <select
+                    value={sortType}
+                    onChange={(e) => setSortType(e.target.value as typeof sortType)}
+                    disabled={useDistance}
+                    className="cursor-pointer appearance-none rounded-2xl border border-stone-200 bg-white py-3 pl-4 pr-10 text-sm text-stone-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 disabled:opacity-60"
+                  >
+                    <option value="newest">Φίλτρο</option>
+                    <option value="price_low">Χαμηλότερη τιμή</option>
+                    <option value="price_high">Υψηλότερη τιμή</option>
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
+                </div>
+              </div>
+
+                {filteredAndSortedProducts.length === 0 ? (
+                  <p className="text-sm text-stone-500">{searchTerm ? 'Δεν βρέθηκαν προϊόντα με αυτό το όνομα.' : 'Δεν υπάρχουν διαθέσιμα προίόντα αυτή τη στιγμή.'}</p>
+                ) : (
+                  <>
+                    <p className="mb-4 text-sm text-stone-500">
+                      Εμφανίζονται {filteredAndSortedProducts.length} προϊόντα
+                      {useDistance && userLocation ? ' (ταξινομημένα κατά απόσταση)' : ''}
+                    </p>
+                    <div data-section="products-grid" data-coords="1,1.2" className="grid grid-cols-2 gap-4 lg:grid-cols-3 lg:gap-5">
+                      {filteredAndSortedProducts.map((item) => {
+                      const itemDistance = (item as any).distance_km;
+                      const productImages = productImagesByProductId[item.id] ?? [];
+                      const selectedQuickQuantity = getQuickQuantity(item);
+                      return (
+                        <article key={item.id} className="flex h-full min-h-[420px] w-full max-w-full flex-col rounded-[26px] border border-stone-200 bg-white p-4 shadow-[0_12px_30px_rgba(15,23,42,0.05)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_20px_40px_rgba(15,23,42,0.08)] lg:min-h-[470px]">
+                          {productImages.length > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedProductImage(productImages[0].image_url);
+                                setShowProductImagePreview(true);
+                              }}
+                              className="mb-3 aspect-[1.08/1] w-full overflow-hidden rounded-[20px] border border-stone-200 bg-stone-100"
+                              aria-label={`Προεπισκόπηση εικόνας για ${item.title}`}
+                            >
+                              <img src={productImages[0].image_url} alt={item.title} className="h-full w-full object-cover" loading="lazy" />
+                            </button>
+                          )}
+                          <div className="mb-1.5 flex w-full items-start justify-between gap-3">
+                            <h3 className="text-left text-[20px] font-bold leading-7 text-stone-900">{item.title}</h3>
+                            <span className="shrink-0 rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">Διαθέσιμο</span>
+                          </div>
+                          {useDistance && itemDistance !== null && (
+                            <p className="mb-2 flex w-full items-center justify-start gap-1 text-left text-xs font-semibold text-emerald-700">
+                              <MapPin className="h-3.5 w-3.5" />
+                              {formatDistance(itemDistance)}
+                            </p>
+                          )}
+                          <div className="mb-3 inline-flex rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">{item.status}</div>
+                          <p className="mb-2 text-left text-[22px] font-bold text-emerald-700">{item.price.toFixed(2)} EUR / {item.unit}</p>
+                          <p className="mb-3 text-left text-sm leading-6 text-stone-600">Διαθέσιμη ποσότητα: <strong>{item.quantity} {getUnitLabel(item.unit, item.quantity)}</strong></p>
+                          <div className="mt-auto flex w-full items-center gap-2">
+                            <div className="flex flex-1 items-center justify-between rounded-2xl border border-stone-200 bg-white px-3 py-3">
+                              <button
+                                type="button"
+                                onClick={() => updateQuickQuantity(item, -1)}
+                                className="rounded p-0.5 text-stone-600 transition hover:bg-stone-100"
+                                aria-label={`Μείωση ποσότητας για ${item.title}`}
+                              >
+                                <Minus className="h-4 w-4" />
+                              </button>
+                              <span className="text-sm font-medium text-stone-800">{selectedQuickQuantity} {getUnitLabel(item.unit, selectedQuickQuantity)}</span>
+                              <button
+                                type="button"
+                                onClick={() => updateQuickQuantity(item, 1)}
+                                className="rounded p-0.5 text-stone-600 transition hover:bg-stone-100"
+                                aria-label={`Αύξηση ποσότητας για ${item.title}`}
+                              >
+                                <Plus className="h-4 w-4" />
+                              </button>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => openRequestForm(item, selectedQuickQuantity)}
+                              className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-700 text-white transition-colors hover:bg-emerald-800"
                               aria-label={`Αίτημα για ${item.title}`}
                               title="Αποστολή αιτήματος"
                             >
@@ -1191,10 +1449,16 @@ export default function ConsumerDashboard() {
             </div>
           </section>
 
-          <section id="requests" className={`rounded-lg border border-stone-200 bg-white p-6 shadow-sm${activeTab !== 'requests' ? ' hidden' : ''}`}>
-            <h2 className="mb-3 text-xl font-semibold text-stone-800">Τα αιτήματά μου</h2>
+          <section id="requests" className={`rounded-[30px] border border-stone-200 bg-[#fbfcf8] p-6 shadow-[0_20px_40px_rgba(15,23,42,0.05)]${activeTab !== 'requests' ? ' hidden' : ''}`}>
+            <div className="mb-5 flex items-center justify-between gap-4">
+              <div>
+                <h2 className="text-2xl font-semibold text-stone-800">Τα αιτήματά μου</h2>
+                <p className="mt-1 text-sm text-stone-500">Δείτε την κατάσταση κάθε αιτήματος και επικοινωνήστε με τον παραγωγό όταν επιβεβαιωθεί.</p>
+              </div>
+              <span className="rounded-full bg-emerald-100 px-3 py-1 text-sm font-semibold text-emerald-800">{requests.length} συνολικά</span>
+            </div>
             {requests.length === 0 ? <p className="text-sm text-stone-500">Δεν έχετε στείλει ακόμη αίτημα σε παραγωγό.</p> : (
-              <ul className="divide-y divide-stone-200">
+              <ul className="space-y-3">
                 {requests.map((request) => {
                   const productDetails = getRequestProductDetails(request);
                   const unit = productDetails.unit;
@@ -1204,9 +1468,9 @@ export default function ConsumerDashboard() {
                   const farmerName = farmerProfile?.full_name || 'Παραγωγός';
                   const farmerPhone = farmerProfile?.contact_phone || 'Δεν έχει καταχωρημένο τηλέφωνο';
                   return (
-                    <li key={request.id} className="flex flex-wrap items-center justify-between gap-2 p-3 text-sm">
+                    <li key={request.id} className="flex flex-wrap items-center justify-between gap-3 rounded-[22px] border border-stone-200 bg-white p-4 text-sm shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
                       <div className="flex-grow">
-                        <strong className="text-stone-900">{request.product_title}</strong>
+                        <strong className="text-base text-stone-900">{request.product_title}</strong>
                         <span className="text-stone-500"> · {request.requested_quantity} {getUnitLabel(unit, request.requested_quantity)}</span>
                         <p className="mt-1 text-sm text-stone-600">Εκτιμώμενο κόστος: <strong className="text-base font-bold text-emerald-700">{formatCurrency(totalCost)}</strong> <span className="text-xs">({formatCurrency(unitPrice)} / {unit || 'μονάδα'})</span></p>
                         {request.status === 'confirmed' && (
@@ -1229,7 +1493,7 @@ export default function ConsumerDashboard() {
                           </div>
                         )}
                       </div>
-                      <span className="shrink-0 font-medium text-emerald-800">{requestStatusLabels[request.status]}</span>
+                      <span className="shrink-0 rounded-full bg-emerald-50 px-3 py-1 text-sm font-medium text-emerald-800">{requestStatusLabels[request.status]}</span>
                     </li>
                   );
                 })}
@@ -1237,12 +1501,12 @@ export default function ConsumerDashboard() {
             )}
           </section>
 
-          <section id="profile" className={activeTab !== 'profile' ? 'hidden' : 'rounded-lg border border-stone-200 bg-white p-6 shadow-sm'}>
+          <section id="profile" className={activeTab !== 'profile' ? 'hidden' : 'rounded-[30px] border border-stone-200 bg-[#fbfcf8] p-6 shadow-[0_20px_40px_rgba(15,23,42,0.05)]'}>
             <div className="mx-auto max-w-6xl">
-            <h2 className="mb-5 text-left text-xl font-semibold text-stone-800">Το Προφίλ μου</h2>
+            <h2 className="mb-5 text-left text-2xl font-semibold text-stone-800">Το Προφίλ μου</h2>
             {!editingProfile ? (
               <div className="space-y-4 text-left">
-                <div className="flex items-start gap-4 rounded-lg border border-stone-200 bg-stone-50 p-4">
+                <div className="flex items-start gap-4 rounded-[24px] border border-stone-200 bg-white p-5 shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
                   <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border border-stone-300 bg-white">
                     {avatarUrl ? (
                       <button
@@ -1264,15 +1528,15 @@ export default function ConsumerDashboard() {
                     {uploadingAvatar ? 'Αποστολή...' : 'Αλλαγή φωτογραφίας'}
                   </label>
                 </div>
-                <div className="rounded-lg border border-stone-200 bg-stone-50 p-4 text-left">
+                <div className="rounded-[22px] border border-stone-200 bg-white p-4 text-left shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
                   <p className="mb-1 text-left text-xs font-semibold text-stone-600">Ονοματεπώνυμο</p>
                   <p className="text-base text-stone-900">{userName || 'Επανόθηση απαιτείται'}</p>
                 </div>
-                <div className="rounded-lg border border-stone-200 bg-stone-50 p-4 text-left">
+                <div className="rounded-[22px] border border-stone-200 bg-white p-4 text-left shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
                   <p className="mb-1 text-left text-xs font-semibold text-stone-600">Email</p>
                   <p className="text-base text-stone-900">{buyerEmail || 'Επανόθηση απαιτείται'}</p>
                 </div>
-                <div className="rounded-lg border border-stone-200 bg-stone-50 p-4 text-left">
+                <div className="rounded-[22px] border border-stone-200 bg-white p-4 text-left shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
                   <p className="mb-1 text-left text-xs font-semibold text-stone-600">Κινητό τηλέφωνο</p>
                   <p className="text-base text-stone-900">{buyerPhone || 'Επανόθηση απαιτείται'}</p>
                 </div>
@@ -1435,7 +1699,7 @@ export default function ConsumerDashboard() {
       </div>
 
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-stone-200 bg-white sm:hidden" aria-label="Κάτω πλοήγηση καταναλωτή">
-        <div className="grid h-16 grid-cols-4">
+        <div className="grid h-[76px] grid-cols-5 items-end pb-2">
           <button
             type="button"
             onClick={() => setActiveTab('products')}
@@ -1451,6 +1715,21 @@ export default function ConsumerDashboard() {
           >
             <ShoppingBag className="h-5 w-5" />
             Τα προϊόντα
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('products');
+              if (typeof window !== 'undefined') {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }
+            }}
+            className="flex flex-col items-center justify-center gap-1 text-xs font-medium text-stone-600"
+          >
+            <span className="-mt-8 grid h-14 w-14 place-items-center rounded-full bg-emerald-600 text-white shadow-[0_16px_30px_rgba(22,163,74,0.3)]">
+              <Plus className="h-6 w-6" />
+            </span>
+            Νέο
           </button>
           <button
             type="button"
