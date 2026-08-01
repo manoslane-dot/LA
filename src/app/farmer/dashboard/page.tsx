@@ -740,11 +740,12 @@ export default function FarmerDashboard() {
 
   const handleSendPasswordReset = async () => {
     if (!userEmail) {
-      alert('Δεν βρέθηκε email λογαριασμού για επαναφορά κωδικού.');
+      setErrorMsg('Δεν βρέθηκε email λογαριασμού για επαναφορά κωδικού.');
       return;
     }
 
     setSendingPasswordReset(true);
+    setErrorMsg('');
     const { error } = await supabase.auth.resetPasswordForEmail(userEmail, {
       redirectTo: `${window.location.origin}/auth/reset-password`,
     });
@@ -753,14 +754,15 @@ export default function FarmerDashboard() {
       if (isInvalidJwtError(error.message)) {
         clearLoginPreference();
         await supabase.auth.signOut();
-        alert(AUTH_RELOGIN_MESSAGE);
+        setErrorMsg(AUTH_RELOGIN_MESSAGE);
         router.replace('/auth');
         setSendingPasswordReset(false);
         return;
       }
-      alert('Αποτυχία αποστολής email επαναφοράς: ' + error.message);
+      setErrorMsg('Αποτυχία αποστολής email επαναφοράς: ' + error.message);
     } else {
-      alert('Στάλθηκε email επαναφοράς κωδικού. Ελέγξτε το inbox σας.');
+      setSuccessMsg('Στάλθηκε email επαναφοράς κωδικού. Ελέγξτε το inbox σας.');
+      window.setTimeout(() => setSuccessMsg(''), 5000);
     }
 
     setSendingPasswordReset(false);
@@ -1949,7 +1951,7 @@ export default function FarmerDashboard() {
 
                     <form onSubmit={handleChangePassword} className="mt-4 space-y-3">
                       <label className="block text-sm font-semibold text-stone-700">
-                        Νέος κωδικός
+                        <span className="mb-1.5 inline-flex items-center gap-2">Νέος κωδικός</span>
                         <input
                           type="password"
                           required
@@ -1959,7 +1961,7 @@ export default function FarmerDashboard() {
                           placeholder="••••••••"
                         />
                         <p className="mt-1 text-xs font-medium text-stone-500">
-                          8-12 χαρακτήρες με κεφαλαία, πεζά, αριθμούς και ειδικούς χαρακτήρες (π.χ. ! @ # $ %).
+                          8–12 χαρακτήρες με κεφαλαία, πεζά, αριθμούς και ειδικούς χαρακτήρες (π.χ. ! @ # $ %).
                         </p>
                       </label>
                       <label className="block text-sm font-semibold text-stone-700">

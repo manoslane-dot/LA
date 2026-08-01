@@ -1871,7 +1871,7 @@ export default function ConsumerDashboard() {
 
               <form onSubmit={handleChangePassword} className="mt-4 space-y-3">
                 <label className="block text-sm font-semibold text-stone-700">
-                  Νέος κωδικός
+                  <span className="mb-1.5 inline-flex items-center gap-2">Νέος κωδικός</span>
                   <input
                     type="password"
                     required
@@ -1881,7 +1881,7 @@ export default function ConsumerDashboard() {
                     placeholder="••••••••"
                   />
                   <p className="mt-1 text-xs font-medium text-stone-500">
-                    8-12 χαρακτήρες με κεφαλαία, πεζά, αριθμούς και ειδικούς χαρακτήρες (π.χ. ! @ # $ %).
+                    8–12 χαρακτήρες με κεφαλαία, πεζά, αριθμούς και ειδικούς χαρακτήρες (π.χ. ! @ # $ %).
                   </p>
                 </label>
                 <label className="block text-sm font-semibold text-stone-700">
