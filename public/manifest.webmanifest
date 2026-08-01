@@ -1,0 +1,17 @@
+{
+  "name": "AgroDirect",
+  "short_name": "AgroDirect",
+  "description": "Φρέσκα τοπικά προϊόντα απευθείας από Έλληνες παραγωγούς",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#16a34a",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64 128x128 256x256",
+      "type": "image/x-icon"
+    }
+  ]
+}
