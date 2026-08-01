@@ -776,7 +776,7 @@ export default function ConsumerDashboard() {
   const gridMarks = Array.from({ length: 24 }, (_, index) => index * gridSize);
 
   return (
-    <div className="min-h-screen bg-stone-50 text-stone-900 flex">
+    <div className="h-screen overflow-hidden bg-stone-50 text-stone-900 flex">
       {showCoordinateOverlay && (
         <>
           <div className="pointer-events-none fixed inset-0 z-[60] overflow-hidden" aria-hidden="true">
@@ -853,7 +853,7 @@ export default function ConsumerDashboard() {
 
       <aside
         id="consumer-sidebar"
-        className={`fixed inset-0 z-50 bg-white transition-transform duration-200 sm:hidden ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}
+        className={`fixed inset-0 z-50 bg-white transition-transform duration-200 sm:hidden ${mobileMenuOpen ? 'translate-y-0' : '-translate-y-full'}`}
         aria-label="Μενού λογαριασμού"
       >
         <div className="flex h-full flex-col overflow-y-auto">
@@ -970,7 +970,7 @@ export default function ConsumerDashboard() {
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col min-h-0">
         {/* Top Header */}
         <header data-section="header" data-coords="0,1" className="bg-white border-b border-stone-200 h-16 flex items-center justify-between px-4 sm:px-8">
           <Link href="/" className="flex items-center gap-2 lg:hidden"><Leaf className="h-5 w-5 text-emerald-700" /><span className="font-bold text-emerald-900">AgroDirect</span></Link>
@@ -1090,7 +1090,7 @@ export default function ConsumerDashboard() {
         </header>
 
         {/* Dashboard Body */}
-        <main data-section="dashboard-body" data-coords="1,0" className="flex-1 w-full space-y-8 px-0 py-2 pb-24 sm:px-0 sm:py-4 sm:pb-4 lg:px-0 lg:py-4">
+        <main data-section="dashboard-body" data-coords="1,0" className="flex-1 w-full overflow-y-auto space-y-8 px-0 py-2 pb-24 sm:px-0 sm:py-4 sm:pb-4 lg:px-0 lg:py-4">
           <section id="overview" className="hidden border-b border-stone-200 pb-2 sm:block" />
 
           {successMsg && <div className="rounded-md border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">{successMsg}</div>}
