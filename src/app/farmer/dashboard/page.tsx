@@ -797,40 +797,74 @@ export default function FarmerDashboard() {
     }
 
     setDeletingAccount(true);
-    const {
-      data: { session },
-      error: sessionError,
-    } = await supabase.auth.getSession();
 
-    if (sessionError || !session?.access_token) {
+    try {
+      const {
+        data: { session: refreshedSession },
+        error: refreshError,
+      } = await supabase.auth.refreshSession();
+
+      const accessToken = refreshedSession?.access_token ?? null;
+      if (refreshError || !accessToken) {
+        const {
+          data: { session: currentSession },
+          error: sessionError,
+        } = await supabase.auth.getSession();
+
+        if (sessionError || !currentSession?.access_token) {
+          throw new Error('Η συνεδρία έληξε. Συνδεθείτε ξανά και δοκιμάστε ξανά.');
+        }
+
+        const response = await fetch('/api/account/delete', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${currentSession.access_token}`,
+          },
+          body: JSON.stringify({
+            method: deleteVerificationMethod,
+            password: deleteVerificationMethod === 'password' ? deletePassword : undefined,
+            confirmEmail: deleteVerificationMethod === 'email' ? deleteEmailConfirmation : undefined,
+          }),
+        });
+
+        const result = (await response.json()) as { error?: string };
+
+        if (!response.ok) {
+          throw new Error(result.error ?? 'Αποτυχία διαγραφής λογαριασμού.');
+        }
+
+        await supabase.auth.signOut();
+        router.replace('/auth');
+        return;
+      }
+
+      const response = await fetch('/api/account/delete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          method: deleteVerificationMethod,
+          password: deleteVerificationMethod === 'password' ? deletePassword : undefined,
+          confirmEmail: deleteVerificationMethod === 'email' ? deleteEmailConfirmation : undefined,
+        }),
+      });
+
+      const result = (await response.json()) as { error?: string };
+
+      if (!response.ok) {
+        throw new Error(result.error ?? 'Αποτυχία διαγραφής λογαριασμού.');
+      }
+
+      await supabase.auth.signOut();
+      router.replace('/auth');
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Αποτυχία διαγραφής λογαριασμού.');
+    } finally {
       setDeletingAccount(false);
-      alert('Η συνεδρία έληξε. Συνδεθείτε ξανά και δοκιμάστε ξανά.');
-      return;
     }
-
-    const response = await fetch('/api/account/delete', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${session.access_token}`,
-      },
-      body: JSON.stringify({
-        method: deleteVerificationMethod,
-        password: deleteVerificationMethod === 'password' ? deletePassword : undefined,
-        confirmEmail: deleteVerificationMethod === 'email' ? deleteEmailConfirmation : undefined,
-      }),
-    });
-
-    const result = (await response.json()) as { error?: string };
-
-    if (!response.ok) {
-      setDeletingAccount(false);
-      alert(result.error ?? 'Αποτυχία διαγραφής λογαριασμού.');
-      return;
-    }
-
-    await supabase.auth.signOut();
-    router.replace('/auth');
   };
 
   const getRequestProductDetails = (request: PurchaseRequest): { unit: string; price: number } => {

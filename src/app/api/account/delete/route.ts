@@ -8,6 +8,20 @@ type DeletePayload = {
   confirmEmail?: string;
 };
 
+const getUserAuthErrorMessage = (message?: string) => {
+  const normalizedMessage = message?.toLowerCase() ?? '';
+
+  if (normalizedMessage.includes('sub claim') || normalizedMessage.includes('jwt') || normalizedMessage.includes('token')) {
+    return 'Η συνεδρία είναι άκυρη ή έληξε. Συνδεθείτε ξανά και δοκιμάστε ξανά.';
+  }
+
+  if (normalizedMessage.includes('not found') || normalizedMessage.includes('no user')) {
+    return 'Δεν βρέθηκε ενεργός χρήστης.';
+  }
+
+  return 'Δεν βρέθηκε ενεργός χρήστης.';
+};
+
 export async function POST(request: Request) {
   const supabaseUrl = env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -52,7 +66,7 @@ export async function POST(request: Request) {
   } = await userClient.auth.getUser();
 
   if (userError || !user) {
-    return NextResponse.json({ error: 'Δεν βρέθηκε ενεργός χρήστης.' }, { status: 401 });
+    return NextResponse.json({ error: getUserAuthErrorMessage(userError?.message) }, { status: 401 });
   }
 
   if (method === 'email') {
