@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ShoppingBag, ClipboardList, LogOut, Leaf, Phone, Search, ChevronDown, User, Mail, MapPin, Bell, X, ShoppingCart, Plus, Minus, House, SlidersHorizontal, LayoutGrid, List, Heart, ShieldCheck, Headphones, Sprout } from 'lucide-react';
+import { ShoppingBag, ClipboardList, LogOut, Leaf, Phone, Search, ChevronDown, User, Mail, MapPin, Bell, X, ShoppingCart, Plus, Minus, House, SlidersHorizontal, LayoutGrid, List, Heart, ShieldCheck, Headphones, Sprout, Star } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { formatGreekPhoneInput, isPhoneValid, normalizePhone } from '@/lib/auth/contactInfo';
 import { sanitizePhoneForTel } from '@/lib/serviceAreas';
@@ -40,6 +40,8 @@ interface Product {
   unit: string;
   status: string;
   farmer_id: string | null;
+  ratingAverage?: number | null;
+  ratingCount?: number | null;
 }
 
 interface PurchaseRequest {
@@ -77,6 +79,17 @@ const getUnitLabel = (unit: string, quantity: number): string => {
     case 'γραμμάριο': return 'γραμμάρια';
     default: return unit;
   }
+};
+
+const renderRatingStars = (ratingAverage?: number | null) => {
+  const filledStars = Math.max(0, Math.min(5, Math.round(Number(ratingAverage ?? 0))));
+
+  return Array.from({ length: 5 }, (_, index) => (
+    <Star
+      key={index}
+      className={`h-4 w-4 ${index < filledStars ? 'fill-amber-400 text-amber-400' : 'text-amber-300/70'}`}
+    />
+  ));
 };
 
 const mobileTrustHighlights = [
@@ -1200,6 +1213,10 @@ export default function ConsumerDashboard() {
                           <div className={`${mobileLayout === 'list' ? 'flex min-w-0 flex-1 flex-col justify-between' : 'flex min-w-0 flex-1 flex-col pt-3'}`}>
                             <div className={mobileLayout === 'list' ? 'min-w-0' : 'min-h-[132px]'}>
                               <h3 className="text-[18px] font-bold leading-6 text-stone-900">{item.title}</h3>
+                              <div className="mt-2 flex items-center gap-1">
+                                {renderRatingStars(item.ratingAverage)}
+                                <span className="ml-1 text-xs font-medium text-stone-400">({item.ratingCount ?? 0})</span>
+                              </div>
                               <p className="mt-3 text-[17px] font-bold text-emerald-700">{item.price.toFixed(2)} EUR / {item.unit}</p>
                               <p className="mt-2 text-sm text-stone-600">Διαθέσιμη ποσότητα: <strong>{item.quantity} {getUnitLabel(item.unit, item.quantity)}</strong></p>
                             {useDistance && itemDistance !== null && (
@@ -1220,7 +1237,10 @@ export default function ConsumerDashboard() {
                               >
                                 <Minus className="h-4 w-4" />
                               </button>
-                              <span className="text-sm font-medium text-stone-800">{selectedQuickQuantity} {getUnitLabel(item.unit, selectedQuickQuantity)}</span>
+                              <span className="flex min-w-[58px] flex-col items-center justify-center gap-0.5 px-1 text-center text-sm font-medium leading-tight text-stone-800">
+                                <span className="text-base font-semibold">{selectedQuickQuantity}</span>
+                                <span className="text-xs font-medium text-stone-500">{getUnitLabel(item.unit, selectedQuickQuantity)}</span>
+                              </span>
                               <button
                                 type="button"
                                 onClick={() => updateQuickQuantity(item, 1)}
@@ -1355,6 +1375,10 @@ export default function ConsumerDashboard() {
                               {formatDistance(itemDistance)}
                             </p>
                           )}
+                          <div className="mb-2 flex items-center gap-1">
+                            {renderRatingStars(item.ratingAverage)}
+                            <span className="ml-1 text-xs font-medium text-stone-400">({item.ratingCount ?? 0})</span>
+                          </div>
                           <p className="mb-2 text-left text-[22px] font-bold text-emerald-700">{item.price.toFixed(2)} EUR / {item.unit}</p>
                           <p className="mb-3 text-left text-sm leading-6 text-stone-600">Διαθέσιμη ποσότητα: <strong>{item.quantity} {getUnitLabel(item.unit, item.quantity)}</strong></p>
                           <div className="mt-auto flex w-full items-center gap-2">
@@ -1367,7 +1391,10 @@ export default function ConsumerDashboard() {
                               >
                                 <Minus className="h-4 w-4" />
                               </button>
-                              <span className="text-sm font-medium text-stone-800">{selectedQuickQuantity} {getUnitLabel(item.unit, selectedQuickQuantity)}</span>
+                              <span className="flex min-w-[58px] flex-col items-center justify-center gap-0.5 px-1 text-center text-sm font-medium leading-tight text-stone-800">
+                                <span className="text-base font-semibold">{selectedQuickQuantity}</span>
+                                <span className="text-xs font-medium text-stone-500">{getUnitLabel(item.unit, selectedQuickQuantity)}</span>
+                              </span>
                               <button
                                 type="button"
                                 onClick={() => updateQuickQuantity(item, 1)}
