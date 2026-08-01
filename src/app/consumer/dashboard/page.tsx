@@ -776,7 +776,7 @@ export default function ConsumerDashboard() {
   const gridMarks = Array.from({ length: 24 }, (_, index) => index * gridSize);
 
   return (
-    <div className="h-screen overflow-hidden bg-stone-50 text-stone-900 flex">
+    <div className="h-screen overflow-hidden overflow-x-hidden bg-stone-50 text-stone-900 flex">
       {showCoordinateOverlay && (
         <>
           <div className="pointer-events-none fixed inset-0 z-[60] overflow-hidden" aria-hidden="true">
@@ -1090,14 +1090,14 @@ export default function ConsumerDashboard() {
         </header>
 
         {/* Dashboard Body */}
-        <main data-section="dashboard-body" data-coords="1,0" className="flex-1 w-full overflow-y-auto space-y-8 px-0 py-2 pb-24 sm:px-0 sm:py-4 sm:pb-4 lg:px-0 lg:py-4">
+        <main data-section="dashboard-body" data-coords="1,0" className="flex-1 w-full overflow-y-auto overflow-x-hidden space-y-8 px-0 py-2 pb-24 sm:px-0 sm:py-4 sm:pb-4 lg:px-0 lg:py-4">
           <section id="overview" className="hidden border-b border-stone-200 pb-2 sm:block" />
 
           {successMsg && <div className="rounded-md border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">{successMsg}</div>}
           {errorMsg && !selectedProduct && <div className="rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{errorMsg}</div>}
 
           <section id="products" data-section="products-section" data-coords="1,1" className={activeTab !== 'products' ? 'hidden' : ''}>
-            <div className="space-y-4 bg-[#fcfcf8] px-4 pb-6 pt-4 sm:hidden">
+            <div className="w-full max-w-full overflow-x-hidden space-y-4 bg-[#fcfcf8] px-4 pb-6 pt-4 sm:hidden">
               <div className="relative overflow-hidden rounded-[28px] bg-[linear-gradient(135deg,#1f6b3d_0%,#2a8f4b_55%,#1f6b3d_100%)] px-5 py-5 text-white shadow-[0_20px_40px_rgba(31,107,61,0.18)]">
                 <div className="max-w-[58%]">
                   <h2 className="text-[15px] font-bold uppercase tracking-[0.06em] text-white/80">AgroDirect</h2>
@@ -1186,7 +1186,7 @@ export default function ConsumerDashboard() {
                   </div>
                 </div>
 
-                <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
+                <div className="mt-4 flex flex-wrap gap-2 pb-1">
                   {mobileCategoryChips.map((chip, index) => (
                     <button
                       key={chip}
@@ -1211,13 +1211,13 @@ export default function ConsumerDashboard() {
                     <p className="font-medium text-stone-700">Ταξινόμηση</p>
                   </div>
 
-                  <div className={`grid gap-3 ${mobileLayout === 'grid' ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                  <div className={`grid w-full max-w-full gap-3 ${mobileLayout === 'grid' ? 'grid-cols-2' : 'grid-cols-1'}`}>
                     {filteredAndSortedProducts.map((item) => {
                       const itemDistance = (item as any).distance_km;
                       const productImages = productImagesByProductId[item.id] ?? [];
                       const selectedQuickQuantity = getQuickQuantity(item);
                       return (
-                        <article key={item.id} className={`overflow-hidden rounded-[24px] border border-stone-200 bg-white p-3 shadow-[0_10px_28px_rgba(15,23,42,0.06)] ${mobileLayout === 'list' ? 'flex gap-3' : ''}`}>
+                        <article key={item.id} className={`w-full min-w-0 overflow-hidden rounded-[24px] border border-stone-200 bg-white p-3 shadow-[0_10px_28px_rgba(15,23,42,0.06)] ${mobileLayout === 'list' ? 'flex gap-3' : ''}`}>
                           <div className={`relative overflow-hidden rounded-[18px] bg-stone-100 ${mobileLayout === 'list' ? 'w-[42%] shrink-0 self-start' : ''}`}>
                             {productImages.length > 0 ? (
                               <button
