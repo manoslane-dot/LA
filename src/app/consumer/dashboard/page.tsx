@@ -1227,12 +1227,12 @@ export default function ConsumerDashboard() {
                             )}
                             </div>
 
-                            <div className={`flex items-center gap-2 ${mobileLayout === 'list' ? 'mt-4' : 'mt-auto pt-3'}`}>
-                              <div className="flex flex-1 items-center justify-between rounded-2xl border border-stone-200 bg-white px-3 py-2.5">
+                            <div className={`flex items-center gap-2 rounded-[22px] border border-emerald-100 bg-gradient-to-r from-white to-emerald-50/60 p-2 shadow-[0_8px_22px_rgba(15,23,42,0.05)] ${mobileLayout === 'list' ? 'mt-4' : 'mt-auto pt-3'}`}>
+                              <div className="flex flex-1 items-center justify-between rounded-[18px] border border-emerald-100 bg-white px-3 py-2.5">
                               <button
                                 type="button"
                                 onClick={() => updateQuickQuantity(item, -1)}
-                                className="rounded p-0.5 text-stone-600 transition hover:bg-stone-100"
+                                className="rounded-md p-1 text-stone-600 transition hover:bg-stone-100"
                                 aria-label={`Μείωση ποσότητας για ${item.title}`}
                               >
                                 <Minus className="h-4 w-4" />
@@ -1244,7 +1244,7 @@ export default function ConsumerDashboard() {
                               <button
                                 type="button"
                                 onClick={() => updateQuickQuantity(item, 1)}
-                                className="rounded p-0.5 text-stone-600 transition hover:bg-stone-100"
+                                className="rounded-md p-1 text-stone-600 transition hover:bg-stone-100"
                                 aria-label={`Αύξηση ποσότητας για ${item.title}`}
                               >
                                 <Plus className="h-4 w-4" />
@@ -1253,7 +1253,7 @@ export default function ConsumerDashboard() {
                             <button
                               type="button"
                               onClick={() => openRequestForm(item, selectedQuickQuantity)}
-                              className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-600 text-white transition hover:bg-emerald-700"
+                              className="inline-flex h-[56px] w-[56px] shrink-0 items-center justify-center rounded-[18px] bg-gradient-to-br from-emerald-600 to-emerald-700 text-white shadow-[0_12px_24px_rgba(5,150,105,0.24)] transition hover:from-emerald-700 hover:to-emerald-800"
                               aria-label={`Αίτημα για ${item.title}`}
                               title="Αποστολή αιτήματος"
                             >
@@ -1381,12 +1381,12 @@ export default function ConsumerDashboard() {
                           </div>
                           <p className="mb-2 text-left text-[22px] font-bold text-emerald-700">{item.price.toFixed(2)} EUR / {item.unit}</p>
                           <p className="mb-3 text-left text-sm leading-6 text-stone-600">Διαθέσιμη ποσότητα: <strong>{item.quantity} {getUnitLabel(item.unit, item.quantity)}</strong></p>
-                          <div className="mt-auto flex w-full items-center gap-2">
-                            <div className="flex flex-1 items-center justify-between rounded-2xl border border-stone-200 bg-white px-3 py-3">
+                          <div className="mt-auto flex w-full items-center gap-2 rounded-[22px] border border-emerald-100 bg-gradient-to-r from-white to-emerald-50/60 p-2 shadow-[0_8px_22px_rgba(15,23,42,0.05)]">
+                            <div className="flex flex-1 items-center justify-between rounded-[18px] border border-emerald-100 bg-white px-3 py-3">
                               <button
                                 type="button"
                                 onClick={() => updateQuickQuantity(item, -1)}
-                                className="rounded p-0.5 text-stone-600 transition hover:bg-stone-100"
+                                className="rounded-md p-1 text-stone-600 transition hover:bg-stone-100"
                                 aria-label={`Μείωση ποσότητας για ${item.title}`}
                               >
                                 <Minus className="h-4 w-4" />
@@ -1398,7 +1398,7 @@ export default function ConsumerDashboard() {
                               <button
                                 type="button"
                                 onClick={() => updateQuickQuantity(item, 1)}
-                                className="rounded p-0.5 text-stone-600 transition hover:bg-stone-100"
+                                className="rounded-md p-1 text-stone-600 transition hover:bg-stone-100"
                                 aria-label={`Αύξηση ποσότητας για ${item.title}`}
                               >
                                 <Plus className="h-4 w-4" />
@@ -1407,7 +1407,7 @@ export default function ConsumerDashboard() {
                             <button
                               type="button"
                               onClick={() => openRequestForm(item, selectedQuickQuantity)}
-                              className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-700 text-white transition-colors hover:bg-emerald-800"
+                              className="inline-flex h-[56px] w-[56px] shrink-0 items-center justify-center rounded-[18px] bg-gradient-to-br from-emerald-600 to-emerald-700 text-white shadow-[0_12px_24px_rgba(5,150,105,0.24)] transition hover:from-emerald-700 hover:to-emerald-800"
                               aria-label={`Αίτημα για ${item.title}`}
                               title="Αποστολή αιτήματος"
                             >
