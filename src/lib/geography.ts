@@ -13,6 +13,28 @@ export interface Region {
   regionalUnits: RegionalUnit[];
 }
 
+export interface LocationSuggestion {
+  label: string;
+  address: string;
+  city: string;
+  postalCode: string;
+}
+
+const postalCodeBySettlement: Record<string, string> = {
+  'Αλεξάνδρεια': '590 01',
+  'Βέροια': '591 00',
+  'Νάουσα': '592 00',
+  'Αθήνα': '104 31',
+  'Θεσσαλονίκη': '546 25',
+  'Πάτρα': '264 41',
+  'Ηράκλειο': '712 02',
+  'Λάρισα': '412 22',
+  'Βόλος': '382 21',
+  'Ιωάννινα': '455 00',
+  'Τρίπολη': '221 00',
+  'Καλαμάτα': '241 00',
+};
+
 export const geography: Region[] = [
   {
     name: 'Κεντρική Μακεδονία',
@@ -84,6 +106,47 @@ export const geography: Region[] = [
     ],
   },
 ];
+
+const buildLocationSuggestions = (): LocationSuggestion[] => {
+  const suggestions: LocationSuggestion[] = [];
+
+  geography.forEach((region) => {
+    region.regionalUnits.forEach((regionalUnit) => {
+      regionalUnit.municipalities.forEach((municipality) => {
+        municipality.settlements.forEach((settlement) => {
+          suggestions.push({
+            label: `${settlement}, ${municipality.name}`,
+            address: settlement,
+            city: settlement,
+            postalCode: postalCodeBySettlement[settlement] ?? '000 00',
+          });
+        });
+      });
+    });
+  });
+
+  return suggestions;
+};
+
+const locationSuggestions = buildLocationSuggestions();
+
+const normalizeSuggestionText = (value: string) => value.trim().toLowerCase();
+
+export function getAddressSuggestions(query: string, field: 'address' | 'city' | 'postalCode' = 'address') {
+  const normalizedQuery = normalizeSuggestionText(query);
+
+  if (!normalizedQuery) {
+    return locationSuggestions.slice(0, 8);
+  }
+
+  return locationSuggestions.filter((suggestion) => {
+    const haystacks = field === 'postalCode'
+      ? [suggestion.postalCode, suggestion.city, suggestion.address]
+      : [suggestion.label, suggestion.address, suggestion.city];
+
+    return haystacks.some((value) => normalizeSuggestionText(value).includes(normalizedQuery));
+  }).slice(0, 6);
+}
 
 export function getRegionalUnit(regionName: string, regionalUnitName: string) {
   return geography

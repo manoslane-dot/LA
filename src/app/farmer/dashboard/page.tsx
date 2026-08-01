@@ -23,6 +23,7 @@ import {
   type NotificationItem,
 } from '@/lib/notifications';
 import { uploadImageToSupabase } from '@/lib/supabase/images';
+import { getAddressSuggestions, type LocationSuggestion } from '@/lib/geography';
 
 interface Product {
   id: number;
@@ -103,6 +104,9 @@ export default function FarmerDashboard() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [editingProfile, setEditingProfile] = useState(false);
   const [profileForm, setProfileForm] = useState({ fullName: '', email: '', phone: '', address: '', city: '', postalCode: '' });
+  const [addressSuggestions, setAddressSuggestions] = useState<LocationSuggestion[]>([]);
+  const [citySuggestions, setCitySuggestions] = useState<LocationSuggestion[]>([]);
+  const [postalCodeSuggestions, setPostalCodeSuggestions] = useState<LocationSuggestion[]>([]);
   const [savingProfile, setSavingProfile] = useState(false);
   const [userPhone, setUserPhone] = useState('');
   const [userAddress, setUserAddress] = useState('');
@@ -122,6 +126,17 @@ export default function FarmerDashboard() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [showAvatarPreview, setShowAvatarPreview] = useState(false);
+  const applyLocationSuggestion = (suggestion: LocationSuggestion) => {
+    setProfileForm((prev) => ({
+      ...prev,
+      address: suggestion.address,
+      city: suggestion.city,
+      postalCode: suggestion.postalCode,
+    }));
+    setAddressSuggestions([]);
+    setCitySuggestions([]);
+    setPostalCodeSuggestions([]);
+  };
   const [selectedProductImage, setSelectedProductImage] = useState<string | null>(null);
   const [showProductImagePreview, setShowProductImagePreview] = useState(false);
   const [productImages, setProductImages] = useState<File[]>([]);
@@ -1857,10 +1872,32 @@ export default function FarmerDashboard() {
                       type="text"
                       required
                       value={profileForm.address}
-                      onChange={(e) => setProfileForm({ ...profileForm, address: e.target.value })}
+                      onChange={(e) => {
+                        const nextValue = e.target.value;
+                        setProfileForm((prev) => ({ ...prev, address: nextValue }));
+                        setAddressSuggestions(getAddressSuggestions(nextValue, 'address'));
+                      }}
+                      onFocus={() => setAddressSuggestions(getAddressSuggestions(profileForm.address, 'address'))}
+                      onBlur={() => window.setTimeout(() => setAddressSuggestions([]), 120)}
                       className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
                       placeholder="π.χ. Πατησίων 123"
                     />
+                    {addressSuggestions.length > 0 && (
+                      <ul className="mt-2 rounded-lg border border-stone-200 bg-white p-2 shadow-sm">
+                        {addressSuggestions.map((suggestion) => (
+                          <li key={`${suggestion.label}-${suggestion.postalCode}`}>
+                            <button
+                              type="button"
+                              onClick={() => applyLocationSuggestion(suggestion)}
+                              className="flex w-full items-center justify-between rounded-md px-2 py-2 text-left text-sm text-stone-700 transition hover:bg-stone-100"
+                            >
+                              <span>{suggestion.label}</span>
+                              <span className="ml-3 text-xs text-stone-500">{suggestion.postalCode}</span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </label>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <label className="block text-sm font-semibold text-stone-700">
@@ -1869,10 +1906,32 @@ export default function FarmerDashboard() {
                         type="text"
                         required
                         value={profileForm.city}
-                        onChange={(e) => setProfileForm({ ...profileForm, city: e.target.value })}
+                        onChange={(e) => {
+                          const nextValue = e.target.value;
+                          setProfileForm((prev) => ({ ...prev, city: nextValue }));
+                          setCitySuggestions(getAddressSuggestions(nextValue, 'city'));
+                        }}
+                        onFocus={() => setCitySuggestions(getAddressSuggestions(profileForm.city, 'city'))}
+                        onBlur={() => window.setTimeout(() => setCitySuggestions([]), 120)}
                         className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
                         placeholder="π.χ. Αθήνα"
                       />
+                      {citySuggestions.length > 0 && (
+                        <ul className="mt-2 rounded-lg border border-stone-200 bg-white p-2 shadow-sm">
+                          {citySuggestions.map((suggestion) => (
+                            <li key={`${suggestion.city}-${suggestion.postalCode}`}>
+                              <button
+                                type="button"
+                                onClick={() => applyLocationSuggestion(suggestion)}
+                                className="flex w-full items-center justify-between rounded-md px-2 py-2 text-left text-sm text-stone-700 transition hover:bg-stone-100"
+                              >
+                                <span>{suggestion.city}</span>
+                                <span className="ml-3 text-xs text-stone-500">{suggestion.postalCode}</span>
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
                     </label>
                     <label className="block text-sm font-semibold text-stone-700">
                       <span className="inline-flex items-center gap-2 mb-1.5">Τ.Κ.</span>
@@ -1880,10 +1939,32 @@ export default function FarmerDashboard() {
                         type="text"
                         required
                         value={profileForm.postalCode}
-                        onChange={(e) => setProfileForm({ ...profileForm, postalCode: e.target.value })}
+                        onChange={(e) => {
+                          const nextValue = e.target.value;
+                          setProfileForm((prev) => ({ ...prev, postalCode: nextValue }));
+                          setPostalCodeSuggestions(getAddressSuggestions(nextValue, 'postalCode'));
+                        }}
+                        onFocus={() => setPostalCodeSuggestions(getAddressSuggestions(profileForm.postalCode, 'postalCode'))}
+                        onBlur={() => window.setTimeout(() => setPostalCodeSuggestions([]), 120)}
                         className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
                         placeholder="π.χ. 11141"
                       />
+                      {postalCodeSuggestions.length > 0 && (
+                        <ul className="mt-2 rounded-lg border border-stone-200 bg-white p-2 shadow-sm">
+                          {postalCodeSuggestions.map((suggestion) => (
+                            <li key={`${suggestion.postalCode}-${suggestion.city}`}>
+                              <button
+                                type="button"
+                                onClick={() => applyLocationSuggestion(suggestion)}
+                                className="flex w-full items-center justify-between rounded-md px-2 py-2 text-left text-sm text-stone-700 transition hover:bg-stone-100"
+                              >
+                                <span>{suggestion.postalCode}</span>
+                                <span className="ml-3 text-xs text-stone-500">{suggestion.city}</span>
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
                     </label>
                   </div>
                   <div className="flex gap-3">
