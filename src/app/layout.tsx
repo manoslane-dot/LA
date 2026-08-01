@@ -3,6 +3,7 @@ import "@/styles/globals.css";
 import { Manrope } from "next/font/google";
 import { type Metadata, type Viewport } from "next";
 import { CookieConsent } from "@/components/CookieConsent";
+import { PwaInstallPrompt } from "@/components/PwaInstallPrompt";
 
 const manrope = Manrope({
   subsets: ["latin"],
@@ -41,6 +42,7 @@ export default function RootLayout({
       </head>
       <body className="font-sans antialiased">
         {children}
+        <PwaInstallPrompt />
         <CookieConsent />
       </body>
     </html>
