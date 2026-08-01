@@ -10,9 +10,18 @@ type BeforeInstallPromptEvent = Event & {
 export function InstallPwaButton() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstalled, setIsInstalled] = useState(false);
+  const [isMobileDevice, setIsMobileDevice] = useState(false);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
+
+    const ua = window.navigator.userAgent.toLowerCase();
+    const isMobile = /android|iphone|ipad|ipod|mobile/.test(ua);
+    setIsMobileDevice(isMobile);
+
+    if (!isMobile) {
+      return;
+    }
 
     const isStandalone =
       window.matchMedia('(display-mode: standalone)').matches ||
@@ -42,6 +51,10 @@ export function InstallPwaButton() {
   }, []);
 
   if (isInstalled) {
+    return null;
+  }
+
+  if (!isMobileDevice) {
     return null;
   }
 
