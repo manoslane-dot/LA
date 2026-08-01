@@ -98,6 +98,13 @@ const mobileTrustHighlights = [
   { icon: Headphones, text: 'Υποστήριξη όταν τη χρειάζεστε' },
 ];
 
+const AUTH_RELOGIN_MESSAGE = 'Η συνεδρία είναι άκυρη ή έληξε. Συνδεθείτε ξανά και δοκιμάστε ξανά.';
+
+const isInvalidJwtError = (message?: string) => {
+  const normalized = message?.toLowerCase() ?? '';
+  return normalized.includes('sub claim') || normalized.includes('jwt') || normalized.includes('token');
+};
+
 export default function ConsumerDashboard() {
   const router = useRouter();
   const supabase = createClient();
@@ -727,6 +734,14 @@ export default function ConsumerDashboard() {
     });
 
     if (error) {
+      if (isInvalidJwtError(error.message)) {
+        clearLoginPreference();
+        await supabase.auth.signOut();
+        router.replace('/auth');
+        setErrorMsg(AUTH_RELOGIN_MESSAGE);
+        setSendingPasswordReset(false);
+        return;
+      }
       setErrorMsg(`Αποτυχία αποστολής email επαναφοράς: ${error.message}`);
     } else {
       setSuccessMsg('Στάλθηκε email επαναφοράς κωδικού. Ελέγξτε το inbox σας.');

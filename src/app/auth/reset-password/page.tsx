@@ -6,6 +6,16 @@ import { KeyRound, Leaf } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { validateStrongPassword } from '@/lib/auth/credentialsPolicy';
 
+const getFriendlyResetPasswordError = (message?: string) => {
+  const normalized = message?.toLowerCase() ?? '';
+
+  if (normalized.includes('sub claim') || normalized.includes('jwt') || normalized.includes('token')) {
+    return 'Ο σύνδεσμος επαναφοράς δεν είναι πλέον έγκυρος. Ζητήστε νέο email επαναφοράς.';
+  }
+
+  return message ?? 'Αποτυχία αλλαγής κωδικού.';
+};
+
 export default function ResetPasswordPage() {
   const router = useRouter();
   const supabase = createClient();
@@ -36,7 +46,7 @@ export default function ResetPasswordPage() {
     const { error } = await supabase.auth.updateUser({ password });
 
     if (error) {
-      setErrorMsg(error.message);
+      setErrorMsg(getFriendlyResetPasswordError(error.message));
     } else {
       setSuccessMsg('Ο κωδικός άλλαξε επιτυχώς. Μπορείς να συνδεθείς τώρα.');
       setTimeout(() => router.replace('/auth'), 1500);

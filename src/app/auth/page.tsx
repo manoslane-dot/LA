@@ -13,6 +13,16 @@ import GoogleSignInButton from './GoogleSignInButton';
 
 const allowedDomains = ['gmail.com', 'outlook.com', 'yahoo.com', 'icloud.com', 'proton.me', 'hotmail.com'];
 
+const AUTH_RELOGIN_MESSAGE = 'Η συνεδρία είναι άκυρη ή έληξε. Συνδεθείτε ξανά και δοκιμάστε ξανά.';
+
+const getFriendlyAuthErrorMessage = (message?: string) => {
+  const normalized = message?.toLowerCase() ?? '';
+  if (normalized.includes('sub claim') || normalized.includes('jwt') || normalized.includes('token')) {
+    return AUTH_RELOGIN_MESSAGE;
+  }
+  return message ?? 'Παρουσιάστηκε σφάλμα ταυτοποίησης.';
+};
+
 function validateEmailDomain(email: string): boolean {
   const domain = email.split('@')[1]?.toLowerCase();
   if (!domain) return false;
@@ -235,7 +245,7 @@ function AuthForm() {
     });
 
     if (error) {
-      setErrorMsg(error.message);
+      setErrorMsg(getFriendlyAuthErrorMessage(error.message));
     } else {
       setSuccessMsg('Στάλθηκε email επαναφοράς κωδικού. Έλεγξε το inbox σου.');
     }

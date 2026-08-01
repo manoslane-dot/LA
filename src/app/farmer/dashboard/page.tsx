@@ -83,6 +83,13 @@ const getValidNormalizedPhone = (value: string) => {
   return normalizedPhone;
 };
 
+const AUTH_RELOGIN_MESSAGE = 'Η συνεδρία είναι άκυρη ή έληξε. Συνδεθείτε ξανά και δοκιμάστε ξανά.';
+
+const isInvalidJwtError = (message?: string) => {
+  const normalized = message?.toLowerCase() ?? '';
+  return normalized.includes('sub claim') || normalized.includes('jwt') || normalized.includes('token');
+};
+
 export default function FarmerDashboard() {
   const router = useRouter();
   const supabase = createClient();
@@ -741,6 +748,14 @@ export default function FarmerDashboard() {
     });
 
     if (error) {
+      if (isInvalidJwtError(error.message)) {
+        clearLoginPreference();
+        await supabase.auth.signOut();
+        alert(AUTH_RELOGIN_MESSAGE);
+        router.replace('/auth');
+        setSendingPasswordReset(false);
+        return;
+      }
       alert('Αποτυχία αποστολής email επαναφοράς: ' + error.message);
     } else {
       alert('Στάλθηκε email επαναφοράς κωδικού. Ελέγξτε το inbox σας.');
