@@ -1610,16 +1610,6 @@ export default function ConsumerDashboard() {
 
           <section id="profile" className={activeTab !== 'profile' ? 'hidden' : 'rounded-[30px] border border-stone-200 bg-[#fbfcf8] p-6 shadow-[0_20px_40px_rgba(15,23,42,0.05)]'}>
             <div className="mx-auto max-w-6xl">
-            {errorMsg && activeTab === 'profile' && (
-              <div className="mb-4 rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
-                {errorMsg}
-              </div>
-            )}
-            {successMsg && activeTab === 'profile' && (
-              <div className="mb-4 rounded-md border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
-                {successMsg}
-              </div>
-            )}
             <h2 className="mb-5 text-left text-2xl font-semibold text-stone-800">Το Προφίλ μου</h2>
             {!editingProfile ? (
               <div className="space-y-4 text-left">
@@ -1883,6 +1873,16 @@ export default function ConsumerDashboard() {
                   <p className="mt-1 text-xs font-medium text-stone-500">
                     8–12 χαρακτήρες με κεφαλαία, πεζά, αριθμούς και ειδικούς χαρακτήρες (π.χ. ! @ # $ %).
                   </p>
+                  {errorMsg && (
+                    <div className="mt-2 rounded-md border border-red-300 bg-red-50 px-3 py-2 text-xs font-medium text-red-700">
+                      {errorMsg}
+                    </div>
+                  )}
+                  {successMsg && (
+                    <div className="mt-2 rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-800">
+                      {successMsg}
+                    </div>
+                  )}
                 </label>
                 <label className="block text-sm font-semibold text-stone-700">
                   Επιβεβαίωση κωδικού

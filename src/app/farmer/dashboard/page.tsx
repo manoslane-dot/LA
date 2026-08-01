@@ -1692,16 +1692,6 @@ export default function FarmerDashboard() {
               {profileSubTab === 'profile' && (
                 <>
                   <h2 className="mb-5 text-xl font-semibold text-stone-800">Το Προφίλ μου</h2>
-                  {errorMsg && (
-                    <div className="mb-4 rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
-                      {errorMsg}
-                    </div>
-                  )}
-                  {successMsg && (
-                    <div className="mb-4 rounded-md border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
-                      {successMsg}
-                    </div>
-                  )}
                   {!editingProfile ? (
                     <div className="space-y-4 text-left">
                       <div className="flex items-start gap-4 rounded-[24px] border border-stone-200 bg-white p-5 shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
@@ -1963,6 +1953,16 @@ export default function FarmerDashboard() {
                         <p className="mt-1 text-xs font-medium text-stone-500">
                           8–12 χαρακτήρες με κεφαλαία, πεζά, αριθμούς και ειδικούς χαρακτήρες (π.χ. ! @ # $ %).
                         </p>
+                        {errorMsg && (
+                          <div className="mt-2 rounded-md border border-red-300 bg-red-50 px-3 py-2 text-xs font-medium text-red-700">
+                            {errorMsg}
+                          </div>
+                        )}
+                        {successMsg && (
+                          <div className="mt-2 rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-800">
+                            {successMsg}
+                          </div>
+                        )}
                       </label>
                       <label className="block text-sm font-semibold text-stone-700">
                         Επιβεβαίωση κωδικού
