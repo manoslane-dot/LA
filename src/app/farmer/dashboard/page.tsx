@@ -119,7 +119,7 @@ export default function FarmerDashboard() {
   const [editingProductQuantity, setEditingProductQuantity] = useState('');
   const [editingProductPrice, setEditingProductPrice] = useState('');
   const [editingProductUnit, setEditingProductUnit] = useState('κιλό');
-  const [editingProductStatus, setEditingProductStatus] = useState('🟢 Ενεργό / Δημοσιευμένο');
+  const [editingProductStatus, setEditingProductStatus] = useState('');
   const [editingProductImages, setEditingProductImages] = useState<File[]>([]);
   const [updatingProduct, setUpdatingProduct] = useState(false);
   const [editingPriceId, setEditingPriceId] = useState<number | null>(null);
@@ -369,7 +369,7 @@ export default function FarmerDashboard() {
     setEditingProductQuantity('');
     setEditingProductPrice('');
     setEditingProductUnit('κιλό');
-    setEditingProductStatus('🟢 Ενεργό / Δημοσιευμένο');
+    setEditingProductStatus('');
     setEditingProductImages([]);
   }, []);
 
@@ -379,7 +379,7 @@ export default function FarmerDashboard() {
     setEditingProductQuantity(String(product.quantity));
     setEditingProductPrice(String(product.price));
     setEditingProductUnit(product.unit || 'κιλό');
-    setEditingProductStatus(product.status || '🟢 Ενεργό / Δημοσιευμένο');
+    setEditingProductStatus(product.status || '');
     setEditingProductImages([]);
   };
 
@@ -398,7 +398,7 @@ export default function FarmerDashboard() {
           quantity: parseFloat(editingProductQuantity),
           price: parseFloat(editingProductPrice),
           unit: editingProductUnit,
-          status: editingProductStatus,
+          status: editingProductStatus || '',
         })
         .eq('id', editingProductId)
         .eq('farmer_id', userId);
@@ -458,7 +458,7 @@ export default function FarmerDashboard() {
             quantity: parseFloat(prodQuantity),
             price: parseFloat(prodPrice),
             unit: prodUnit,
-            status: '🟢 Ενεργό / Δημοσιευμένο',
+            status: '',
             farmer_id: userId,
           },
         ])
@@ -1373,18 +1373,6 @@ export default function FarmerDashboard() {
                         onChange={(e) => setEditingProductPrice(e.target.value)}
                         className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
                       />
-                    </div>
-                    <div>
-                      <label className="mb-1 block text-sm font-medium text-gray-700">Κατάσταση</label>
-                      <select
-                        value={editingProductStatus}
-                        onChange={(e) => setEditingProductStatus(e.target.value)}
-                        className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
-                      >
-                        <option value="🟢 Ενεργό / Δημοσιευμένο">🟢 Ενεργό / Δημοσιευμένο</option>
-                        <option value="🟡 Μερικώς διαθέσιμο">🟡 Μερικώς διαθέσιμο</option>
-                        <option value="🔴 Εκτός αποθέματος">🔴 Εκτός αποθέματος</option>
-                      </select>
                     </div>
                     <div className="sm:col-span-2">
                       <label className="mb-1 block text-sm font-medium text-gray-700">Νέες εικόνες προϊόντος (προαιρετικά)</label>
