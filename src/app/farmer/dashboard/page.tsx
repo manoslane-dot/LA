@@ -1661,16 +1661,9 @@ export default function FarmerDashboard() {
             )}
           </section>
 
-          <section id="profile" className={`rounded-lg border border-stone-200 bg-white shadow-sm${activeTab !== 'profile' ? ' hidden' : ''}`}>
-            <div className="border-b border-stone-200 px-4 py-3 sm:px-6">
-              <div className="inline-flex items-center rounded-t-lg border-b-2 border-emerald-700 px-4 py-3 text-sm font-medium text-emerald-800">
-                <User className="mr-2 h-4 w-4" />
-                Προφίλ
-              </div>
-            </div>
-
-            <div className="p-6">
-              <h2 className="mb-5 text-xl font-semibold text-stone-800">Το Προφίλ μου</h2>
+          <section id="profile" className={activeTab !== 'profile' ? 'hidden' : 'rounded-[30px] border border-stone-200 bg-[#fbfcf8] p-6 shadow-[0_20px_40px_rgba(15,23,42,0.05)]'}>
+            <div className="mx-auto max-w-6xl">
+              <h2 className="mb-5 text-left text-2xl font-semibold text-stone-800">Το Προφίλ μου</h2>
               {!editingProfile ? (
                 <div className="space-y-4 text-left">
                   <div className="flex items-start gap-4 rounded-[24px] border border-stone-200 bg-white p-5 shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
@@ -1817,7 +1810,7 @@ export default function FarmerDashboard() {
                   className="space-y-4"
                 >
                   <label className="block text-sm font-semibold text-stone-700">
-                    <span className="mb-1.5 inline-flex items-center gap-2">
+                    <span className="inline-flex items-center gap-2 mb-1.5">
                       <User className="h-4 w-4 text-emerald-700" /> Ονοματεπώνυμο
                     </span>
                     <input
@@ -1830,19 +1823,19 @@ export default function FarmerDashboard() {
                     />
                   </label>
                   <label className="block text-sm font-semibold text-stone-700">
-                    <span className="mb-1.5 inline-flex items-center gap-2">
+                    <span className="inline-flex items-center gap-2 mb-1.5">
                       <Mail className="h-4 w-4 text-emerald-700" /> Email
                     </span>
                     <input
                       type="email"
                       disabled
                       value={profileForm.email}
-                      className="w-full cursor-not-allowed rounded-lg border border-stone-300 bg-stone-100 px-3 py-2.5 text-sm text-stone-600"
+                      className="w-full rounded-lg border border-stone-300 bg-stone-100 px-3 py-2.5 text-sm text-stone-600 cursor-not-allowed"
                     />
                     <p className="mt-1 text-xs text-stone-500">Το email δεν μπορεί να αλλάξει</p>
                   </label>
                   <label className="block text-sm font-semibold text-stone-700">
-                    <span className="mb-1.5 inline-flex items-center gap-2">
+                    <span className="inline-flex items-center gap-2 mb-1.5">
                       <Phone className="h-4 w-4 text-emerald-700" /> Κινητό τηλέφωνο
                     </span>
                     <input
@@ -1852,12 +1845,12 @@ export default function FarmerDashboard() {
                       onChange={(e) => {
                         setProfileForm({ ...profileForm, phone: formatGreekPhoneInput(e.target.value) });
                       }}
-                      className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                      className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-stone-400 focus:ring-2 focus:ring-emerald-100"
                       placeholder="π.χ. +30 69 12345678"
                     />
                   </label>
                   <label className="block text-sm font-semibold text-stone-700">
-                    <span className="mb-1.5 inline-flex items-center gap-2">
+                    <span className="inline-flex items-center gap-2 mb-1.5">
                       <MapPin className="h-4 w-4 text-emerald-700" /> Διεύθυνση
                     </span>
                     <input
@@ -1871,7 +1864,7 @@ export default function FarmerDashboard() {
                   </label>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <label className="block text-sm font-semibold text-stone-700">
-                      <span className="mb-1.5 inline-flex items-center gap-2">Πόλη</span>
+                      <span className="inline-flex items-center gap-2 mb-1.5">Πόλη</span>
                       <input
                         type="text"
                         required
@@ -1882,7 +1875,7 @@ export default function FarmerDashboard() {
                       />
                     </label>
                     <label className="block text-sm font-semibold text-stone-700">
-                      <span className="mb-1.5 inline-flex items-center gap-2">Τ.Κ.</span>
+                      <span className="inline-flex items-center gap-2 mb-1.5">Τ.Κ.</span>
                       <input
                         type="text"
                         required
@@ -1913,10 +1906,10 @@ export default function FarmerDashboard() {
               )}
 
               <div className="mt-8 rounded-[24px] border border-stone-200 bg-white p-5 shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
-                <h3 className="flex items-center gap-2 text-base font-semibold text-stone-900">
-                  <KeyRound className="h-4 w-4 text-emerald-700" /> Ασφάλεια
+                <h3 className="flex items-center gap-2 text-lg font-semibold text-stone-900">
+                  <KeyRound className="h-5 w-5 text-emerald-700" /> Ασφάλεια
                 </h3>
-                <p className="mt-1 text-sm text-stone-600">Αλλαγή κωδικού, επιβεβαίωση κωδικού και επαναφορά μέσω email.</p>
+                <p className="mt-1 text-sm text-stone-500">Αλλαγή κωδικού, επιβεβαίωση κωδικού και επαναφορά μέσω email.</p>
 
                 <form onSubmit={handleChangePassword} className="mt-4 space-y-3">
                   <label className="block text-sm font-semibold text-stone-700">
@@ -1926,7 +1919,7 @@ export default function FarmerDashboard() {
                       required
                       value={newPassword}
                       onChange={(event) => setNewPassword(event.target.value)}
-                      className="mt-1 w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                      className="mt-1 w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
                       placeholder="••••••••"
                     />
                     <p className="mt-1 text-xs font-medium text-stone-500">
@@ -1950,11 +1943,10 @@ export default function FarmerDashboard() {
                       required
                       value={confirmPassword}
                       onChange={(event) => setConfirmPassword(event.target.value)}
-                      className="mt-1 w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                      className="mt-1 w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
                       placeholder="••••••••"
                     />
                   </label>
-
                   <div className="flex flex-col gap-2 sm:flex-row">
                     <button
                       type="submit"
@@ -1975,22 +1967,25 @@ export default function FarmerDashboard() {
                 </form>
               </div>
 
-              <div className="mt-6 rounded-xl border border-rose-200 bg-rose-50/60 p-4">
-                <h3 className="flex items-center gap-2 text-base font-semibold text-rose-800">
-                  <Trash2 className="h-4 w-4" /> Διαγραφή λογαριασμού
+              <div className="mt-6 rounded-[24px] border border-rose-200 bg-rose-50/60 p-5 shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
+                <h3 className="flex items-center gap-2 text-lg font-semibold text-rose-800">
+                  <Trash2 className="h-5 w-5" /> Διαγραφή λογαριασμού
                 </h3>
-                <p className="mt-1 text-sm text-rose-700">Η ενέργεια είναι μη αναστρέψιμη. Τα στοιχεία του προφίλ και η πρόσβαση θα διαγραφούν οριστικά.</p>
+                <p className="mt-1 text-sm text-rose-700">
+                  Η ενέργεια είναι μη αναστρέψιμη. Θα χαθεί η πρόσβαση στον λογαριασμό και τα προσωπικά στοιχεία προφίλ.
+                </p>
 
                 {!deleteConfirmOpen ? (
                   <button
                     type="button"
                     onClick={() => setDeleteConfirmOpen(true)}
-                    className="mt-3 inline-flex items-center justify-center rounded-lg bg-rose-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-rose-800"
+                    className="mt-4 inline-flex items-center justify-center rounded-lg bg-rose-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-rose-800"
                   >
                     Διαγραφή λογαριασμού
                   </button>
                 ) : (
-                  <div className="mt-3 space-y-3 rounded-lg border border-rose-200 bg-white p-3">
+                  <div className="mt-4 space-y-3 rounded-lg border border-rose-200 bg-white p-4">
+                    <p className="text-sm font-medium text-rose-800">Επιλέξτε τρόπο επιβεβαίωσης:</p>
                     <div className="flex gap-3">
                       <button
                         type="button"
