@@ -1215,7 +1215,6 @@ export default function ConsumerDashboard() {
                           <div className={`${mobileLayout === 'list' ? 'flex min-w-0 flex-1 flex-col justify-between' : 'flex min-w-0 flex-1 flex-col pt-3'}`}>
                             <div className={mobileLayout === 'list' ? 'min-w-0' : 'min-h-[132px]'}>
                               <h3 className="text-[18px] font-bold leading-6 text-stone-900">{item.title}</h3>
-                              <div className="mt-2 inline-flex rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">{item.status}</div>
                               <p className="mt-3 text-[17px] font-bold text-emerald-700">{item.price.toFixed(2)} EUR / {item.unit}</p>
                               <p className="mt-2 text-sm text-stone-600">Διαθέσιμη ποσότητα: <strong>{item.quantity} {getUnitLabel(item.unit, item.quantity)}</strong></p>
                             {useDistance && itemDistance !== null && (
@@ -1371,7 +1370,6 @@ export default function ConsumerDashboard() {
                               {formatDistance(itemDistance)}
                             </p>
                           )}
-                          <div className="mb-3 inline-flex rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">{item.status}</div>
                           <p className="mb-2 text-left text-[22px] font-bold text-emerald-700">{item.price.toFixed(2)} EUR / {item.unit}</p>
                           <p className="mb-3 text-left text-sm leading-6 text-stone-600">Διαθέσιμη ποσότητα: <strong>{item.quantity} {getUnitLabel(item.unit, item.quantity)}</strong></p>
                           <div className="mt-auto flex w-full items-center gap-2">
