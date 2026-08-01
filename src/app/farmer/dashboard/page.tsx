@@ -883,7 +883,6 @@ export default function FarmerDashboard() {
               <p className="truncate text-base font-semibold text-stone-900">{userName ?? 'Ο λογαριασμός μου'}</p>
               <p className="mt-1 truncate text-sm text-stone-500">{userEmail ?? 'Στοιχεία λογαριασμού'}</p>
             </div>
-            <ChevronDown className="h-5 w-5 -rotate-90 text-stone-400" />
           </button>
 
           <nav className="flex-1 px-4 py-4" aria-label="Κύρια πλοήγηση κινητού">
@@ -900,7 +899,6 @@ export default function FarmerDashboard() {
                 >
                   <User className="mr-3 h-5 w-5" />
                   Το Προφίλ μου
-                  <ChevronDown className="ml-auto h-5 w-5 -rotate-90 text-stone-400" />
                 </button>
               </li>
             </ul>
@@ -919,7 +917,6 @@ export default function FarmerDashboard() {
                 >
                   <LayoutDashboard className="mr-3 h-5 w-5" />
                   Επισκόπηση
-                  <ChevronDown className="ml-auto h-5 w-5 -rotate-90 text-stone-400" />
                 </button>
               </li>
               <li>
@@ -933,7 +930,6 @@ export default function FarmerDashboard() {
                 >
                   <Package className="mr-3 h-5 w-5" />
                   Προϊόντα
-                  <ChevronDown className="ml-auto h-5 w-5 -rotate-90 text-stone-400" />
                 </button>
               </li>
               <li>
@@ -952,7 +948,6 @@ export default function FarmerDashboard() {
                       {requests.filter((r) => r.status === 'pending').length}
                     </span>
                   )}
-                  <ChevronDown className="ml-auto h-5 w-5 -rotate-90 text-stone-400" />
                 </button>
               </li>
             </ul>

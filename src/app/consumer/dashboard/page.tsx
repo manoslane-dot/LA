@@ -1109,7 +1109,7 @@ export default function ConsumerDashboard() {
                 <button
                   onClick={handleRequestLocation}
                   disabled={loadingLocation}
-                  className={`mt-4 flex w-full items-center justify-between rounded-2xl border px-4 py-3.5 text-left text-sm font-semibold transition-colors ${
+                  className={`mt-4 flex w-full items-center justify-center rounded-2xl border px-4 py-3.5 text-sm font-semibold transition-colors ${
                     useDistance
                       ? 'border-emerald-300 bg-emerald-50 text-emerald-800'
                       : 'border-stone-200 bg-white text-stone-800'
@@ -1119,31 +1119,28 @@ export default function ConsumerDashboard() {
                     <MapPin className="h-5 w-5" />
                     {loadingLocation ? 'Φόρτωση...' : 'Εύρεση κοντά μου'}
                   </span>
-                  <ChevronDown className="h-5 w-5 -rotate-90 text-stone-400" />
                 </button>
 
-                <div className="mt-4 grid grid-cols-[1.15fr_1fr_auto] gap-3">
-                  <div className="relative">
-                    <select
-                      value={sortType}
-                      onChange={(e) => setSortType(e.target.value as typeof sortType)}
-                      disabled={useDistance}
-                      className="h-12 w-full appearance-none rounded-2xl border border-stone-200 bg-white py-2 pl-4 pr-10 text-sm font-medium text-stone-800 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 disabled:opacity-60"
-                    >
-                      <option value="price_low">Χαμηλότερη τιμή</option>
-                      <option value="price_high">Υψηλότερη τιμή</option>
-                      <option value="newest">Πιο πρόσφατα</option>
-                    </select>
-                    <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
-                  </div>
+                <div className="mt-4 grid grid-cols-2 gap-3">
                   <button
                     type="button"
-                    className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl border border-stone-200 bg-white px-4 text-sm font-medium text-stone-800"
+                    onClick={() => setSortType('price_low')}
+                    className={`h-12 rounded-2xl border px-4 text-sm font-medium transition-colors ${
+                      sortType === 'price_low' ? 'border-emerald-300 bg-emerald-50 text-emerald-700' : 'border-stone-200 bg-white text-stone-800'
+                    }`}
                   >
-                    <SlidersHorizontal className="h-4 w-4" />
-                    Φίλτρα
+                    Χαμηλή τιμή
                   </button>
-                  <div className="grid grid-cols-2 overflow-hidden rounded-2xl border border-stone-200 bg-white">
+                  <button
+                    type="button"
+                    onClick={() => setSortType('price_high')}
+                    className={`h-12 rounded-2xl border px-4 text-sm font-medium transition-colors ${
+                      sortType === 'price_high' ? 'border-emerald-300 bg-emerald-50 text-emerald-700' : 'border-stone-200 bg-white text-stone-800'
+                    }`}
+                  >
+                    Υψηλή τιμή
+                  </button>
+                  <div className="col-span-2 grid grid-cols-2 overflow-hidden rounded-2xl border border-stone-200 bg-white">
                     <button
                       type="button"
                       onClick={() => setMobileLayout('grid')}
