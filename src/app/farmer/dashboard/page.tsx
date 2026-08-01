@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Bell, ChevronDown, CircleDollarSign, ClipboardList, LayoutDashboard, Leaf, LogOut, Mail, Menu, Package, Pencil, Phone, Plus, Settings, ShoppingBag, Trash2, User, X } from 'lucide-react';
+import { Bell, ChevronDown, CircleDollarSign, ClipboardList, House, LayoutDashboard, Leaf, LogOut, Mail, Menu, Package, Pencil, Phone, Plus, Settings, ShoppingBag, Trash2, User, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { formatGreekPhoneInput } from '@/lib/auth/contactInfo';
 import { sanitizePhoneForTel } from '@/lib/serviceAreas';
@@ -807,7 +807,7 @@ export default function FarmerDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-stone-50 text-stone-900 flex">
+    <div className="h-screen overflow-hidden overflow-x-hidden bg-stone-50 text-stone-900 flex">
       {/* Sidebar */}
       <aside className="w-64 shrink-0 border-r border-stone-200 bg-white hidden lg:block">
         <div className="p-6 border-b border-stone-100">
@@ -842,7 +842,7 @@ export default function FarmerDashboard() {
         <div className="fixed inset-0 z-40 bg-stone-950/40 sm:hidden" onClick={() => setMobileMenuOpen(false)} />
       )}
 
-      <aside id="logo-sidebar" className={`fixed inset-0 z-50 bg-white transition-transform duration-200 sm:hidden ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`} aria-label="Sidebar">
+      <aside id="logo-sidebar" className={`fixed inset-0 z-50 bg-white transition-transform duration-200 sm:hidden ${mobileMenuOpen ? 'translate-y-0' : '-translate-y-full'}`} aria-label="Sidebar">
         <div className="flex h-full flex-col overflow-y-auto">
           <header className="flex items-center justify-between border-b border-stone-200 px-5 py-5">
             <Link href="/" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2.5">
@@ -971,7 +971,7 @@ export default function FarmerDashboard() {
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex min-h-0 flex-col">
         {/* Top Header */}
         <header className="bg-white border-b border-stone-200 h-16 flex items-center justify-between px-4 sm:px-8">
           <Link href="/" className="flex items-center gap-2 lg:hidden"><Leaf className="h-5 w-5 text-emerald-700" /><span className="font-bold text-emerald-900">AgroDirect</span></Link>
@@ -1084,7 +1084,7 @@ export default function FarmerDashboard() {
         </header>
 
         {/* Dashboard Body */}
-        <main className="p-4 sm:p-8 flex-1 space-y-8 max-w-7xl w-full mx-auto">
+        <main className="mx-auto w-full max-w-7xl flex-1 overflow-y-auto overflow-x-hidden space-y-8 p-4 pb-24 sm:p-8 sm:pb-8">
           <section id="overview" className={`hidden border-b border-stone-200 pb-2 flex-col gap-2 sm:flex sm:flex-row sm:items-end sm:justify-between${activeTab !== 'overview' ? ' hidden' : ''}`}>
             <div>
               {activeTab === 'overview' && (
@@ -1732,6 +1732,43 @@ export default function FarmerDashboard() {
 
         </main>
       </div>
+
+      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-stone-200 bg-white sm:hidden" aria-label="Κάτω πλοήγηση παραγωγού">
+        <div className="grid h-16 grid-cols-4">
+          <button
+            type="button"
+            onClick={() => setActiveTab('overview')}
+            className={`flex flex-col items-center justify-center gap-1 text-xs font-medium ${activeTab === 'overview' ? 'text-emerald-700' : 'text-stone-500'}`}
+          >
+            <House className="h-5 w-5" />
+            Αρχική
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('products')}
+            className={`flex flex-col items-center justify-center gap-1 text-xs font-medium ${activeTab === 'products' ? 'text-emerald-700' : 'text-stone-500'}`}
+          >
+            <Package className="h-5 w-5" />
+            Προϊόντα
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('requests')}
+            className={`flex flex-col items-center justify-center gap-1 text-xs font-medium ${activeTab === 'requests' ? 'text-emerald-700' : 'text-stone-500'}`}
+          >
+            <ClipboardList className="h-5 w-5" />
+            Αιτήματα
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('profile')}
+            className={`flex flex-col items-center justify-center gap-1 text-xs font-medium ${activeTab === 'profile' ? 'text-emerald-700' : 'text-stone-500'}`}
+          >
+            <User className="h-5 w-5" />
+            Προφίλ
+          </button>
+        </div>
+      </nav>
 
       {/* Confirmation Dialog for Request Confirmation */}
       {confirmingRequestId !== null && (

@@ -79,35 +79,11 @@ const getUnitLabel = (unit: string, quantity: number): string => {
   }
 };
 
-const mobileCategoryChips = ['Ολα', 'Λαχανικά', 'Φρούτα', 'Πατάτες', 'Κηπευτικά', 'Περισσότερα'];
-
 const mobileTrustHighlights = [
   { icon: Sprout, text: 'Φρέσκα προϊόντα κατευθείαν από παραγωγούς' },
   { icon: ShieldCheck, text: 'Ασφαλείς συναλλαγές και προστασία δεδομένων' },
   { icon: Headphones, text: 'Υποστήριξη όταν τη χρειάζεστε' },
 ];
-
-const getMobileProductCategory = (productTitle: string): string => {
-  const normalizedTitle = productTitle.trim().toLowerCase();
-
-  if (normalizedTitle.includes('πατάτ')) {
-    return 'Πατάτες';
-  }
-
-  if (/μήλ|πορτοκ|ροδάκιν|βερικ|καρπούζ|πεπόν|μπανάν|αχλάδ|κεράσ|σταφύλ|φράουλ|λεμόν|μανταρίν/.test(normalizedTitle)) {
-    return 'Φρούτα';
-  }
-
-  if (/μαρούλ|ντομάτ|αγγουρ|πιπερ|κολοκυθ|μελιτζ|λάχαν|κρεμμ|σπανάκ|μπρόκολ|κουνουπ|καρότ|παντζάρ/.test(normalizedTitle)) {
-    return 'Λαχανικά';
-  }
-
-  if (/μαϊνταν|άνηθ|δυόσμ|ρίγαν|βασιλικ|ματσάκ|κηπευτ/.test(normalizedTitle)) {
-    return 'Κηπευτικά';
-  }
-
-  return 'Περισσότερα';
-};
 
 export default function ConsumerDashboard() {
   const router = useRouter();
@@ -138,7 +114,6 @@ export default function ConsumerDashboard() {
   const [activeTab, setActiveTab] = useState<'products' | 'requests' | 'profile'>('products');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileLayout, setMobileLayout] = useState<'grid' | 'list'>('grid');
-  const [selectedCategory, setSelectedCategory] = useState('Ολα');
   const [searchTerm, setSearchTerm] = useState('');
   const [sortType, setSortType] = useState<'newest' | 'price_low' | 'price_high'>('price_low');
   const [editingProfile, setEditingProfile] = useState(false);
@@ -742,10 +717,6 @@ export default function ConsumerDashboard() {
       filtered = filtered.filter((p) => p.title.toLowerCase().includes(lowerSearch));
     }
 
-    if (selectedCategory !== 'Ολα') {
-      filtered = filtered.filter((product) => getMobileProductCategory(product.title) === selectedCategory);
-    }
-
     // Ταξινόμηση ανά απόσταση (αν έχουμε τοποθεσία) ή ανά τιμή
     const sorted = [...filtered];
     
@@ -1186,18 +1157,6 @@ export default function ConsumerDashboard() {
                   </div>
                 </div>
 
-                <div className="mt-4 flex flex-wrap gap-2 pb-1">
-                  {mobileCategoryChips.map((chip, index) => (
-                    <button
-                      key={chip}
-                      type="button"
-                      onClick={() => setSelectedCategory(chip)}
-                      className={`shrink-0 rounded-full border px-4 py-2 text-sm font-medium ${selectedCategory === chip || (index === 0 && selectedCategory === 'Ολα') ? 'border-emerald-600 bg-emerald-600 text-white' : 'border-stone-200 bg-white text-stone-700'}`}
-                    >
-                      {chip}
-                    </button>
-                  ))}
-                </div>
               </div>
 
               {filteredAndSortedProducts.length === 0 ? (
