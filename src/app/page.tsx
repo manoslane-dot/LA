@@ -74,24 +74,39 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="mt-6 rounded-[24px] border border-white/20 bg-white/12 p-4 shadow-2xl shadow-black/20 backdrop-blur-xl sm:mt-8 sm:p-5">
-              <div className="flex items-center gap-2 text-sm font-semibold text-[#ffd47d]">
-                <span className="h-2.5 w-2.5 rounded-full bg-[#ffd47d]" />
-                Γιατί οι άνθρωποι το αγαπούν
+            <div className="relative mt-6 rounded-[24px] border border-white/20 bg-white/12 p-4 shadow-2xl shadow-black/20 backdrop-blur-xl sm:mt-8 sm:p-5">
+              <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-[24px] border border-emerald-300/70">
+                <div className="absolute inset-0 opacity-60" style={{ backgroundImage: 'linear-gradient(to right, rgba(255,255,255,0.18) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.18) 1px, transparent 1px)', backgroundSize: '18px 18px' }} />
+                <div className="absolute inset-0 shadow-[inset_0_0_0_9999px_rgba(12,35,24,0.14)]" />
+                <div className="absolute right-3 top-3 rounded-full border border-emerald-200/70 bg-emerald-500/20 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.25em] text-emerald-100">
+                  PWA target
+                </div>
               </div>
-              <div className="mt-3 grid gap-2 sm:grid-cols-3">
-                {[
-                  'Εύκολη παραγγελία',
-                  'Διαφάνεια τιμής',
-                  'Άμεση επικοινωνία',
-                ].map((item) => (
-                  <div key={item} className="rounded-xl border border-white/15 bg-[#143c2b]/40 px-3 py-2.5 text-sm font-medium text-white/90">
-                    {item}
+              <div className="relative z-10">
+                <div className="flex items-center gap-2 text-sm font-semibold text-[#ffd47d]">
+                  <span className="h-2.5 w-2.5 rounded-full bg-[#ffd47d]" />
+                  Γιατί οι άνθρωποι το αγαπούν
+                </div>
+                <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                  {[
+                    'Εύκολη παραγγελία',
+                    'Διαφάνεια τιμής',
+                    'Άμεση επικοινωνία',
+                  ].map((item) => (
+                    <div key={item} className="rounded-xl border border-white/15 bg-[#143c2b]/40 px-3 py-2.5 text-sm font-medium text-white/90">
+                      {item}
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-3 rounded-2xl border border-[#ffd47d]/40 bg-[#102d20]/70 p-3 shadow-lg shadow-black/20 backdrop-blur-sm">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-[#ffd47d]">Εγκατάσταση ως εφαρμογή</p>
+                      <p className="text-sm text-white/80">Αποκτήστε γρήγορη πρόσβαση από την αρχική οθόνη του κινητού σας.</p>
+                    </div>
+                    <InstallPwaButton />
                   </div>
-                ))}
-              </div>
-              <div className="mt-3">
-                <InstallPwaButton />
+                </div>
               </div>
             </div>
           </div>
