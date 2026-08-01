@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   },
   icons: [
     { rel: "icon", url: "/favicon.ico" },
-    { rel: "apple-touch-icon", url: "/favicon.ico" },
+    { rel: "apple-touch-icon", url: "/icons/apple-touch-icon.png" },
   ],
 };
 
@@ -39,6 +39,10 @@ export default function RootLayout({
     <html lang="el" className={`${manrope.variable}`}>
       <head>
         <meta name="theme-color" content="#16a34a" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-title" content="AgroDirect" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
       </head>
       <body className="font-sans antialiased">
         {children}

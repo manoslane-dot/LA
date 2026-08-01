@@ -95,10 +95,7 @@ export default function Home() {
 
           <div className="mt-8 flex min-h-[72px] w-full max-w-xl items-center justify-center rounded-[20px] border border-white/20 bg-[#143c2b]/70 px-4 py-3 shadow-xl shadow-black/15 backdrop-blur-sm sm:mt-10 sm:w-fit sm:max-w-none">
             <div className="flex flex-col items-center gap-2 text-center sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-              <div>
-                <p className="text-sm font-semibold text-[#ffd47d]">Εγκατάσταση ως εφαρμογή</p>
-                <p className="text-sm text-white/80">Αποκτήστε γρήγορη πρόσβαση από την αρχική οθόνη του κινητού σας.</p>
-              </div>
+              <p className="text-sm font-semibold text-[#ffd47d]">Εγκατάσταση ως εφαρμογή</p>
               <InstallPwaButton />
             </div>
           </div>

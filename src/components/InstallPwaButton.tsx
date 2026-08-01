@@ -9,13 +9,14 @@ type BeforeInstallPromptEvent = Event & {
 
 export function InstallPwaButton() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [canInstall, setCanInstall] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+    const isStandalone =
+      window.matchMedia('(display-mode: standalone)').matches ||
+      Boolean((window.navigator as Navigator & { standalone?: boolean }).standalone);
     if (isStandalone) {
       setIsInstalled(true);
       return;
@@ -24,12 +25,10 @@ export function InstallPwaButton() {
     const handleBeforeInstallPrompt = (event: Event) => {
       event.preventDefault();
       setDeferredPrompt(event as BeforeInstallPromptEvent);
-      setCanInstall(true);
     };
 
     const handleAppInstalled = () => {
       setDeferredPrompt(null);
-      setCanInstall(false);
       setIsInstalled(true);
     };
 
@@ -46,16 +45,27 @@ export function InstallPwaButton() {
     return null;
   }
 
-  if (!canInstall && !deferredPrompt) {
-    return null;
-  }
-
   const handleInstall = async () => {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    await deferredPrompt.userChoice;
-    setDeferredPrompt(null);
-    setCanInstall(false);
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      await deferredPrompt.userChoice;
+      setDeferredPrompt(null);
+      return;
+    }
+
+    const ua = window.navigator.userAgent.toLowerCase();
+
+    if (/iphone|ipad|ipod/.test(ua)) {
+      window.alert('Στο iPhone/iPad: Safari > Κοινοποίηση > Προσθήκη στην Αρχική Οθόνη');
+      return;
+    }
+
+    if (/android/.test(ua)) {
+      window.alert('Στο Android: Chrome > Μενού > Προσθήκη στην αρχική οθόνη');
+      return;
+    }
+
+    window.alert('Αν δεν εμφανίζεται prompt, άνοιξε την εφαρμογή από Chrome ή Edge και δοκίμασε ξανά.');
   };
 
   return (
