@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ShoppingBag, ClipboardList, LogOut, Leaf, Phone, Search, ChevronDown, User, Mail, MapPin, Bell, X, ShoppingCart, Plus, Minus, House, SlidersHorizontal, LayoutGrid, List, Heart, ShieldCheck, Headphones, Sprout, Star } from 'lucide-react';
+import { ShoppingBag, ClipboardList, LogOut, Leaf, Phone, Search, ChevronDown, User, Mail, MapPin, Bell, X, ShoppingCart, House, SlidersHorizontal, LayoutGrid, List, Heart, ShieldCheck, Headphones, Sprout, Star } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { formatGreekPhoneInput, isPhoneValid, normalizePhone } from '@/lib/auth/contactInfo';
 import { sanitizePhoneForTel } from '@/lib/serviceAreas';
@@ -121,7 +121,6 @@ export default function ConsumerDashboard() {
   const [buyerPhone, setBuyerPhone] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [requestedQuantity, setRequestedQuantity] = useState('1');
-  const [quickQuantities, setQuickQuantities] = useState<Record<number, number>>({});
   const [message, setMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState<'products' | 'requests' | 'profile'>('products');
@@ -553,23 +552,6 @@ export default function ConsumerDashboard() {
     setRequestedQuantity(String(sanitizedQuantity));
     setMessage('');
     setErrorMsg('');
-  };
-
-  const getQuickQuantity = (product: Product) => {
-    const current = quickQuantities[product.id];
-    if (Number.isFinite(current) && current > 0) {
-      return Math.min(current, Math.max(1, Math.floor(product.quantity)));
-    }
-    return 1;
-  };
-
-  const updateQuickQuantity = (product: Product, delta: number) => {
-    setQuickQuantities((prev) => {
-      const maxQuantity = Math.max(1, Math.floor(product.quantity));
-      const base = Number.isFinite(prev[product.id]) ? prev[product.id] : 1;
-      const next = Math.max(1, Math.min(maxQuantity, base + delta));
-      return { ...prev, [product.id]: next };
-    });
   };
 
   const handleNotificationSelect = (notification: NotificationItem) => {
@@ -1178,7 +1160,6 @@ export default function ConsumerDashboard() {
                     {filteredAndSortedProducts.map((item) => {
                       const itemDistance = (item as any).distance_km;
                       const productImages = productImagesByProductId[item.id] ?? [];
-                      const selectedQuickQuantity = getQuickQuantity(item);
                       return (
                         <article key={item.id} className={`h-full w-full min-w-0 overflow-hidden rounded-[24px] border border-stone-200 bg-white p-3 shadow-[0_10px_28px_rgba(15,23,42,0.06)] ${mobileLayout === 'list' ? 'flex gap-3' : 'flex min-h-[345px] flex-col'}`}>
                           <div className={`relative overflow-hidden rounded-[18px] bg-stone-100 ${mobileLayout === 'list' ? 'w-[42%] shrink-0 self-start' : ''}`}>
@@ -1227,32 +1208,10 @@ export default function ConsumerDashboard() {
                             )}
                             </div>
 
-                            <div className={`flex items-center gap-2 rounded-[22px] border border-emerald-100 bg-gradient-to-r from-white to-emerald-50/60 p-2 shadow-[0_8px_22px_rgba(15,23,42,0.05)] ${mobileLayout === 'list' ? 'mt-4' : 'mt-auto pt-3'}`}>
-                              <div className="flex flex-1 items-center justify-between rounded-[18px] border border-emerald-100 bg-white px-3 py-2.5">
-                              <button
-                                type="button"
-                                onClick={() => updateQuickQuantity(item, -1)}
-                                className="rounded-md p-1 text-stone-600 transition hover:bg-stone-100"
-                                aria-label={`Μείωση ποσότητας για ${item.title}`}
-                              >
-                                <Minus className="h-4 w-4" />
-                              </button>
-                              <span className="flex min-w-[58px] flex-col items-center justify-center gap-0.5 px-1 text-center text-sm font-medium leading-tight text-stone-800">
-                                <span className="text-base font-semibold">{selectedQuickQuantity}</span>
-                                <span className="text-xs font-medium text-stone-500">{getUnitLabel(item.unit, selectedQuickQuantity)}</span>
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() => updateQuickQuantity(item, 1)}
-                                className="rounded-md p-1 text-stone-600 transition hover:bg-stone-100"
-                                aria-label={`Αύξηση ποσότητας για ${item.title}`}
-                              >
-                                <Plus className="h-4 w-4" />
-                              </button>
-                            </div>
+                            <div className={`flex justify-end ${mobileLayout === 'list' ? 'mt-4' : 'mt-auto pt-3'}`}>
                             <button
                               type="button"
-                              onClick={() => openRequestForm(item, selectedQuickQuantity)}
+                              onClick={() => openRequestForm(item, 1)}
                               className="inline-flex h-[56px] w-[56px] shrink-0 items-center justify-center rounded-[18px] bg-gradient-to-br from-emerald-600 to-emerald-700 text-white shadow-[0_12px_24px_rgba(5,150,105,0.24)] transition hover:from-emerald-700 hover:to-emerald-800"
                               aria-label={`Αίτημα για ${item.title}`}
                               title="Αποστολή αιτήματος"
@@ -1349,7 +1308,6 @@ export default function ConsumerDashboard() {
                       {filteredAndSortedProducts.map((item) => {
                       const itemDistance = (item as any).distance_km;
                       const productImages = productImagesByProductId[item.id] ?? [];
-                      const selectedQuickQuantity = getQuickQuantity(item);
                       return (
                         <article key={item.id} className="flex h-full min-h-[420px] w-full max-w-full flex-col rounded-[26px] border border-stone-200 bg-white p-4 shadow-[0_12px_30px_rgba(15,23,42,0.05)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_20px_40px_rgba(15,23,42,0.08)] lg:min-h-[470px]">
                           {productImages.length > 0 && (
@@ -1381,32 +1339,10 @@ export default function ConsumerDashboard() {
                           </div>
                           <p className="mb-2 text-left text-[22px] font-bold text-emerald-700">{item.price.toFixed(2)} EUR / {item.unit}</p>
                           <p className="mb-3 text-left text-sm leading-6 text-stone-600">Διαθέσιμη ποσότητα: <strong>{item.quantity} {getUnitLabel(item.unit, item.quantity)}</strong></p>
-                          <div className="mt-auto flex w-full items-center gap-2 rounded-[22px] border border-emerald-100 bg-gradient-to-r from-white to-emerald-50/60 p-2 shadow-[0_8px_22px_rgba(15,23,42,0.05)]">
-                            <div className="flex flex-1 items-center justify-between rounded-[18px] border border-emerald-100 bg-white px-3 py-3">
-                              <button
-                                type="button"
-                                onClick={() => updateQuickQuantity(item, -1)}
-                                className="rounded-md p-1 text-stone-600 transition hover:bg-stone-100"
-                                aria-label={`Μείωση ποσότητας για ${item.title}`}
-                              >
-                                <Minus className="h-4 w-4" />
-                              </button>
-                              <span className="flex min-w-[58px] flex-col items-center justify-center gap-0.5 px-1 text-center text-sm font-medium leading-tight text-stone-800">
-                                <span className="text-base font-semibold">{selectedQuickQuantity}</span>
-                                <span className="text-xs font-medium text-stone-500">{getUnitLabel(item.unit, selectedQuickQuantity)}</span>
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() => updateQuickQuantity(item, 1)}
-                                className="rounded-md p-1 text-stone-600 transition hover:bg-stone-100"
-                                aria-label={`Αύξηση ποσότητας για ${item.title}`}
-                              >
-                                <Plus className="h-4 w-4" />
-                              </button>
-                            </div>
+                          <div className="mt-auto flex w-full justify-end">
                             <button
                               type="button"
-                              onClick={() => openRequestForm(item, selectedQuickQuantity)}
+                              onClick={() => openRequestForm(item, 1)}
                               className="inline-flex h-[56px] w-[56px] shrink-0 items-center justify-center rounded-[18px] bg-gradient-to-br from-emerald-600 to-emerald-700 text-white shadow-[0_12px_24px_rgba(5,150,105,0.24)] transition hover:from-emerald-700 hover:to-emerald-800"
                               aria-label={`Αίτημα για ${item.title}`}
                               title="Αποστολή αιτήματος"
