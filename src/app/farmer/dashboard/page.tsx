@@ -13,7 +13,7 @@ import {
   shouldLogoutOnAppClose,
 } from '@/lib/auth/sessionPersistence';
 import { getDashboardForRole, normalizeUserRole } from '@/lib/auth/roleRouting';
-import { validateUsername } from '@/lib/auth/credentialsPolicy';
+import { validateStrongPassword, validateUsername } from '@/lib/auth/credentialsPolicy';
 import {
   addNotification,
   getNotificationStorageKey,
@@ -94,6 +94,8 @@ export default function FarmerDashboard() {
   const router = useRouter();
   const supabase = createClient();
   const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
@@ -768,24 +770,32 @@ export default function FarmerDashboard() {
     event.preventDefault();
 
     if (!newPassword || !confirmPassword) {
-      alert('Συμπληρώστε νέο κωδικό και επιβεβαίωση.');
+      setErrorMsg('Συμπληρώστε νέο κωδικό και επιβεβαίωση.');
+      return;
+    }
+
+    const passwordError = validateStrongPassword(newPassword);
+    if (passwordError) {
+      setErrorMsg(passwordError);
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      alert('Η επιβεβαίωση κωδικού δεν ταιριάζει.');
+      setErrorMsg('Η επιβεβαίωση κωδικού δεν ταιριάζει.');
       return;
     }
 
     setChangingPassword(true);
+    setErrorMsg('');
     const { error } = await supabase.auth.updateUser({ password: newPassword });
 
     if (error) {
-      alert('Αποτυχία αλλαγής κωδικού: ' + error.message);
+      setErrorMsg('Αποτυχία αλλαγής κωδικού: ' + error.message);
     } else {
       setNewPassword('');
       setConfirmPassword('');
-      alert('Ο κωδικός άλλαξε επιτυχώς.');
+      setSuccessMsg('Ο κωδικός άλλαξε επιτυχώς.');
+      window.setTimeout(() => setSuccessMsg(''), 5000);
     }
 
     setChangingPassword(false);
@@ -1680,9 +1690,19 @@ export default function FarmerDashboard() {
               {profileSubTab === 'profile' && (
                 <>
                   <h2 className="mb-5 text-xl font-semibold text-stone-800">Το Προφίλ μου</h2>
+                  {errorMsg && (
+                    <div className="mb-4 rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+                      {errorMsg}
+                    </div>
+                  )}
+                  {successMsg && (
+                    <div className="mb-4 rounded-md border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
+                      {successMsg}
+                    </div>
+                  )}
                   {!editingProfile ? (
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-4 rounded-lg border border-stone-200 bg-stone-50 p-4">
+                    <div className="space-y-4 text-left">
+                      <div className="flex items-start gap-4 rounded-[24px] border border-stone-200 bg-white p-5 shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
                         <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border border-stone-300 bg-white">
                           {avatarUrl ? (
                             <button
@@ -1699,34 +1719,34 @@ export default function FarmerDashboard() {
                             </span>
                           )}
                         </div>
-                        <label className="cursor-pointer rounded-lg border border-emerald-300 bg-white px-3 py-2 text-sm font-semibold text-emerald-700">
+                        <label className="cursor-pointer rounded-lg border border-emerald-300 bg-white px-3 py-2 text-sm font-semibold text-emerald-700 text-left">
                           <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={handleAvatarUpload} />
                           {uploadingAvatar ? 'Αποστολή...' : 'Αλλαγή φωτογραφίας'}
                         </label>
                       </div>
-                      <div className="rounded-lg border border-stone-200 bg-stone-50 p-4">
-                        <p className="mb-1 text-xs font-semibold text-stone-600">Ονοματεπώνυμο</p>
+                      <div className="rounded-[22px] border border-stone-200 bg-white p-4 text-left shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
+                        <p className="mb-1 text-left text-xs font-semibold text-stone-600">Ονοματεπώνυμο</p>
                         <p className="text-base text-stone-900">{userName || 'Επανόθηση απαιτείται'}</p>
                       </div>
-                      <div className="rounded-lg border border-stone-200 bg-stone-50 p-4">
-                        <p className="mb-1 text-xs font-semibold text-stone-600">Email</p>
+                      <div className="rounded-[22px] border border-stone-200 bg-white p-4 text-left shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
+                        <p className="mb-1 text-left text-xs font-semibold text-stone-600">Email</p>
                         <p className="text-base text-stone-900">{userEmail || 'Επανόθηση απαιτείται'}</p>
                       </div>
-                      <div className="rounded-lg border border-stone-200 bg-stone-50 p-4">
-                        <p className="mb-1 text-xs font-semibold text-stone-600">Κινητό τηλέφωνο</p>
+                      <div className="rounded-[22px] border border-stone-200 bg-white p-4 text-left shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
+                        <p className="mb-1 text-left text-xs font-semibold text-stone-600">Κινητό τηλέφωνο</p>
                         <p className="text-base text-stone-900">{userPhone || 'Επανόθηση απαιτείται'}</p>
                       </div>
-                      <div className="rounded-lg border border-stone-200 bg-stone-50 p-4">
-                        <p className="mb-1 text-xs font-semibold text-stone-600">Διεύθυνση</p>
+                      <div className="rounded-[22px] border border-stone-200 bg-white p-4 text-left shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
+                        <p className="mb-1 text-left text-xs font-semibold text-stone-600">Διεύθυνση</p>
                         <p className="text-base text-stone-900">{userAddress || 'Δεν έχει συμπληρωθεί'}</p>
                       </div>
-                      <div className="grid gap-4 md:grid-cols-2">
-                        <div className="rounded-lg border border-stone-200 bg-stone-50 p-4">
-                          <p className="mb-1 text-xs font-semibold text-stone-600">Πόλη</p>
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="rounded-[22px] border border-stone-200 bg-white p-4 text-left shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
+                          <p className="mb-1 text-left text-xs font-semibold text-stone-600">Πόλη</p>
                           <p className="text-base text-stone-900">{userCity || 'Δεν έχει συμπληρωθεί'}</p>
                         </div>
-                        <div className="rounded-lg border border-stone-200 bg-stone-50 p-4">
-                          <p className="mb-1 text-xs font-semibold text-stone-600">Τ.Κ.</p>
+                        <div className="rounded-[22px] border border-stone-200 bg-white p-4 text-left shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
+                          <p className="mb-1 text-left text-xs font-semibold text-stone-600">Τ.Κ.</p>
                           <p className="text-base text-stone-900">{userPostalCode || 'Δεν έχει συμπληρωθεί'}</p>
                         </div>
                       </div>
@@ -1759,6 +1779,7 @@ export default function FarmerDashboard() {
                         }
 
                         setSavingProfile(true);
+                        setErrorMsg('');
                         const trimmedFullName = profileForm.fullName.trim();
                         const normalizedPhone = getValidNormalizedPhone(profileForm.phone.trim());
                         const trimmedAddress = profileForm.address.trim();
@@ -1766,13 +1787,13 @@ export default function FarmerDashboard() {
                         const trimmedPostalCode = profileForm.postalCode.trim();
 
                         if (!normalizedPhone) {
-                          alert('Συμπληρώστε ένα έγκυρο ελληνικό κινητό τηλέφωνο που ξεκινά από 69 και έχει 10 ψηφία.');
+                          setErrorMsg('Συμπληρώστε ένα έγκυρο ελληνικό κινητό τηλέφωνο που ξεκινά από 69 και έχει 10 ψηφία.');
                           setSavingProfile(false);
                           return;
                         }
 
                         if (!trimmedAddress || !trimmedCity || !trimmedPostalCode) {
-                          alert('Συμπληρώστε διεύθυνση, πόλη και Τ.Κ. για ολοκληρωμένο προφίλ.');
+                          setErrorMsg('Συμπληρώστε διεύθυνση, πόλη και Τ.Κ. για ολοκληρωμένο προφίλ.');
                           setSavingProfile(false);
                           return;
                         }
@@ -1791,7 +1812,7 @@ export default function FarmerDashboard() {
                         });
 
                         if (!error && userId) {
-                          await supabase.from('farmer_profiles').upsert({
+                          const { error: profileError } = await supabase.from('farmer_profiles').upsert({
                             user_id: userId,
                             full_name: trimmedFullName,
                             contact_phone: normalizedPhone,
@@ -1800,10 +1821,16 @@ export default function FarmerDashboard() {
                             postal_code: trimmedPostalCode,
                             avatar_url: avatarUrl,
                           });
+
+                          if (profileError) {
+                            setErrorMsg('Σφάλμα αποθήκευσης στοιχείων προφίλ: ' + profileError.message);
+                            setSavingProfile(false);
+                            return;
+                          }
                         }
 
                         if (error) {
-                          alert('Σφάλμα αποθήκευσης: ' + error.message);
+                          setErrorMsg('Σφάλμα αποθήκευσης: ' + error.message);
                         } else {
                           setUserName(trimmedFullName);
                           setUserPhone(normalizedPhone);
@@ -1811,6 +1838,8 @@ export default function FarmerDashboard() {
                           setUserCity(trimmedCity);
                           setUserPostalCode(trimmedPostalCode);
                           setEditingProfile(false);
+                          setSuccessMsg('Το προφίλ ενημερώθηκε επιτυχώς.');
+                          window.setTimeout(() => setSuccessMsg(''), 5000);
                         }
                         setSavingProfile(false);
                       }}
@@ -1878,7 +1907,7 @@ export default function FarmerDashboard() {
                             value={profileForm.city}
                             onChange={(e) => setProfileForm({ ...profileForm, city: e.target.value })}
                             className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
-                            placeholder="π.χ. Θεσσαλονίκη"
+                            placeholder="π.χ. Αθήνα"
                           />
                         </label>
                         <label className="block text-sm font-semibold text-stone-700">
@@ -1889,7 +1918,7 @@ export default function FarmerDashboard() {
                             value={profileForm.postalCode}
                             onChange={(e) => setProfileForm({ ...profileForm, postalCode: e.target.value })}
                             className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
-                            placeholder="π.χ. 54621"
+                            placeholder="π.χ. 11141"
                           />
                         </label>
                       </div>
@@ -1912,7 +1941,7 @@ export default function FarmerDashboard() {
                     </form>
                   )}
 
-                  <div className="mt-6 rounded-xl border border-stone-200 bg-white p-4">
+                  <div className="mt-8 rounded-[24px] border border-stone-200 bg-white p-5 shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
                     <h3 className="flex items-center gap-2 text-base font-semibold text-stone-900">
                       <KeyRound className="h-4 w-4 text-emerald-700" /> Ασφάλεια
                     </h3>
@@ -1929,6 +1958,9 @@ export default function FarmerDashboard() {
                           className="mt-1 w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
                           placeholder="••••••••"
                         />
+                        <p className="mt-1 text-xs font-medium text-stone-500">
+                          8-12 χαρακτήρες με κεφαλαία, πεζά, αριθμούς και ειδικούς χαρακτήρες (π.χ. ! @ # $ %).
+                        </p>
                       </label>
                       <label className="block text-sm font-semibold text-stone-700">
                         Επιβεβαίωση κωδικού

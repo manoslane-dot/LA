@@ -13,7 +13,7 @@ import {
   shouldLogoutOnAppClose,
 } from '@/lib/auth/sessionPersistence';
 import { getDashboardForRole, normalizeUserRole } from '@/lib/auth/roleRouting';
-import { validateUsername } from '@/lib/auth/credentialsPolicy';
+import { validateStrongPassword, validateUsername } from '@/lib/auth/credentialsPolicy';
 import { usePermissions } from '@/lib/permissions';
 import {
   addNotification,
@@ -756,6 +756,12 @@ export default function ConsumerDashboard() {
 
     if (!newPassword || !confirmPassword) {
       setErrorMsg('Συμπληρώστε νέο κωδικό και επιβεβαίωση.');
+      return;
+    }
+
+    const passwordError = validateStrongPassword(newPassword);
+    if (passwordError) {
+      setErrorMsg(passwordError);
       return;
     }
 
@@ -1874,6 +1880,9 @@ export default function ConsumerDashboard() {
                     className="mt-1 w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
                     placeholder="••••••••"
                   />
+                  <p className="mt-1 text-xs font-medium text-stone-500">
+                    8-12 χαρακτήρες με κεφαλαία, πεζά, αριθμούς και ειδικούς χαρακτήρες (π.χ. ! @ # $ %).
+                  </p>
                 </label>
                 <label className="block text-sm font-semibold text-stone-700">
                   Επιβεβαίωση κωδικού
