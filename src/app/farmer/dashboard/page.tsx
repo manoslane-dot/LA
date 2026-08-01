@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Bell, CircleDollarSign, ClipboardList, House, KeyRound, LayoutDashboard, Leaf, LogOut, Mail, MapPin, Package, Pencil, Phone, Plus, Settings, ShoppingBag, Trash2, User, X } from 'lucide-react';
+import { Bell, CircleDollarSign, ClipboardList, House, KeyRound, Leaf, LogOut, Mail, MapPin, Package, Pencil, Phone, Plus, ShoppingBag, Trash2, User, X, LayoutDashboard } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { formatGreekPhoneInput, isPhoneValid, normalizePhone } from '@/lib/auth/contactInfo';
 import { sanitizePhoneForTel } from '@/lib/serviceAreas';
@@ -99,8 +99,7 @@ export default function FarmerDashboard() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'products' | 'requests' | 'profile'>('overview');  // Profile info shown in overview header
-  const [profileSubTab, setProfileSubTab] = useState<'profile' | 'dashboard' | 'settings' | 'contacts'>('profile');
+  const [activeTab, setActiveTab] = useState<'overview' | 'products' | 'requests' | 'profile'>('overview');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [editingProfile, setEditingProfile] = useState(false);
   const [profileForm, setProfileForm] = useState({ fullName: '', email: '', phone: '', address: '', city: '', postalCode: '' });
@@ -1664,464 +1663,399 @@ export default function FarmerDashboard() {
 
           <section id="profile" className={`rounded-lg border border-stone-200 bg-white shadow-sm${activeTab !== 'profile' ? ' hidden' : ''}`}>
             <div className="border-b border-stone-200 px-4 py-3 sm:px-6">
-              <ul className="flex flex-wrap -mb-px text-sm font-medium text-center text-stone-600">
-                {[
-                  { key: 'profile', label: 'Προφίλ', icon: User },
-                  { key: 'dashboard', label: 'Πίνακας', icon: LayoutDashboard },
-                  { key: 'settings', label: 'Ρυθμίσεις', icon: Settings },
-                  { key: 'contacts', label: 'Επικοινωνία', icon: Phone },
-                ].map(({ key, label, icon: Icon }) => {
-                  const isActive = profileSubTab === key;
-                  return (
-                    <li key={key} className="me-2">
-                      <button
-                        type="button"
-                        onClick={() => setProfileSubTab(key as 'profile' | 'dashboard' | 'settings' | 'contacts')}
-                        className={`inline-flex items-center justify-center rounded-t-lg border-b-2 px-4 py-3 transition-colors ${isActive ? 'border-emerald-700 text-emerald-800' : 'border-transparent text-stone-500 hover:border-emerald-200 hover:text-emerald-700'}`}
-                      >
-                        <Icon className="mr-2 h-4 w-4" />
-                        {label}
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
+              <div className="inline-flex items-center rounded-t-lg border-b-2 border-emerald-700 px-4 py-3 text-sm font-medium text-emerald-800">
+                <User className="mr-2 h-4 w-4" />
+                Προφίλ
+              </div>
             </div>
 
             <div className="p-6">
-              {profileSubTab === 'profile' && (
-                <>
-                  <h2 className="mb-5 text-xl font-semibold text-stone-800">Το Προφίλ μου</h2>
-                  {!editingProfile ? (
-                    <div className="space-y-4 text-left">
-                      <div className="flex items-start gap-4 rounded-[24px] border border-stone-200 bg-white p-5 shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
-                        <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border border-stone-300 bg-white">
-                          {avatarUrl ? (
-                            <button
-                              type="button"
-                              onClick={() => setShowAvatarPreview(true)}
-                              className="h-full w-full"
-                              aria-label="Προεπισκόπηση φωτογραφίας προφίλ"
-                            >
-                              <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
-                            </button>
-                          ) : (
-                            <span className="text-lg font-semibold text-stone-700">
-                              {(userName ?? userEmail ?? 'F').charAt(0).toUpperCase()}
-                            </span>
-                          )}
-                        </div>
-                        <label className="cursor-pointer rounded-lg border border-emerald-300 bg-white px-3 py-2 text-sm font-semibold text-emerald-700 text-left">
-                          <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={handleAvatarUpload} />
-                          {uploadingAvatar ? 'Αποστολή...' : 'Αλλαγή φωτογραφίας'}
-                        </label>
+              <h2 className="mb-5 text-xl font-semibold text-stone-800">Το Προφίλ μου</h2>
+              {!editingProfile ? (
+                <div className="space-y-4 text-left">
+                  <div className="flex items-start gap-4 rounded-[24px] border border-stone-200 bg-white p-5 shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
+                    <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border border-stone-300 bg-white">
+                      {avatarUrl ? (
+                        <button
+                          type="button"
+                          onClick={() => setShowAvatarPreview(true)}
+                          className="h-full w-full"
+                          aria-label="Προεπισκόπηση φωτογραφίας προφίλ"
+                        >
+                          <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+                        </button>
+                      ) : (
+                        <span className="text-lg font-semibold text-stone-700">
+                          {(userName ?? userEmail ?? 'F').charAt(0).toUpperCase()}
+                        </span>
+                      )}
+                    </div>
+                    <label className="cursor-pointer rounded-lg border border-emerald-300 bg-white px-3 py-2 text-sm font-semibold text-emerald-700 text-left">
+                      <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={handleAvatarUpload} />
+                      {uploadingAvatar ? 'Αποστολή...' : 'Αλλαγή φωτογραφίας'}
+                    </label>
+                  </div>
+                  <div className="rounded-[22px] border border-stone-200 bg-white p-4 text-left shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
+                    <p className="mb-1 text-left text-xs font-semibold text-stone-600">Ονοματεπώνυμο</p>
+                    <p className="text-base text-stone-900">{userName || 'Επανόθηση απαιτείται'}</p>
+                  </div>
+                  <div className="rounded-[22px] border border-stone-200 bg-white p-4 text-left shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
+                    <p className="mb-1 text-left text-xs font-semibold text-stone-600">Email</p>
+                    <p className="text-base text-stone-900">{userEmail || 'Επανόθηση απαιτείται'}</p>
+                  </div>
+                  <div className="rounded-[22px] border border-stone-200 bg-white p-4 text-left shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
+                    <p className="mb-1 text-left text-xs font-semibold text-stone-600">Κινητό τηλέφωνο</p>
+                    <p className="text-base text-stone-900">{userPhone || 'Επανόθηση απαιτείται'}</p>
+                  </div>
+                  <div className="rounded-[22px] border border-stone-200 bg-white p-4 text-left shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
+                    <p className="mb-1 text-left text-xs font-semibold text-stone-600">Διεύθυνση</p>
+                    <p className="text-base text-stone-900">{userAddress || 'Δεν έχει συμπληρωθεί'}</p>
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="rounded-[22px] border border-stone-200 bg-white p-4 text-left shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
+                      <p className="mb-1 text-left text-xs font-semibold text-stone-600">Πόλη</p>
+                      <p className="text-base text-stone-900">{userCity || 'Δεν έχει συμπληρωθεί'}</p>
+                    </div>
+                    <div className="rounded-[22px] border border-stone-200 bg-white p-4 text-left shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
+                      <p className="mb-1 text-left text-xs font-semibold text-stone-600">Τ.Κ.</p>
+                      <p className="text-base text-stone-900">{userPostalCode || 'Δεν έχει συμπληρωθεί'}</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setProfileForm({
+                        fullName: userName || '',
+                        email: userEmail || '',
+                        phone: userPhone || '',
+                        address: userAddress || '',
+                        city: userCity || '',
+                        postalCode: userPostalCode || '',
+                      });
+                      setEditingProfile(true);
+                    }}
+                    className="w-full rounded-lg bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-800"
+                  >
+                    Επεξεργασία Προσωπικών Στοιχείων
+                  </button>
+                </div>
+              ) : (
+                <form
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+
+                    if (!emailConfirmedAt) {
+                      setShowEmailVerificationWarning(true);
+                      return;
+                    }
+
+                    setSavingProfile(true);
+                    setErrorMsg('');
+                    const trimmedFullName = profileForm.fullName.trim();
+                    const normalizedPhone = getValidNormalizedPhone(profileForm.phone.trim());
+                    const trimmedAddress = profileForm.address.trim();
+                    const trimmedCity = profileForm.city.trim();
+                    const trimmedPostalCode = profileForm.postalCode.trim();
+
+                    if (!normalizedPhone) {
+                      setErrorMsg('Συμπληρώστε ένα έγκυρο ελληνικό κινητό τηλέφωνο που ξεκινά από 69 και έχει 10 ψηφία.');
+                      setSavingProfile(false);
+                      return;
+                    }
+
+                    if (!trimmedAddress || !trimmedCity || !trimmedPostalCode) {
+                      setErrorMsg('Συμπληρώστε διεύθυνση, πόλη και Τ.Κ. για ολοκληρωμένο προφίλ.');
+                      setSavingProfile(false);
+                      return;
+                    }
+
+                    const updateData: Record<string, string> = {
+                      full_name: trimmedFullName,
+                      phone: normalizedPhone,
+                    };
+
+                    if (!validateUsername(trimmedFullName)) {
+                      updateData.username = trimmedFullName;
+                    }
+
+                    const { error } = await supabase.auth.updateUser({
+                      data: updateData,
+                    });
+
+                    if (!error && userId) {
+                      const { error: profileError } = await supabase.from('farmer_profiles').upsert({
+                        user_id: userId,
+                        full_name: trimmedFullName,
+                        contact_phone: normalizedPhone,
+                        address: trimmedAddress,
+                        city: trimmedCity,
+                        postal_code: trimmedPostalCode,
+                        avatar_url: avatarUrl,
+                      });
+
+                      if (profileError) {
+                        setErrorMsg('Σφάλμα αποθήκευσης στοιχείων προφίλ: ' + profileError.message);
+                        setSavingProfile(false);
+                        return;
+                      }
+                    }
+
+                    if (error) {
+                      setErrorMsg('Σφάλμα αποθήκευσης: ' + error.message);
+                    } else {
+                      setUserName(trimmedFullName);
+                      setUserPhone(normalizedPhone);
+                      setUserAddress(trimmedAddress);
+                      setUserCity(trimmedCity);
+                      setUserPostalCode(trimmedPostalCode);
+                      setEditingProfile(false);
+                      setSuccessMsg('Το προφίλ ενημερώθηκε επιτυχώς.');
+                      window.setTimeout(() => setSuccessMsg(''), 5000);
+                    }
+                    setSavingProfile(false);
+                  }}
+                  className="space-y-4"
+                >
+                  <label className="block text-sm font-semibold text-stone-700">
+                    <span className="mb-1.5 inline-flex items-center gap-2">
+                      <User className="h-4 w-4 text-emerald-700" /> Ονοματεπώνυμο
+                    </span>
+                    <input
+                      type="text"
+                      required
+                      value={profileForm.fullName}
+                      onChange={(e) => setProfileForm({ ...profileForm, fullName: e.target.value })}
+                      className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                      placeholder="π.χ. Γιάννης Παπαδόπουλος"
+                    />
+                  </label>
+                  <label className="block text-sm font-semibold text-stone-700">
+                    <span className="mb-1.5 inline-flex items-center gap-2">
+                      <Mail className="h-4 w-4 text-emerald-700" /> Email
+                    </span>
+                    <input
+                      type="email"
+                      disabled
+                      value={profileForm.email}
+                      className="w-full cursor-not-allowed rounded-lg border border-stone-300 bg-stone-100 px-3 py-2.5 text-sm text-stone-600"
+                    />
+                    <p className="mt-1 text-xs text-stone-500">Το email δεν μπορεί να αλλάξει</p>
+                  </label>
+                  <label className="block text-sm font-semibold text-stone-700">
+                    <span className="mb-1.5 inline-flex items-center gap-2">
+                      <Phone className="h-4 w-4 text-emerald-700" /> Κινητό τηλέφωνο
+                    </span>
+                    <input
+                      type="tel"
+                      required
+                      value={profileForm.phone}
+                      onChange={(e) => {
+                        setProfileForm({ ...profileForm, phone: formatGreekPhoneInput(e.target.value) });
+                      }}
+                      className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                      placeholder="π.χ. +30 69 12345678"
+                    />
+                  </label>
+                  <label className="block text-sm font-semibold text-stone-700">
+                    <span className="mb-1.5 inline-flex items-center gap-2">
+                      <MapPin className="h-4 w-4 text-emerald-700" /> Διεύθυνση
+                    </span>
+                    <input
+                      type="text"
+                      required
+                      value={profileForm.address}
+                      onChange={(e) => setProfileForm({ ...profileForm, address: e.target.value })}
+                      className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                      placeholder="π.χ. Πατησίων 123"
+                    />
+                  </label>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <label className="block text-sm font-semibold text-stone-700">
+                      <span className="mb-1.5 inline-flex items-center gap-2">Πόλη</span>
+                      <input
+                        type="text"
+                        required
+                        value={profileForm.city}
+                        onChange={(e) => setProfileForm({ ...profileForm, city: e.target.value })}
+                        className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                        placeholder="π.χ. Αθήνα"
+                      />
+                    </label>
+                    <label className="block text-sm font-semibold text-stone-700">
+                      <span className="mb-1.5 inline-flex items-center gap-2">Τ.Κ.</span>
+                      <input
+                        type="text"
+                        required
+                        value={profileForm.postalCode}
+                        onChange={(e) => setProfileForm({ ...profileForm, postalCode: e.target.value })}
+                        className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                        placeholder="π.χ. 11141"
+                      />
+                    </label>
+                  </div>
+                  <div className="flex gap-3">
+                    <button
+                      type="submit"
+                      disabled={savingProfile}
+                      className="flex-1 rounded-lg bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:bg-emerald-400"
+                    >
+                      {savingProfile ? 'Αποθήκευση...' : 'Αποθήκευση'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEditingProfile(false)}
+                      className="flex-1 rounded-lg border border-stone-300 px-4 py-2.5 text-sm font-semibold text-stone-700 transition hover:bg-stone-100"
+                    >
+                      Ακύρωση
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              <div className="mt-8 rounded-[24px] border border-stone-200 bg-white p-5 shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
+                <h3 className="flex items-center gap-2 text-base font-semibold text-stone-900">
+                  <KeyRound className="h-4 w-4 text-emerald-700" /> Ασφάλεια
+                </h3>
+                <p className="mt-1 text-sm text-stone-600">Αλλαγή κωδικού, επιβεβαίωση κωδικού και επαναφορά μέσω email.</p>
+
+                <form onSubmit={handleChangePassword} className="mt-4 space-y-3">
+                  <label className="block text-sm font-semibold text-stone-700">
+                    <span className="mb-1.5 inline-flex items-center gap-2">Νέος κωδικός</span>
+                    <input
+                      type="password"
+                      required
+                      value={newPassword}
+                      onChange={(event) => setNewPassword(event.target.value)}
+                      className="mt-1 w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                      placeholder="••••••••"
+                    />
+                    <p className="mt-1 text-xs font-medium text-stone-500">
+                      8–12 χαρακτήρες με κεφαλαία, πεζά, αριθμούς και ειδικούς χαρακτήρες (π.χ. ! @ # $ %).
+                    </p>
+                    {errorMsg && (
+                      <div className="mt-2 rounded-md border border-red-300 bg-red-50 px-3 py-2 text-xs font-medium text-red-700">
+                        {errorMsg}
                       </div>
-                      <div className="rounded-[22px] border border-stone-200 bg-white p-4 text-left shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
-                        <p className="mb-1 text-left text-xs font-semibold text-stone-600">Ονοματεπώνυμο</p>
-                        <p className="text-base text-stone-900">{userName || 'Επανόθηση απαιτείται'}</p>
+                    )}
+                    {successMsg && (
+                      <div className="mt-2 rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-800">
+                        {successMsg}
                       </div>
-                      <div className="rounded-[22px] border border-stone-200 bg-white p-4 text-left shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
-                        <p className="mb-1 text-left text-xs font-semibold text-stone-600">Email</p>
-                        <p className="text-base text-stone-900">{userEmail || 'Επανόθηση απαιτείται'}</p>
-                      </div>
-                      <div className="rounded-[22px] border border-stone-200 bg-white p-4 text-left shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
-                        <p className="mb-1 text-left text-xs font-semibold text-stone-600">Κινητό τηλέφωνο</p>
-                        <p className="text-base text-stone-900">{userPhone || 'Επανόθηση απαιτείται'}</p>
-                      </div>
-                      <div className="rounded-[22px] border border-stone-200 bg-white p-4 text-left shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
-                        <p className="mb-1 text-left text-xs font-semibold text-stone-600">Διεύθυνση</p>
-                        <p className="text-base text-stone-900">{userAddress || 'Δεν έχει συμπληρωθεί'}</p>
-                      </div>
-                      <div className="grid gap-4 sm:grid-cols-2">
-                        <div className="rounded-[22px] border border-stone-200 bg-white p-4 text-left shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
-                          <p className="mb-1 text-left text-xs font-semibold text-stone-600">Πόλη</p>
-                          <p className="text-base text-stone-900">{userCity || 'Δεν έχει συμπληρωθεί'}</p>
-                        </div>
-                        <div className="rounded-[22px] border border-stone-200 bg-white p-4 text-left shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
-                          <p className="mb-1 text-left text-xs font-semibold text-stone-600">Τ.Κ.</p>
-                          <p className="text-base text-stone-900">{userPostalCode || 'Δεν έχει συμπληρωθεί'}</p>
-                        </div>
-                      </div>
+                    )}
+                  </label>
+                  <label className="block text-sm font-semibold text-stone-700">
+                    Επιβεβαίωση κωδικού
+                    <input
+                      type="password"
+                      required
+                      value={confirmPassword}
+                      onChange={(event) => setConfirmPassword(event.target.value)}
+                      className="mt-1 w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                      placeholder="••••••••"
+                    />
+                  </label>
+
+                  <div className="flex flex-col gap-2 sm:flex-row">
+                    <button
+                      type="submit"
+                      disabled={changingPassword}
+                      className="inline-flex items-center justify-center rounded-lg bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:bg-emerald-400"
+                    >
+                      {changingPassword ? 'Αποθήκευση...' : 'Αλλαγή κωδικού'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void handleSendPasswordReset()}
+                      disabled={sendingPasswordReset}
+                      className="inline-flex items-center justify-center rounded-lg border border-stone-300 px-4 py-2.5 text-sm font-semibold text-stone-700 transition hover:bg-stone-100 disabled:border-stone-200 disabled:text-stone-400"
+                    >
+                      {sendingPasswordReset ? 'Αποστολή...' : 'Επαναφορά μέσω email'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+
+              <div className="mt-6 rounded-xl border border-rose-200 bg-rose-50/60 p-4">
+                <h3 className="flex items-center gap-2 text-base font-semibold text-rose-800">
+                  <Trash2 className="h-4 w-4" /> Διαγραφή λογαριασμού
+                </h3>
+                <p className="mt-1 text-sm text-rose-700">Η ενέργεια είναι μη αναστρέψιμη. Τα στοιχεία του προφίλ και η πρόσβαση θα διαγραφούν οριστικά.</p>
+
+                {!deleteConfirmOpen ? (
+                  <button
+                    type="button"
+                    onClick={() => setDeleteConfirmOpen(true)}
+                    className="mt-3 inline-flex items-center justify-center rounded-lg bg-rose-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-rose-800"
+                  >
+                    Διαγραφή λογαριασμού
+                  </button>
+                ) : (
+                  <div className="mt-3 space-y-3 rounded-lg border border-rose-200 bg-white p-3">
+                    <div className="flex gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setDeleteVerificationMethod('password')}
+                        className={`rounded-md px-3 py-2 text-sm font-semibold transition ${deleteVerificationMethod === 'password' ? 'bg-rose-700 text-white' : 'bg-rose-100 text-rose-800 hover:bg-rose-200'}`}
+                      >
+                        Με κωδικό
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDeleteVerificationMethod('email')}
+                        className={`rounded-md px-3 py-2 text-sm font-semibold transition ${deleteVerificationMethod === 'email' ? 'bg-rose-700 text-white' : 'bg-rose-100 text-rose-800 hover:bg-rose-200'}`}
+                      >
+                        Με email
+                      </button>
+                    </div>
+
+                    {deleteVerificationMethod === 'password' ? (
+                      <label className="block text-sm font-semibold text-stone-700">
+                        Κωδικός επιβεβαίωσης
+                        <input
+                          type="password"
+                          value={deletePassword}
+                          onChange={(event) => setDeletePassword(event.target.value)}
+                          className="mt-1 w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none transition focus:border-rose-400 focus:ring-2 focus:ring-rose-100"
+                          placeholder="Συμπληρώστε τον τρέχοντα κωδικό σας"
+                        />
+                      </label>
+                    ) : (
+                      <label className="block text-sm font-semibold text-stone-700">
+                        Επιβεβαίωση email
+                        <input
+                          type="email"
+                          value={deleteEmailConfirmation}
+                          onChange={(event) => setDeleteEmailConfirmation(event.target.value)}
+                          className="mt-1 w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none transition focus:border-rose-400 focus:ring-2 focus:ring-rose-100"
+                          placeholder="Γράψτε το email του λογαριασμού"
+                        />
+                      </label>
+                    )}
+
+                    <div className="flex flex-col gap-2 sm:flex-row">
+                      <button
+                        type="button"
+                        onClick={() => void handleDeleteAccount()}
+                        disabled={deletingAccount}
+                        className="inline-flex items-center justify-center rounded-lg bg-rose-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-rose-800 disabled:bg-rose-400"
+                      >
+                        {deletingAccount ? 'Διαγραφή...' : 'Οριστική διαγραφή λογαριασμού'}
+                      </button>
                       <button
                         type="button"
                         onClick={() => {
-                          setProfileForm({
-                            fullName: userName || '',
-                            email: userEmail || '',
-                            phone: userPhone || '',
-                            address: userAddress || '',
-                            city: userCity || '',
-                            postalCode: userPostalCode || '',
-                          });
-                          setEditingProfile(true);
+                          setDeleteConfirmOpen(false);
+                          setDeletePassword('');
+                          setDeleteEmailConfirmation('');
                         }}
-                        className="w-full rounded-lg bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-800"
+                        className="inline-flex items-center justify-center rounded-lg border border-stone-300 px-4 py-2.5 text-sm font-semibold text-stone-700 transition hover:bg-stone-100"
                       >
-                        Επεξεργασία Προσωπικών Στοιχείων
+                        Ακύρωση
                       </button>
                     </div>
-                  ) : (
-                    <form
-                      onSubmit={async (e) => {
-                        e.preventDefault();
-
-                        if (!emailConfirmedAt) {
-                          setShowEmailVerificationWarning(true);
-                          return;
-                        }
-
-                        setSavingProfile(true);
-                        setErrorMsg('');
-                        const trimmedFullName = profileForm.fullName.trim();
-                        const normalizedPhone = getValidNormalizedPhone(profileForm.phone.trim());
-                        const trimmedAddress = profileForm.address.trim();
-                        const trimmedCity = profileForm.city.trim();
-                        const trimmedPostalCode = profileForm.postalCode.trim();
-
-                        if (!normalizedPhone) {
-                          setErrorMsg('Συμπληρώστε ένα έγκυρο ελληνικό κινητό τηλέφωνο που ξεκινά από 69 και έχει 10 ψηφία.');
-                          setSavingProfile(false);
-                          return;
-                        }
-
-                        if (!trimmedAddress || !trimmedCity || !trimmedPostalCode) {
-                          setErrorMsg('Συμπληρώστε διεύθυνση, πόλη και Τ.Κ. για ολοκληρωμένο προφίλ.');
-                          setSavingProfile(false);
-                          return;
-                        }
-
-                        const updateData: Record<string, string> = {
-                          full_name: trimmedFullName,
-                          phone: normalizedPhone,
-                        };
-
-                        if (!validateUsername(trimmedFullName)) {
-                          updateData.username = trimmedFullName;
-                        }
-
-                        const { error } = await supabase.auth.updateUser({
-                          data: updateData,
-                        });
-
-                        if (!error && userId) {
-                          const { error: profileError } = await supabase.from('farmer_profiles').upsert({
-                            user_id: userId,
-                            full_name: trimmedFullName,
-                            contact_phone: normalizedPhone,
-                            address: trimmedAddress,
-                            city: trimmedCity,
-                            postal_code: trimmedPostalCode,
-                            avatar_url: avatarUrl,
-                          });
-
-                          if (profileError) {
-                            setErrorMsg('Σφάλμα αποθήκευσης στοιχείων προφίλ: ' + profileError.message);
-                            setSavingProfile(false);
-                            return;
-                          }
-                        }
-
-                        if (error) {
-                          setErrorMsg('Σφάλμα αποθήκευσης: ' + error.message);
-                        } else {
-                          setUserName(trimmedFullName);
-                          setUserPhone(normalizedPhone);
-                          setUserAddress(trimmedAddress);
-                          setUserCity(trimmedCity);
-                          setUserPostalCode(trimmedPostalCode);
-                          setEditingProfile(false);
-                          setSuccessMsg('Το προφίλ ενημερώθηκε επιτυχώς.');
-                          window.setTimeout(() => setSuccessMsg(''), 5000);
-                        }
-                        setSavingProfile(false);
-                      }}
-                      className="space-y-4"
-                    >
-                      <label className="block text-sm font-semibold text-stone-700">
-                        <span className="mb-1.5 inline-flex items-center gap-2">
-                          <User className="h-4 w-4 text-emerald-700" /> Ονοματεπώνυμο
-                        </span>
-                        <input
-                          type="text"
-                          required
-                          value={profileForm.fullName}
-                          onChange={(e) => setProfileForm({ ...profileForm, fullName: e.target.value })}
-                          className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
-                          placeholder="π.χ. Γιάννης Παπαδόπουλος"
-                        />
-                      </label>
-                      <label className="block text-sm font-semibold text-stone-700">
-                        <span className="mb-1.5 inline-flex items-center gap-2">
-                          <Mail className="h-4 w-4 text-emerald-700" /> Email
-                        </span>
-                        <input
-                          type="email"
-                          disabled
-                          value={profileForm.email}
-                          className="w-full cursor-not-allowed rounded-lg border border-stone-300 bg-stone-100 px-3 py-2.5 text-sm text-stone-600"
-                        />
-                        <p className="mt-1 text-xs text-stone-500">Το email δεν μπορεί να αλλάξει</p>
-                      </label>
-                      <label className="block text-sm font-semibold text-stone-700">
-                        <span className="mb-1.5 inline-flex items-center gap-2">
-                          <Phone className="h-4 w-4 text-emerald-700" /> Κινητό τηλέφωνο
-                        </span>
-                        <input
-                          type="tel"
-                          required
-                          value={profileForm.phone}
-                          onChange={(e) => {
-                            setProfileForm({ ...profileForm, phone: formatGreekPhoneInput(e.target.value) });
-                          }}
-                          className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
-                          placeholder="π.χ. +30 69 12345678"
-                        />
-                      </label>
-                      <label className="block text-sm font-semibold text-stone-700">
-                        <span className="mb-1.5 inline-flex items-center gap-2">
-                          <MapPin className="h-4 w-4 text-emerald-700" /> Διεύθυνση
-                        </span>
-                        <input
-                          type="text"
-                          required
-                          value={profileForm.address}
-                          onChange={(e) => setProfileForm({ ...profileForm, address: e.target.value })}
-                          className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
-                          placeholder="π.χ. Πατησίων 123"
-                        />
-                      </label>
-                      <div className="grid gap-3 sm:grid-cols-2">
-                        <label className="block text-sm font-semibold text-stone-700">
-                          <span className="mb-1.5 inline-flex items-center gap-2">Πόλη</span>
-                          <input
-                            type="text"
-                            required
-                            value={profileForm.city}
-                            onChange={(e) => setProfileForm({ ...profileForm, city: e.target.value })}
-                            className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
-                            placeholder="π.χ. Αθήνα"
-                          />
-                        </label>
-                        <label className="block text-sm font-semibold text-stone-700">
-                          <span className="mb-1.5 inline-flex items-center gap-2">Τ.Κ.</span>
-                          <input
-                            type="text"
-                            required
-                            value={profileForm.postalCode}
-                            onChange={(e) => setProfileForm({ ...profileForm, postalCode: e.target.value })}
-                            className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
-                            placeholder="π.χ. 11141"
-                          />
-                        </label>
-                      </div>
-                      <div className="flex gap-3">
-                        <button
-                          type="submit"
-                          disabled={savingProfile}
-                          className="flex-1 rounded-lg bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:bg-emerald-400"
-                        >
-                          {savingProfile ? 'Αποθήκευση...' : 'Αποθήκευση'}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setEditingProfile(false)}
-                          className="flex-1 rounded-lg border border-stone-300 px-4 py-2.5 text-sm font-semibold text-stone-700 transition hover:bg-stone-100"
-                        >
-                          Ακύρωση
-                        </button>
-                      </div>
-                    </form>
-                  )}
-
-                  <div className="mt-8 rounded-[24px] border border-stone-200 bg-white p-5 shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
-                    <h3 className="flex items-center gap-2 text-base font-semibold text-stone-900">
-                      <KeyRound className="h-4 w-4 text-emerald-700" /> Ασφάλεια
-                    </h3>
-                    <p className="mt-1 text-sm text-stone-600">Αλλαγή κωδικού, επιβεβαίωση κωδικού και επαναφορά μέσω email.</p>
-
-                    <form onSubmit={handleChangePassword} className="mt-4 space-y-3">
-                      <label className="block text-sm font-semibold text-stone-700">
-                        <span className="mb-1.5 inline-flex items-center gap-2">Νέος κωδικός</span>
-                        <input
-                          type="password"
-                          required
-                          value={newPassword}
-                          onChange={(event) => setNewPassword(event.target.value)}
-                          className="mt-1 w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
-                          placeholder="••••••••"
-                        />
-                        <p className="mt-1 text-xs font-medium text-stone-500">
-                          8–12 χαρακτήρες με κεφαλαία, πεζά, αριθμούς και ειδικούς χαρακτήρες (π.χ. ! @ # $ %).
-                        </p>
-                        {errorMsg && (
-                          <div className="mt-2 rounded-md border border-red-300 bg-red-50 px-3 py-2 text-xs font-medium text-red-700">
-                            {errorMsg}
-                          </div>
-                        )}
-                        {successMsg && (
-                          <div className="mt-2 rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-800">
-                            {successMsg}
-                          </div>
-                        )}
-                      </label>
-                      <label className="block text-sm font-semibold text-stone-700">
-                        Επιβεβαίωση κωδικού
-                        <input
-                          type="password"
-                          required
-                          value={confirmPassword}
-                          onChange={(event) => setConfirmPassword(event.target.value)}
-                          className="mt-1 w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
-                          placeholder="••••••••"
-                        />
-                      </label>
-
-                      <div className="flex flex-col gap-2 sm:flex-row">
-                        <button
-                          type="submit"
-                          disabled={changingPassword}
-                          className="inline-flex items-center justify-center rounded-lg bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:bg-emerald-400"
-                        >
-                          {changingPassword ? 'Αποθήκευση...' : 'Αλλαγή κωδικού'}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => void handleSendPasswordReset()}
-                          disabled={sendingPasswordReset}
-                          className="inline-flex items-center justify-center rounded-lg border border-stone-300 px-4 py-2.5 text-sm font-semibold text-stone-700 transition hover:bg-stone-100 disabled:border-stone-200 disabled:text-stone-400"
-                        >
-                          {sendingPasswordReset ? 'Αποστολή...' : 'Επαναφορά μέσω email'}
-                        </button>
-                      </div>
-                    </form>
                   </div>
-
-                  <div className="mt-6 rounded-xl border border-rose-200 bg-rose-50/60 p-4">
-                    <h3 className="flex items-center gap-2 text-base font-semibold text-rose-800">
-                      <Trash2 className="h-4 w-4" /> Διαγραφή λογαριασμού
-                    </h3>
-                    <p className="mt-1 text-sm text-rose-700">Η ενέργεια είναι μη αναστρέψιμη. Τα στοιχεία του προφίλ και η πρόσβαση θα διαγραφούν οριστικά.</p>
-
-                    {!deleteConfirmOpen ? (
-                      <button
-                        type="button"
-                        onClick={() => setDeleteConfirmOpen(true)}
-                        className="mt-3 inline-flex items-center justify-center rounded-lg bg-rose-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-rose-800"
-                      >
-                        Διαγραφή λογαριασμού
-                      </button>
-                    ) : (
-                      <div className="mt-3 space-y-3 rounded-lg border border-rose-200 bg-white p-3">
-                        <div className="flex gap-3">
-                          <button
-                            type="button"
-                            onClick={() => setDeleteVerificationMethod('password')}
-                            className={`rounded-md px-3 py-2 text-sm font-semibold transition ${deleteVerificationMethod === 'password' ? 'bg-rose-700 text-white' : 'bg-rose-100 text-rose-800 hover:bg-rose-200'}`}
-                          >
-                            Με κωδικό
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setDeleteVerificationMethod('email')}
-                            className={`rounded-md px-3 py-2 text-sm font-semibold transition ${deleteVerificationMethod === 'email' ? 'bg-rose-700 text-white' : 'bg-rose-100 text-rose-800 hover:bg-rose-200'}`}
-                          >
-                            Με email
-                          </button>
-                        </div>
-
-                        {deleteVerificationMethod === 'password' ? (
-                          <label className="block text-sm font-semibold text-stone-700">
-                            Κωδικός επιβεβαίωσης
-                            <input
-                              type="password"
-                              value={deletePassword}
-                              onChange={(event) => setDeletePassword(event.target.value)}
-                              className="mt-1 w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none transition focus:border-rose-400 focus:ring-2 focus:ring-rose-100"
-                              placeholder="Συμπληρώστε τον τρέχοντα κωδικό σας"
-                            />
-                          </label>
-                        ) : (
-                          <label className="block text-sm font-semibold text-stone-700">
-                            Επιβεβαίωση email
-                            <input
-                              type="email"
-                              value={deleteEmailConfirmation}
-                              onChange={(event) => setDeleteEmailConfirmation(event.target.value)}
-                              className="mt-1 w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none transition focus:border-rose-400 focus:ring-2 focus:ring-rose-100"
-                              placeholder="Γράψτε το email του λογαριασμού"
-                            />
-                          </label>
-                        )}
-
-                        <div className="flex flex-col gap-2 sm:flex-row">
-                          <button
-                            type="button"
-                            onClick={() => void handleDeleteAccount()}
-                            disabled={deletingAccount}
-                            className="inline-flex items-center justify-center rounded-lg bg-rose-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-rose-800 disabled:bg-rose-400"
-                          >
-                            {deletingAccount ? 'Διαγραφή...' : 'Οριστική διαγραφή λογαριασμού'}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setDeleteConfirmOpen(false);
-                              setDeletePassword('');
-                              setDeleteEmailConfirmation('');
-                            }}
-                            className="inline-flex items-center justify-center rounded-lg border border-stone-300 px-4 py-2.5 text-sm font-semibold text-stone-700 transition hover:bg-stone-100"
-                          >
-                            Ακύρωση
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </>
-              )}
-
-              {profileSubTab === 'dashboard' && (
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-500">Στοιχεία αγρότη</p>
-                    <p className="mt-3 text-lg font-semibold text-stone-900">{userName || 'Αγρότης'}</p>
-                    <p className="mt-1 text-sm text-stone-600">{userEmail || 'Δεν έχει καταχωρημένο email'}</p>
-                  </div>
-                  <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">Συνολικές εισπράξεις</p>
-                    <p className="mt-3 text-2xl font-bold text-emerald-900">{formatCurrency(totalRevenue)}</p>
-                    <p className="mt-1 text-sm text-emerald-700">Σύνολο από ολοκληρωμένες παραγγελίες</p>
-                  </div>
-                </div>
-              )}
-
-              {profileSubTab === 'settings' && (
-                <div className="space-y-4">
-                  <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-500">Κατάσταση λογαριασμού</p>
-                    <p className="mt-2 text-sm text-stone-700">
-                      {emailConfirmedAt ? 'Το email έχει επιβεβαιωθεί.' : 'Η επιβεβαίωση email είναι ακόμη εκκρεμής.'}
-                    </p>
-                  </div>
-                  <div className="rounded-xl border border-stone-200 bg-white p-4">
-                    <p className="text-sm font-semibold text-stone-900">Επεξεργασία στοιχείων</p>
-                    <p className="mt-2 text-sm text-stone-600">Από την καρτέλα “Προφίλ” μπορείτε να ενημερώσετε το όνομα και το κινητό σας.</p>
-                  </div>
-                </div>
-              )}
-
-              {profileSubTab === 'contacts' && (
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="rounded-xl border border-stone-200 bg-white p-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-500">Email</p>
-                    <p className="mt-2 text-sm font-semibold text-stone-900">{userEmail || 'Δεν έχει καταχωρημένο email'}</p>
-                  </div>
-                  <div className="rounded-xl border border-stone-200 bg-white p-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-500">Τηλέφωνο</p>
-                    <p className="mt-2 text-sm font-semibold text-stone-900">{userPhone || 'Δεν έχει καταχωρημένο τηλέφωνο'}</p>
-                  </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </section>
 
