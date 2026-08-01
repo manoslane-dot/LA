@@ -1229,7 +1229,7 @@ export default function FarmerDashboard() {
                   {products.map((prod) => {
                     const productImages = productImagesByProductId[prod.id] ?? [];
                     return (
-                      <div key={prod.id} className="rounded-[20px] border border-stone-200 bg-white p-4 shadow-[0_8px_22px_rgba(15,23,42,0.04)]">
+                      <div key={prod.id} className="rounded-[22px] border border-stone-200 bg-white p-4 shadow-[0_8px_22px_rgba(15,23,42,0.04)]">
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0 flex-1 flex flex-col items-start">
                             {productImages.length > 0 && (
@@ -1239,14 +1239,17 @@ export default function FarmerDashboard() {
                                   setSelectedProductImage(productImages[0].image_url);
                                   setShowProductImagePreview(true);
                                 }}
-                                className="mb-3 aspect-square w-full max-w-[320px] overflow-hidden self-start rounded-md border border-stone-200 bg-stone-50"
+                                className="mb-3 aspect-[1.08/1] w-full overflow-hidden self-start rounded-[16px] border border-stone-200 bg-stone-50"
                                 aria-label={`Προεπισκόπηση εικόνας για ${prod.title}`}
                               >
                                 <img src={productImages[0].image_url} alt={prod.title} className="h-full w-full object-cover" loading="lazy" />
                               </button>
                             )}
-                            <p className="text-left text-lg font-semibold text-gray-800">{prod.title}</p>
+                            <p className="min-h-[56px] text-left text-lg font-semibold leading-7 text-gray-800">{prod.title}</p>
                             <p className="text-left text-sm text-gray-600">Ποσότητα: {prod.quantity} {getUnitLabel(prod.unit, prod.quantity)}</p>
+                            <span className="mt-2 inline-flex rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 sm:hidden">
+                              {prod.status}
+                            </span>
                           {editingPriceId === prod.id ? (
                             <div className="mt-2 flex items-center gap-2">
                               <input
@@ -1280,7 +1283,7 @@ export default function FarmerDashboard() {
                             <p className="mt-1 text-left text-base font-semibold text-emerald-700">Τιμή: {prod.price.toFixed(2)} €</p>
                           )}
                           </div>
-                          <div className="flex shrink-0 items-center gap-2">
+                          <div className="flex shrink-0 items-center gap-2 self-start">
                             <span className="hidden sm:inline px-2.5 py-1 text-xs font-semibold text-emerald-800 bg-emerald-50 rounded-full">
                               {prod.status}
                             </span>
