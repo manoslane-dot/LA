@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ShoppingBag, ClipboardList, LogOut, Leaf, Phone, Search, ChevronDown, User, Mail, MapPin, Bell, Menu, X, ShoppingCart, Plus, Minus, House, SlidersHorizontal, LayoutGrid, List, Heart, ShieldCheck, Headphones, Sprout } from 'lucide-react';
+import { ShoppingBag, ClipboardList, LogOut, Leaf, Phone, Search, ChevronDown, User, Mail, MapPin, Bell, X, ShoppingCart, Plus, Minus, House, SlidersHorizontal, LayoutGrid, List, Heart, ShieldCheck, Headphones, Sprout } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { formatGreekPhoneInput, isPhoneValid, normalizePhone } from '@/lib/auth/contactInfo';
 import { sanitizePhoneForTel } from '@/lib/serviceAreas';
@@ -964,18 +964,6 @@ export default function ConsumerDashboard() {
             >
               <span className="mr-2 h-2.5 w-2.5 rounded-full bg-current" />
               {showCoordinateOverlay ? 'Overlay ON' : 'Overlay OFF'}
-            </button>
-            <button
-              data-drawer-target="consumer-sidebar"
-              data-drawer-toggle="consumer-sidebar"
-              aria-controls="consumer-sidebar"
-              type="button"
-              onClick={() => setMobileMenuOpen(true)}
-              className="inline-flex items-center rounded-md border border-stone-300 bg-transparent p-2 text-stone-700 transition hover:bg-stone-100 focus:outline-none focus:ring-2 focus:ring-emerald-200 sm:hidden"
-              aria-label="Άνοιγμα κινητού μενού"
-            >
-              <span className="sr-only">Άνοιγμα sidebar</span>
-              <Menu className="h-6 w-6" />
             </button>
             <div className="relative" ref={notificationRef}>
               <button
