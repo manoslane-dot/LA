@@ -1247,9 +1247,6 @@ export default function FarmerDashboard() {
                             )}
                             <p className="min-h-[56px] text-left text-lg font-semibold leading-7 text-gray-800">{prod.title}</p>
                             <p className="text-left text-sm text-gray-600">Ποσότητα: {prod.quantity} {getUnitLabel(prod.unit, prod.quantity)}</p>
-                            <span className="mt-2 inline-flex rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 sm:hidden">
-                              {prod.status}
-                            </span>
                           {editingPriceId === prod.id ? (
                             <div className="mt-2 flex items-center gap-2">
                               <input
@@ -1284,9 +1281,6 @@ export default function FarmerDashboard() {
                           )}
                           </div>
                           <div className="flex shrink-0 items-center gap-2 self-start">
-                            <span className="hidden sm:inline px-2.5 py-1 text-xs font-semibold text-emerald-800 bg-emerald-50 rounded-full">
-                              {prod.status}
-                            </span>
                             <button
                               type="button"
                               onClick={() => handleStartEditProduct(prod)}
