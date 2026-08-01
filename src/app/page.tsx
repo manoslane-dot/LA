@@ -6,6 +6,7 @@ import {
   Sprout,
   Star,
 } from "lucide-react";
+import { InstallPwaButton } from "@/components/InstallPwaButton";
 
 export default function Home() {
   return (
@@ -88,6 +89,9 @@ export default function Home() {
                     {item}
                   </div>
                 ))}
+              </div>
+              <div className="mt-3">
+                <InstallPwaButton />
               </div>
             </div>
           </div>
