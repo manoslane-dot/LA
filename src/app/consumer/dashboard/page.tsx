@@ -371,7 +371,49 @@ export default function ConsumerDashboard() {
       }
 
       const nextProducts = (data ?? []) as Product[];
-      setProducts(nextProducts);
+      const productIds = nextProducts.map((product) => product.id);
+
+      if (productIds.length > 0) {
+        const { data: reviewsData, error: reviewsError } = await supabase
+          .from('reviews')
+          .select('product_id, rating')
+          .in('product_id', productIds);
+
+        if (reviewsError) {
+          console.warn('Σφάλμα φόρτωσης αξιολογήσεων προϊόντων (μη κρίσιμο):', reviewsError.message);
+        }
+
+        const ratingMap = new Map<number, { sum: number; count: number }>();
+        for (const review of (reviewsData ?? []) as Array<{ product_id: number | null; rating: number }>) {
+          if (!review.product_id) continue;
+          const current = ratingMap.get(review.product_id) ?? { sum: 0, count: 0 };
+          current.sum += Number(review.rating) || 0;
+          current.count += 1;
+          ratingMap.set(review.product_id, current);
+        }
+
+        const productsWithRatings = nextProducts.map((product) => {
+          const entry = ratingMap.get(product.id);
+          if (!entry || entry.count === 0) {
+            return {
+              ...product,
+              ratingAverage: null,
+              ratingCount: 0,
+            };
+          }
+
+          return {
+            ...product,
+            ratingAverage: entry.sum / entry.count,
+            ratingCount: entry.count,
+          };
+        });
+
+        setProducts(productsWithRatings);
+      } else {
+        setProducts(nextProducts);
+      }
+
       setErrorMsg('');
       void fetchProductImages(nextProducts.map((product) => product.id));
     } catch (err) {
