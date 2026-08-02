@@ -111,7 +111,7 @@ export default function FarmerDashboard() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'products' | 'requests' | 'profile'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'products' | 'requests' | 'reviews' | 'profile'>('overview');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [editingProfile, setEditingProfile] = useState(false);
   const [profileForm, setProfileForm] = useState({ fullName: '', email: '', phone: '', address: '', city: '', postalCode: '' });
@@ -1056,6 +1056,9 @@ export default function FarmerDashboard() {
               <span className="ml-auto rounded-full bg-amber-100 px-1.5 py-0.5 text-xs font-semibold text-amber-800">{requests.filter((r) => r.status === 'pending').length}</span>
             )}
           </button>
+          <button type="button" onClick={() => setActiveTab('reviews')} className={`w-full flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-colors ${activeTab === 'reviews' ? 'bg-emerald-50 font-semibold text-emerald-800' : 'font-medium text-stone-600 hover:bg-stone-100 hover:text-stone-900'}`}>
+            <Star className="h-4 w-4" /> Αξιολογήσεις
+          </button>
         </nav>
       </aside>
 
@@ -1169,6 +1172,19 @@ export default function FarmerDashboard() {
                       {requests.filter((r) => r.status === 'pending').length}
                     </span>
                   )}
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveTab('reviews');
+                    setMobileMenuOpen(false);
+                  }}
+                  className={`flex w-full items-center rounded-lg px-3 py-3 text-left text-base font-medium transition ${activeTab === 'reviews' ? 'bg-emerald-50 text-emerald-800' : 'text-stone-700 hover:bg-stone-100 hover:text-emerald-700'}`}
+                >
+                  <Star className="mr-3 h-5 w-5" />
+                  Αξιολογήσεις
                 </button>
               </li>
             </ul>
@@ -1691,11 +1707,11 @@ export default function FarmerDashboard() {
             )}
           </section>
 
-          <section className={`mt-6 rounded-lg border border-stone-200 bg-white p-6 shadow-sm${activeTab !== 'requests' ? ' hidden' : ''}`}>
+          <section id="reviews" className={`mt-8 rounded-[24px] border border-amber-200 bg-[linear-gradient(180deg,#fffdf7_0%,#ffffff_100%)] p-6 shadow-[0_12px_30px_rgba(15,23,42,0.05)]${activeTab !== 'reviews' ? ' hidden' : ''}`}>
             <div className="mb-4 flex items-center justify-between gap-4">
               <div>
                 <h3 className="flex items-center gap-2 text-lg font-bold text-stone-900"><Star className="h-5 w-5 text-amber-500" />Αξιολογήσεις παραγωγού</h3>
-                <p className="mt-1 text-sm text-stone-500">Αξιολογήσεις που αφήνουν οι καταναλωτές μετά την ολοκλήρωση παραγγελίας.</p>
+                <p className="mt-1 text-sm text-stone-500">Ξεχωριστό πεδίο αξιολογήσεων κάτω από τα αιτήματα, με σχόλια που αφήνουν οι καταναλωτές μετά την ολοκλήρωση παραγγελίας.</p>
               </div>
               <span className="rounded-full bg-amber-50 px-3 py-1 text-sm font-semibold text-amber-800">{reviews.length} συνολικά</span>
             </div>
@@ -2132,7 +2148,7 @@ export default function FarmerDashboard() {
       </div>
 
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-stone-200 bg-white sm:hidden" aria-label="Κάτω πλοήγηση παραγωγού">
-        <div className="grid h-16 grid-cols-4">
+        <div className="grid h-16 grid-cols-5">
           <button
             type="button"
             onClick={() => setActiveTab('overview')}
@@ -2156,6 +2172,14 @@ export default function FarmerDashboard() {
           >
             <ClipboardList className="h-5 w-5" />
             Αιτήματα
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('reviews')}
+            className={`flex flex-col items-center justify-center gap-1 text-xs font-medium ${activeTab === 'reviews' ? 'text-emerald-700' : 'text-stone-500'}`}
+          >
+            <Star className="h-5 w-5" />
+            Reviews
           </button>
           <button
             type="button"
