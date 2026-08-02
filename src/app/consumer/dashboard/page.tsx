@@ -30,6 +30,7 @@ import {
   hasUserLocationCached,
   type UserLocation,
 } from '@/lib/geolocation';
+import { getAddressSuggestions, getLocationFromAddressText } from '@/lib/geography';
 import { uploadImageToSupabase } from '@/lib/supabase/images';
 
 interface Product {
@@ -137,6 +138,8 @@ export default function ConsumerDashboard() {
   const [sortType, setSortType] = useState<'newest' | 'price_low' | 'price_high'>('price_low');
   const [editingProfile, setEditingProfile] = useState(false);
   const [profileForm, setProfileForm] = useState({ fullName: '', email: '', phone: '', address: '', city: '', postalCode: '' });
+  const [addressSuggestions, setAddressSuggestions] = useState<Array<{ label: string; address: string; city: string; postalCode: string }>>([]);
+  const [showAddressSuggestions, setShowAddressSuggestions] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
   const [buyerAddress, setBuyerAddress] = useState('');
   const [buyerCity, setBuyerCity] = useState('');
@@ -1805,10 +1808,59 @@ export default function ConsumerDashboard() {
                     type="text"
                     required
                     value={profileForm.address}
-                    onChange={(e) => setProfileForm({ ...profileForm, address: e.target.value })}
+                    onChange={(e) => {
+                      const nextAddress = e.target.value;
+                      setProfileForm((prev) => {
+                        const inferredLocation = getLocationFromAddressText(nextAddress);
+
+                        return {
+                          ...prev,
+                          address: nextAddress,
+                          city: inferredLocation?.city ?? prev.city,
+                          postalCode: inferredLocation?.postalCode ?? prev.postalCode,
+                        };
+                      });
+                      setAddressSuggestions(getAddressSuggestions(nextAddress, 'address'));
+                      setShowAddressSuggestions(Boolean(nextAddress.trim()));
+                    }}
+                    onFocus={() => {
+                      if (profileForm.address.trim()) {
+                        setAddressSuggestions(getAddressSuggestions(profileForm.address, 'address'));
+                        setShowAddressSuggestions(true);
+                      }
+                    }}
+                    onBlur={() => window.setTimeout(() => setShowAddressSuggestions(false), 150)}
                     className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
-                    placeholder="π.χ. Πατησίων 123"
+                    placeholder="π.χ. Πατησίων 123 ή Βέροια"
                   />
+                  {showAddressSuggestions && addressSuggestions.length > 0 && (
+                    <ul className="mt-2 overflow-hidden rounded-lg border border-stone-200 bg-white shadow-sm">
+                      {addressSuggestions.map((suggestion, index) => (
+                        <li key={`${suggestion.label}-${index}`}>
+                          <button
+                            type="button"
+                            onMouseDown={(event) => event.preventDefault()}
+                            onClick={() => {
+                              setProfileForm((prev) => ({
+                                ...prev,
+                                address: suggestion.address,
+                                city: suggestion.city,
+                                postalCode: suggestion.postalCode,
+                              }));
+                              setShowAddressSuggestions(false);
+                            }}
+                            className="flex w-full flex-col items-start px-3 py-2 text-left text-sm text-stone-700 transition hover:bg-emerald-50"
+                          >
+                            <span className="font-medium">{suggestion.address}</span>
+                            <span className="text-xs text-stone-500">{suggestion.city} · {suggestion.postalCode}</span>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  <p className="mt-1 text-xs text-stone-500">
+                    Γράψτε τη διεύθυνση ή την οδό σας και επιλέξτε μια πρόταση για αυτόματη συμπλήρωση πόλης και Τ.Κ.
+                  </p>
                 </label>
                 <div className="grid gap-3 sm:grid-cols-2">
                   <label className="block text-sm font-semibold text-stone-700">

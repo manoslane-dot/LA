@@ -422,6 +422,34 @@ const locationSuggestions = buildLocationSuggestions();
 
 const normalizeSuggestionText = (value: string) => value.trim().toLowerCase();
 
+const normalizeLocationText = (value: string) => normalizeSuggestionText(value).normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+export function getLocationFromAddressText(address: string) {
+  const normalizedAddress = normalizeLocationText(address);
+
+  if (!normalizedAddress) {
+    return null;
+  }
+
+  const matchingSettlements = Object.keys(postalCodeBySettlement)
+    .filter((settlement) => {
+      const normalizedSettlement = normalizeLocationText(settlement);
+      return normalizedAddress.includes(normalizedSettlement) || normalizedSettlement.includes(normalizedAddress);
+    })
+    .sort((a, b) => b.length - a.length);
+
+  const settlement = matchingSettlements[0];
+
+  if (!settlement) {
+    return null;
+  }
+
+  return {
+    city: settlement,
+    postalCode: postalCodeBySettlement[settlement] ?? '000 00',
+  };
+}
+
 export function getAddressSuggestions(query: string, field: 'address' | 'city' | 'postalCode' = 'address') {
   const normalizedQuery = normalizeSuggestionText(query);
 
