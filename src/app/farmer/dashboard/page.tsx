@@ -14,8 +14,6 @@ import {
 } from '@/lib/auth/sessionPersistence';
 import { getDashboardForRole, normalizeUserRole } from '@/lib/auth/roleRouting';
 import { validateStrongPassword, validateUsername } from '@/lib/auth/credentialsPolicy';
-import { getAddressSuggestions, getLocationFromAddressText } from '@/lib/geography';
-import { attachGooglePlacesAutocomplete, hasGooglePlacesApiKey } from '@/lib/googlePlaces';
 import {
   addNotification,
   getNotificationStorageKey,
@@ -95,7 +93,6 @@ const isInvalidJwtError = (message?: string) => {
 export default function FarmerDashboard() {
   const router = useRouter();
   const supabase = createClient();
-  const useGoogleAddressAutocomplete = hasGooglePlacesApiKey();
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
@@ -106,9 +103,6 @@ export default function FarmerDashboard() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [editingProfile, setEditingProfile] = useState(false);
   const [profileForm, setProfileForm] = useState({ fullName: '', email: '', phone: '', address: '', city: '', postalCode: '' });
-  const [addressSuggestions, setAddressSuggestions] = useState<Array<{ label: string; address: string; city: string; postalCode: string }>>([]);
-  const [showAddressSuggestions, setShowAddressSuggestions] = useState(false);
-  const [addressInputRef, setAddressInputRef] = useState<HTMLInputElement | null>(null);
   const [savingProfile, setSavingProfile] = useState(false);
   const [userPhone, setUserPhone] = useState('');
   const [userAddress, setUserAddress] = useState('');
@@ -975,38 +969,6 @@ export default function FarmerDashboard() {
     setShowNotifications(false);
     setSelectedNotificationId(null);
   }, [markAllNotificationsAsRead]);
-
-  useEffect(() => {
-    if (!useGoogleAddressAutocomplete || !addressInputRef) {
-      return;
-    }
-
-    let isMounted = true;
-    let cleanup: (() => void) | undefined;
-
-    const attachAutocomplete = async () => {
-      cleanup = await attachGooglePlacesAutocomplete(addressInputRef, (selection) => {
-        setProfileForm((prev) => ({
-          ...prev,
-          address: selection.address || prev.address,
-          city: selection.city || prev.city,
-          postalCode: selection.postalCode || prev.postalCode,
-        }));
-        setShowAddressSuggestions(false);
-      });
-
-      if (!isMounted) {
-        cleanup?.();
-      }
-    };
-
-    void attachAutocomplete();
-
-    return () => {
-      isMounted = false;
-      cleanup?.();
-    };
-  }, [addressInputRef, useGoogleAddressAutocomplete]);
 
   useEffect(() => {
     if (!showNotifications) return;
@@ -1892,78 +1854,15 @@ export default function FarmerDashboard() {
                       <MapPin className="h-4 w-4 text-emerald-700" /> Διεύθυνση
                     </span>
                     <input
-                      ref={setAddressInputRef}
                       type="text"
                       required
                       value={profileForm.address}
-                      onChange={(e) => {
-                        const nextAddress = e.target.value;
-                        if (useGoogleAddressAutocomplete) {
-                          setProfileForm((prev) => ({
-                            ...prev,
-                            address: nextAddress,
-                          }));
-                          setShowAddressSuggestions(false);
-                          return;
-                        }
-
-                        setProfileForm((prev) => {
-                          const inferredLocation = getLocationFromAddressText(nextAddress);
-
-                          return {
-                            ...prev,
-                            address: nextAddress,
-                            city: inferredLocation?.city ?? prev.city,
-                            postalCode: inferredLocation?.postalCode ?? prev.postalCode,
-                          };
-                        });
-                        setAddressSuggestions(getAddressSuggestions(nextAddress, 'address'));
-                        setShowAddressSuggestions(Boolean(nextAddress.trim()));
-                      }}
-                      onFocus={() => {
-                        if (useGoogleAddressAutocomplete) {
-                          setShowAddressSuggestions(false);
-                          return;
-                        }
-
-                        if (profileForm.address.trim()) {
-                          setAddressSuggestions(getAddressSuggestions(profileForm.address, 'address'));
-                          setShowAddressSuggestions(true);
-                        }
-                      }}
-                      onBlur={() => window.setTimeout(() => setShowAddressSuggestions(false), 150)}
+                      onChange={(e) => setProfileForm({ ...profileForm, address: e.target.value })}
                       className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
                       placeholder="π.χ. Πατησίων 123 ή Βέροια"
                     />
-                    {!useGoogleAddressAutocomplete && showAddressSuggestions && addressSuggestions.length > 0 && (
-                      <ul className="mt-2 overflow-hidden rounded-lg border border-stone-200 bg-white shadow-sm">
-                        {addressSuggestions.map((suggestion, index) => (
-                          <li key={`${suggestion.label}-${index}`}>
-                            <button
-                              type="button"
-                              onMouseDown={(event) => event.preventDefault()}
-                              onClick={() => {
-                                setProfileForm((prev) => ({
-                                  ...prev,
-                                  address: suggestion.address,
-                                  city: suggestion.city,
-                                  postalCode: suggestion.postalCode,
-                                }));
-                                setShowAddressSuggestions(false);
-                              }}
-                              className="flex w-full flex-col items-start px-3 py-2 text-left text-sm text-stone-700 transition hover:bg-emerald-50"
-                            >
-                              <span className="font-medium">{suggestion.address}</span>
-                              <span className="text-xs text-stone-500">{suggestion.city} · {suggestion.postalCode}</span>
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
                     <p className="mt-1 text-xs text-stone-500">
-                      {useGoogleAddressAutocomplete
-                        ? 'Ξεκινήστε να γράφετε οδό και επιλέξτε από το Google Maps για αυτόματη συμπλήρωση πόλης και Τ.Κ.'
-                        : 'Γράψτε τη διεύθυνση ή την οδό σας και επιλέξτε μια πρόταση για αυτόματη συμπλήρωση πόλης και Τ.Κ.'}
+                      Συμπληρώστε χειροκίνητα τη διεύθυνση, την πόλη και τον Τ.Κ.
                     </p>
                   </label>
                   <div className="grid gap-3 sm:grid-cols-2">

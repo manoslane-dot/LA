@@ -451,7 +451,7 @@ export function getLocationFromAddressText(address: string) {
 }
 
 export function getAddressSuggestions(query: string, field: 'address' | 'city' | 'postalCode' = 'address') {
-  const normalizedQuery = normalizeSuggestionText(query);
+  const normalizedQuery = normalizeLocationText(query);
 
   if (!normalizedQuery) {
     return locationSuggestions.slice(0, 8);
@@ -462,7 +462,7 @@ export function getAddressSuggestions(query: string, field: 'address' | 'city' |
       ? [suggestion.postalCode, suggestion.city, suggestion.address]
       : [suggestion.label, suggestion.address, suggestion.city];
 
-    return haystacks.some((value) => normalizeSuggestionText(value).includes(normalizedQuery));
+    return haystacks.some((value) => normalizeLocationText(value).includes(normalizedQuery));
   }).slice(0, 6);
 }
 
