@@ -34,11 +34,7 @@ export function formatGreekPhoneInput(value: string): string {
     return '';
   }
 
-  if (normalizedDigits.length <= 2) {
-    return `+30 ${normalizedDigits}`.trim();
-  }
-
-  return `+30 ${normalizedDigits.slice(0, 2)} ${normalizedDigits.slice(2)}`.trim();
+  return `+30 ${normalizedDigits}`;
 }
 
 export function normalizePhone(value: unknown): string | null {
