@@ -15,7 +15,7 @@ import {
 import { getDashboardForRole, normalizeUserRole } from '@/lib/auth/roleRouting';
 import { validateStrongPassword, validateUsername } from '@/lib/auth/credentialsPolicy';
 import { getAddressSuggestions, getLocationFromAddressText } from '@/lib/geography';
-import { attachGooglePlacesAutocomplete } from '@/lib/googlePlaces';
+import { attachGooglePlacesAutocomplete, hasGooglePlacesApiKey } from '@/lib/googlePlaces';
 import {
   addNotification,
   getNotificationStorageKey,
@@ -95,6 +95,7 @@ const isInvalidJwtError = (message?: string) => {
 export default function FarmerDashboard() {
   const router = useRouter();
   const supabase = createClient();
+  const useGoogleAddressAutocomplete = hasGooglePlacesApiKey();
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
@@ -976,7 +977,7 @@ export default function FarmerDashboard() {
   }, [markAllNotificationsAsRead]);
 
   useEffect(() => {
-    if (!addressInputRef) {
+    if (!useGoogleAddressAutocomplete || !addressInputRef) {
       return;
     }
 
@@ -1005,7 +1006,7 @@ export default function FarmerDashboard() {
       isMounted = false;
       cleanup?.();
     };
-  }, [addressInputRef]);
+  }, [addressInputRef, useGoogleAddressAutocomplete]);
 
   useEffect(() => {
     if (!showNotifications) return;
@@ -1897,6 +1898,15 @@ export default function FarmerDashboard() {
                       value={profileForm.address}
                       onChange={(e) => {
                         const nextAddress = e.target.value;
+                        if (useGoogleAddressAutocomplete) {
+                          setProfileForm((prev) => ({
+                            ...prev,
+                            address: nextAddress,
+                          }));
+                          setShowAddressSuggestions(false);
+                          return;
+                        }
+
                         setProfileForm((prev) => {
                           const inferredLocation = getLocationFromAddressText(nextAddress);
 
@@ -1911,6 +1921,11 @@ export default function FarmerDashboard() {
                         setShowAddressSuggestions(Boolean(nextAddress.trim()));
                       }}
                       onFocus={() => {
+                        if (useGoogleAddressAutocomplete) {
+                          setShowAddressSuggestions(false);
+                          return;
+                        }
+
                         if (profileForm.address.trim()) {
                           setAddressSuggestions(getAddressSuggestions(profileForm.address, 'address'));
                           setShowAddressSuggestions(true);
@@ -1920,7 +1935,7 @@ export default function FarmerDashboard() {
                       className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
                       placeholder="π.χ. Πατησίων 123 ή Βέροια"
                     />
-                    {showAddressSuggestions && addressSuggestions.length > 0 && (
+                    {!useGoogleAddressAutocomplete && showAddressSuggestions && addressSuggestions.length > 0 && (
                       <ul className="mt-2 overflow-hidden rounded-lg border border-stone-200 bg-white shadow-sm">
                         {addressSuggestions.map((suggestion, index) => (
                           <li key={`${suggestion.label}-${index}`}>
@@ -1946,7 +1961,9 @@ export default function FarmerDashboard() {
                       </ul>
                     )}
                     <p className="mt-1 text-xs text-stone-500">
-                      Γράψτε τη διεύθυνση ή την οδό σας και επιλέξτε μια πρόταση για αυτόματη συμπλήρωση πόλης και Τ.Κ.
+                      {useGoogleAddressAutocomplete
+                        ? 'Ξεκινήστε να γράφετε οδό και επιλέξτε από το Google Maps για αυτόματη συμπλήρωση πόλης και Τ.Κ.'
+                        : 'Γράψτε τη διεύθυνση ή την οδό σας και επιλέξτε μια πρόταση για αυτόματη συμπλήρωση πόλης και Τ.Κ.'}
                     </p>
                   </label>
                   <div className="grid gap-3 sm:grid-cols-2">

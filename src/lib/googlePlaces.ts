@@ -31,8 +31,19 @@ export interface GooglePlaceSelection {
 
 const getGooglePlacesApiKey = () => process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY?.trim() ?? '';
 
+export const hasGooglePlacesApiKey = () => Boolean(getGooglePlacesApiKey());
+
 const getComponentValue = (components: Array<{ long_name: string; short_name: string; types: string[] }> | undefined, type: string) =>
   components?.find((component) => component.types.includes(type))?.long_name ?? '';
+
+const getCityFromAddressComponents = (components: Array<{ long_name: string; short_name: string; types: string[] }> | undefined) => (
+  getComponentValue(components, 'locality')
+  || getComponentValue(components, 'postal_town')
+  || getComponentValue(components, 'administrative_area_level_3')
+  || getComponentValue(components, 'administrative_area_level_2')
+  || getComponentValue(components, 'sublocality_level_1')
+  || ''
+);
 
 export async function loadGooglePlacesLibrary() {
   if (typeof window === 'undefined') {
@@ -100,7 +111,7 @@ export async function attachGooglePlacesAutocomplete(
   }
 
   const autocomplete = new window.google.maps.places.Autocomplete(input, {
-    types: ['address'],
+    types: ['geocode'],
     componentRestrictions: { country: 'gr' },
     fields: ['address_components', 'formatted_address'],
   });
@@ -109,10 +120,7 @@ export async function attachGooglePlacesAutocomplete(
     const place = autocomplete.getPlace();
     const address = place.formatted_address?.trim() ?? '';
     const components = place.address_components;
-    const city = getComponentValue(components, 'locality')
-      || getComponentValue(components, 'administrative_area_level_3')
-      || getComponentValue(components, 'administrative_area_level_2')
-      || '';
+    const city = getCityFromAddressComponents(components);
     const postalCode = getComponentValue(components, 'postal_code');
 
     if (!address && !city && !postalCode) {
