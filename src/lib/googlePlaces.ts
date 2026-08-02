@@ -126,14 +126,11 @@ export async function attachGooglePlacesAutocomplete(
     });
   };
 
-  const listener = autocomplete.addListener('place_changed', placeChangedHandler);
+  autocomplete.addListener('place_changed', placeChangedHandler);
 
   return () => {
     if (window.google?.maps?.event?.clearInstanceListeners) {
       window.google.maps.event.clearInstanceListeners(autocomplete);
-    }
-    if (listener) {
-      // noop: the event listener is cleared above
     }
   };
 }
