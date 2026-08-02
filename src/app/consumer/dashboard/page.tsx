@@ -31,6 +31,7 @@ import {
   type UserLocation,
 } from '@/lib/geolocation';
 import { getAddressSuggestions, getLocationFromAddressText } from '@/lib/geography';
+import { attachGooglePlacesAutocomplete } from '@/lib/googlePlaces';
 import { uploadImageToSupabase } from '@/lib/supabase/images';
 
 interface Product {
@@ -140,6 +141,7 @@ export default function ConsumerDashboard() {
   const [profileForm, setProfileForm] = useState({ fullName: '', email: '', phone: '', address: '', city: '', postalCode: '' });
   const [addressSuggestions, setAddressSuggestions] = useState<Array<{ label: string; address: string; city: string; postalCode: string }>>([]);
   const [showAddressSuggestions, setShowAddressSuggestions] = useState(false);
+  const [addressInputRef, setAddressInputRef] = useState<HTMLInputElement | null>(null);
   const [savingProfile, setSavingProfile] = useState(false);
   const [buyerAddress, setBuyerAddress] = useState('');
   const [buyerCity, setBuyerCity] = useState('');
@@ -181,6 +183,38 @@ export default function ConsumerDashboard() {
     setShowNotifications(false);
     setSelectedNotificationId(null);
   }, [markAllNotificationsAsRead]);
+
+  useEffect(() => {
+    if (!addressInputRef) {
+      return;
+    }
+
+    let isMounted = true;
+    let cleanup: (() => void) | undefined;
+
+    const attachAutocomplete = async () => {
+      cleanup = await attachGooglePlacesAutocomplete(addressInputRef, (selection) => {
+        setProfileForm((prev) => ({
+          ...prev,
+          address: selection.address || prev.address,
+          city: selection.city || prev.city,
+          postalCode: selection.postalCode || prev.postalCode,
+        }));
+        setShowAddressSuggestions(false);
+      });
+
+      if (!isMounted) {
+        cleanup?.();
+      }
+    };
+
+    void attachAutocomplete();
+
+    return () => {
+      isMounted = false;
+      cleanup?.();
+    };
+  }, [addressInputRef]);
 
   useEffect(() => {
     if (!showNotifications) return;
@@ -1805,6 +1839,7 @@ export default function ConsumerDashboard() {
                     <MapPin className="h-4 w-4 text-emerald-700" /> Διεύθυνση
                   </span>
                   <input
+                    ref={setAddressInputRef}
                     type="text"
                     required
                     value={profileForm.address}

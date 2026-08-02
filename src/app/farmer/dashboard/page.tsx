@@ -15,6 +15,7 @@ import {
 import { getDashboardForRole, normalizeUserRole } from '@/lib/auth/roleRouting';
 import { validateStrongPassword, validateUsername } from '@/lib/auth/credentialsPolicy';
 import { getAddressSuggestions, getLocationFromAddressText } from '@/lib/geography';
+import { attachGooglePlacesAutocomplete } from '@/lib/googlePlaces';
 import {
   addNotification,
   getNotificationStorageKey,
@@ -106,6 +107,7 @@ export default function FarmerDashboard() {
   const [profileForm, setProfileForm] = useState({ fullName: '', email: '', phone: '', address: '', city: '', postalCode: '' });
   const [addressSuggestions, setAddressSuggestions] = useState<Array<{ label: string; address: string; city: string; postalCode: string }>>([]);
   const [showAddressSuggestions, setShowAddressSuggestions] = useState(false);
+  const [addressInputRef, setAddressInputRef] = useState<HTMLInputElement | null>(null);
   const [savingProfile, setSavingProfile] = useState(false);
   const [userPhone, setUserPhone] = useState('');
   const [userAddress, setUserAddress] = useState('');
@@ -972,6 +974,38 @@ export default function FarmerDashboard() {
     setShowNotifications(false);
     setSelectedNotificationId(null);
   }, [markAllNotificationsAsRead]);
+
+  useEffect(() => {
+    if (!addressInputRef) {
+      return;
+    }
+
+    let isMounted = true;
+    let cleanup: (() => void) | undefined;
+
+    const attachAutocomplete = async () => {
+      cleanup = await attachGooglePlacesAutocomplete(addressInputRef, (selection) => {
+        setProfileForm((prev) => ({
+          ...prev,
+          address: selection.address || prev.address,
+          city: selection.city || prev.city,
+          postalCode: selection.postalCode || prev.postalCode,
+        }));
+        setShowAddressSuggestions(false);
+      });
+
+      if (!isMounted) {
+        cleanup?.();
+      }
+    };
+
+    void attachAutocomplete();
+
+    return () => {
+      isMounted = false;
+      cleanup?.();
+    };
+  }, [addressInputRef]);
 
   useEffect(() => {
     if (!showNotifications) return;
@@ -1857,6 +1891,7 @@ export default function FarmerDashboard() {
                       <MapPin className="h-4 w-4 text-emerald-700" /> Διεύθυνση
                     </span>
                     <input
+                      ref={setAddressInputRef}
                       type="text"
                       required
                       value={profileForm.address}
