@@ -11,6 +11,7 @@ import {
   normalizeContactEmail,
   normalizePhone,
 } from '@/lib/auth/contactInfo';
+import { censorProfanity } from '@/lib/contentModeration';
 import { resolvePostLoginRedirect } from '@/lib/auth/roleRouting';
 
 function CompleteProfileForm() {
@@ -86,7 +87,7 @@ function CompleteProfileForm() {
 
     const normalizedEmail = normalizeContactEmail(email);
     const normalizedPhone = normalizePhone(phone);
-    const trimmedName = fullName.trim();
+    const trimmedName = censorProfanity(fullName).trim();
 
     if (!normalizedEmail) {
       setErrorMsg('Συμπληρώστε έγκυρο email επικοινωνίας.');
@@ -173,7 +174,7 @@ function CompleteProfileForm() {
               type="text"
               required
               value={fullName}
-              onChange={(event) => setFullName(event.target.value)}
+              onChange={(event) => setFullName(censorProfanity(event.target.value))}
               className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
               placeholder="π.χ. Γιώργης Παπαδόπουλος"
             />

@@ -30,6 +30,7 @@ import {
   hasUserLocationCached,
   type UserLocation,
 } from '@/lib/geolocation';
+import { censorProfanity } from '@/lib/contentModeration';
 import { uploadImageToSupabase } from '@/lib/supabase/images';
 
 interface Product {
@@ -57,6 +58,17 @@ interface PurchaseRequest {
   unit_price_at_request: number;
   profit: number;
   products?: { unit: string; price: number } | { unit: string; price: number }[] | null;
+}
+
+interface Review {
+  id: number;
+  request_id: number;
+  buyer_id: string;
+  farmer_id: string;
+  product_id: number | null;
+  rating: number;
+  message: string | null;
+  created_at: string;
 }
 
 const requestStatusLabels: Record<PurchaseRequest['status'], string> = {
@@ -161,6 +173,11 @@ export default function ConsumerDashboard() {
   const [selectedNotificationId, setSelectedNotificationId] = useState<string | null>(null);
   const [showCoordinateOverlay, setShowCoordinateOverlay] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [reviewsByRequestId, setReviewsByRequestId] = useState<Record<number, Review>>({});
+  const [openReviewRequestId, setOpenReviewRequestId] = useState<number | null>(null);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewMessage, setReviewMessage] = useState('');
+  const [submittingReview, setSubmittingReview] = useState(false);
   const notificationRef = useRef<HTMLDivElement | null>(null);
 
   const markAllNotificationsAsRead = useCallback(() => {
@@ -415,6 +432,28 @@ export default function ConsumerDashboard() {
     }
   }, [supabase]);
 
+  const fetchMyReviews = useCallback(async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('reviews')
+        .select('id, request_id, buyer_id, farmer_id, product_id, rating, message, created_at')
+        .eq('buyer_id', userId);
+
+      if (error) {
+        console.warn('Σφάλμα φόρτωσης αξιολογήσεων (μη κρίσιμο):', error.message);
+        return;
+      }
+
+      const nextMap: Record<number, Review> = {};
+      for (const review of (data ?? []) as Review[]) {
+        nextMap[review.request_id] = review;
+      }
+      setReviewsByRequestId(nextMap);
+    } catch (err) {
+      console.warn('Exception loading reviews:', err);
+    }
+  }, [supabase]);
+
   const fetchFarmerServiceAreas = useCallback(async () => {
     const farmerIds = [...new Set(products.map((p) => p.farmer_id).filter(Boolean) as string[])];
     if (farmerIds.length === 0) return;
@@ -557,12 +596,12 @@ export default function ConsumerDashboard() {
       setBuyerCity(profileCity);
       setBuyerPostalCode(profilePostalCode);
 
-      await Promise.all([fetchProducts(), fetchRequests(session.user.id)]);
+      await Promise.all([fetchProducts(), fetchRequests(session.user.id), fetchMyReviews(session.user.id)]);
       setLoading(false);
     };
 
     void loadDashboard();
-  }, [fetchProducts, fetchRequests, supabase, router]);
+  }, [fetchProducts, fetchRequests, fetchMyReviews, supabase, router]);
 
   // Φόρτωση service areas όταν αλλάξουν τα products
   useEffect(() => {
@@ -602,6 +641,65 @@ export default function ConsumerDashboard() {
     setShowNotifications(true);
   };
 
+  const handleSubmitReview = async (request: PurchaseRequest) => {
+    if (!buyerId) {
+      return;
+    }
+
+    if (reviewsByRequestId[request.id]) {
+      setSuccessMsg('Έχετε ήδη αφήσει αξιολόγηση για αυτό το αίτημα.');
+      window.setTimeout(() => setSuccessMsg(''), 4000);
+      return;
+    }
+
+    if (reviewRating < 1 || reviewRating > 5) {
+      setErrorMsg('Παρακαλώ επιλέξτε βαθμολογία από 1 έως 5 αστέρια.');
+      return;
+    }
+
+    setSubmittingReview(true);
+    setErrorMsg('');
+
+    try {
+      const cleanedMessage = censorProfanity(reviewMessage).trim();
+      const { data, error } = await supabase
+        .from('reviews')
+        .insert({
+          request_id: request.id,
+          buyer_id: buyerId,
+          farmer_id: request.farmer_id,
+          product_id: request.product_id,
+          rating: reviewRating,
+          message: cleanedMessage || null,
+        })
+        .select('id, request_id, buyer_id, farmer_id, product_id, rating, message, created_at')
+        .single();
+
+      if (error) {
+        setErrorMsg(`Δεν αποθηκεύτηκε η αξιολόγηση: ${error.message}`);
+        return;
+      }
+
+      if (data) {
+        setReviewsByRequestId((prev) => ({
+          ...prev,
+          [request.id]: data as Review,
+        }));
+      }
+
+      setOpenReviewRequestId(null);
+      setReviewRating(5);
+      setReviewMessage('');
+      setSuccessMsg('Η αξιολόγησή σας αποθηκεύτηκε. Ευχαριστούμε!');
+      window.setTimeout(() => setSuccessMsg(''), 5000);
+    } catch (err) {
+      console.error('Exception submitting review:', err);
+      setErrorMsg('Σφάλμα κατά την αποθήκευση αξιολόγησης.');
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
+
   const handleRequest = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!buyerId || !selectedProduct?.farmer_id) return;
@@ -635,6 +733,8 @@ export default function ConsumerDashboard() {
     setSubmitting(true);
     setErrorMsg('');
     
+    const sanitizedMessage = censorProfanity(message).trim();
+
     const insertData = {
       product_id: selectedProduct.id,
       product_title: selectedProduct.title,
@@ -645,7 +745,7 @@ export default function ConsumerDashboard() {
       requested_quantity: quantity,
       unit_at_request: selectedProduct.unit,
       unit_price_at_request: selectedProduct.price,
-      message: message.trim() || null,
+      message: sanitizedMessage || null,
     };
     
     console.log('Attempting to insert purchase request:', insertData);
@@ -708,7 +808,7 @@ export default function ConsumerDashboard() {
       setAvatarUrl(publicUrl);
     } catch (err) {
       console.error('Σφάλμα upload avatar:', err);
-      setErrorMsg('Δεν ήταν δυνατή η αποστολή της φωτογραφίας.');
+      setErrorMsg(err instanceof Error ? err.message : 'Δεν ήταν δυνατή η αποστολή της φωτογραφίας.');
     } finally {
       setUploadingAvatar(false);
     }
@@ -1571,6 +1671,8 @@ export default function ConsumerDashboard() {
                   const unit = productDetails.unit;
                   const unitPrice = productDetails.price;
                   const totalCost = request.requested_quantity * unitPrice;
+                  const existingReview = reviewsByRequestId[request.id];
+                  const isReviewFormOpen = openReviewRequestId === request.id;
                   const farmerProfile = farmerProfiles[request.farmer_id];
                   const farmerName = farmerProfile?.full_name || 'Παραγωγός';
                   const farmerPhone = farmerProfile?.contact_phone || 'Δεν έχει καταχωρημένο τηλέφωνο';
@@ -1597,6 +1699,93 @@ export default function ConsumerDashboard() {
                                 )}
                               </div>
                             </div>
+                          </div>
+                        )}
+                        {request.status === 'ready' && (
+                          <div className="mt-3 rounded-lg border border-stone-200 bg-stone-50 p-3">
+                            <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-700">Αξιολόγηση παραγωγού</p>
+                            {existingReview ? (
+                              <div className="mt-2 space-y-2">
+                                <div className="flex items-center gap-1" aria-label={`Βαθμολογία ${existingReview.rating} στα 5`}>
+                                  {Array.from({ length: 5 }, (_, index) => (
+                                    <Star
+                                      key={index}
+                                      className={`h-4 w-4 ${index < existingReview.rating ? 'fill-amber-400 text-amber-400' : 'text-amber-300/70'}`}
+                                    />
+                                  ))}
+                                </div>
+                                {existingReview.message && (
+                                  <p className="text-sm text-stone-700">{existingReview.message}</p>
+                                )}
+                              </div>
+                            ) : isReviewFormOpen ? (
+                              <form
+                                onSubmit={async (event) => {
+                                  event.preventDefault();
+                                  await handleSubmitReview(request);
+                                }}
+                                className="mt-2 space-y-3"
+                              >
+                                <div className="flex items-center gap-1">
+                                  {Array.from({ length: 5 }, (_, index) => {
+                                    const starValue = index + 1;
+                                    return (
+                                      <button
+                                        key={starValue}
+                                        type="button"
+                                        onClick={() => setReviewRating(starValue)}
+                                        className="rounded p-0.5"
+                                        aria-label={`${starValue} αστέρια`}
+                                      >
+                                        <Star
+                                          className={`h-5 w-5 ${starValue <= reviewRating ? 'fill-amber-400 text-amber-400' : 'text-amber-300/70'}`}
+                                        />
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                                <textarea
+                                  value={reviewMessage}
+                                  onChange={(event) => setReviewMessage(censorProfanity(event.target.value))}
+                                  maxLength={300}
+                                  rows={3}
+                                  className="w-full rounded-md border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                                  placeholder="Προαιρετικό μήνυμα για την εμπειρία σας"
+                                />
+                                <div className="flex flex-wrap gap-2">
+                                  <button
+                                    type="submit"
+                                    disabled={submittingReview}
+                                    className="rounded-md bg-emerald-700 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-800 disabled:bg-emerald-400"
+                                  >
+                                    {submittingReview ? 'Αποθήκευση...' : 'Αποστολή αξιολόγησης'}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setOpenReviewRequestId(null);
+                                      setReviewRating(5);
+                                      setReviewMessage('');
+                                    }}
+                                    className="rounded-md border border-stone-300 px-3 py-1.5 text-xs font-semibold text-stone-700 transition hover:bg-stone-100"
+                                  >
+                                    Ακύρωση
+                                  </button>
+                                </div>
+                              </form>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setOpenReviewRequestId(request.id);
+                                  setReviewRating(5);
+                                  setReviewMessage('');
+                                }}
+                                className="mt-2 rounded-md bg-emerald-700 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-800"
+                              >
+                                Αφήστε αξιολόγηση
+                              </button>
+                            )}
                           </div>
                         )}
                       </div>
@@ -1691,7 +1880,7 @@ export default function ConsumerDashboard() {
 
                   setSavingProfile(true);
                   setErrorMsg('');
-                  const trimmedFullName = profileForm.fullName.trim();
+                  const trimmedFullName = censorProfanity(profileForm.fullName).trim();
                   const trimmedPhone = profileForm.phone.trim();
                   const trimmedAddress = profileForm.address.trim();
                   const trimmedCity = profileForm.city.trim();
@@ -1765,7 +1954,7 @@ export default function ConsumerDashboard() {
                     type="text"
                     required
                     value={profileForm.fullName}
-                    onChange={(e) => setProfileForm({ ...profileForm, fullName: e.target.value })}
+                    onChange={(e) => setProfileForm({ ...profileForm, fullName: censorProfanity(e.target.value) })}
                     className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
                     placeholder="π.χ. Γιάννης Παπαδόπουλος"
                   />
@@ -2117,7 +2306,7 @@ export default function ConsumerDashboard() {
                 formatCurrency((Number(requestedQuantity) > 0 ? Number(requestedQuantity) : 0) * selectedProduct.price)
               } ({formatCurrency(selectedProduct.price)} / {selectedProduct.unit})
             </div>
-            <label className="mb-5 block text-sm font-medium text-stone-700">Μήνυμα για τον παραγωγό (προαιρετικό)<textarea value={message} onChange={(event) => setMessage(event.target.value)} maxLength={1000} rows={3} className="mt-1 w-full rounded-md border border-stone-300 px-3 py-2 text-base" /></label>
+            <label className="mb-5 block text-sm font-medium text-stone-700">Μήνυμα για τον παραγωγό (προαιρετικό)<textarea value={message} onChange={(event) => setMessage(censorProfanity(event.target.value))} maxLength={1000} rows={3} className="mt-1 w-full rounded-md border border-stone-300 px-3 py-2 text-base" /></label>
             <button type="submit" disabled={submitting} className="w-full rounded-md bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white disabled:bg-emerald-400">{submitting ? 'Αποστολή...' : 'Στείλε αίτημα'}</button>
           </form>
         </div>

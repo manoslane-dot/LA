@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Bell, CircleDollarSign, ClipboardList, House, KeyRound, Leaf, LogOut, Mail, MapPin, Package, Pencil, Phone, Plus, ShoppingBag, Trash2, User, X, LayoutDashboard } from 'lucide-react';
+import { Bell, CircleDollarSign, ClipboardList, House, KeyRound, Leaf, LogOut, Mail, MapPin, Package, Pencil, Phone, Plus, ShoppingBag, Star, Trash2, User, X, LayoutDashboard } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { formatGreekPhoneInput, isPhoneValid, normalizePhone } from '@/lib/auth/contactInfo';
 import { sanitizePhoneForTel } from '@/lib/serviceAreas';
@@ -22,6 +22,7 @@ import {
   markNotificationsRead,
   type NotificationItem,
 } from '@/lib/notifications';
+import { censorProfanity } from '@/lib/contentModeration';
 import { uploadImageToSupabase } from '@/lib/supabase/images';
 
 interface Product {
@@ -50,6 +51,17 @@ interface PurchaseRequest {
   unit_price_at_request: number;
   profit: number;
   products?: { unit: string; price: number } | { unit: string; price: number }[] | null;
+}
+
+interface Review {
+  id: number;
+  request_id: number;
+  buyer_id: string;
+  farmer_id: string;
+  product_id: number | null;
+  rating: number;
+  message: string | null;
+  created_at: string;
 }
 
 const requestStatusLabels: Record<PurchaseRequest['status'], string> = {
@@ -136,6 +148,7 @@ export default function FarmerDashboard() {
   // Προϊόντα προς Πώληση
   const [products, setProducts] = useState<Product[]>([]);
   const [requests, setRequests] = useState<PurchaseRequest[]>([]);
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [updatingRequestId, setUpdatingRequestId] = useState<number | null>(null);
   const [prodTitle, setProdTitle] = useState('');
   const [prodQuantity, setProdQuantity] = useState('');
@@ -284,6 +297,21 @@ export default function FarmerDashboard() {
     return [] as PurchaseRequest[];
   }, [supabase]);
 
+  const fetchReviews = useCallback(async (farmerId: string) => {
+    const { data, error } = await supabase
+      .from('reviews')
+      .select('id, request_id, buyer_id, farmer_id, product_id, rating, message, created_at')
+      .eq('farmer_id', farmerId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching reviews:', error.message);
+      return;
+    }
+
+    setReviews((data ?? []) as Review[]);
+  }, [supabase]);
+
   useEffect(() => {
     const checkUserAndFetchData = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -355,6 +383,7 @@ export default function FarmerDashboard() {
       }
       
       const requestsData = await fetchRequests(session.user.id);
+      await fetchReviews(session.user.id);
       const derivedTotalRevenue = requestsData.reduce((sum, request) => {
         if (request.status === 'ready' && typeof request.profit === 'number') {
           return sum + request.profit;
@@ -372,7 +401,7 @@ export default function FarmerDashboard() {
     };
 
     void checkUserAndFetchData();
-  }, [router, supabase, fetchProducts, fetchRequests]);
+  }, [router, supabase, fetchProducts, fetchRequests, fetchReviews]);
 
   const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -392,7 +421,7 @@ export default function FarmerDashboard() {
       setAvatarUrl(publicUrl);
     } catch (err) {
       console.error('Σφάλμα upload avatar:', err);
-      alert('Δεν ήταν δυνατή η αποστολή της φωτογραφίας.');
+      alert(err instanceof Error ? err.message : 'Δεν ήταν δυνατή η αποστολή της φωτογραφίας.');
     } finally {
       setUploadingAvatar(false);
     }
@@ -429,7 +458,7 @@ export default function FarmerDashboard() {
       const { error: updateError } = await supabase
         .from('products')
         .update({
-          title: editingProductTitle.trim(),
+          title: censorProfanity(editingProductTitle).trim(),
           quantity: parseFloat(editingProductQuantity),
           price: parseFloat(editingProductPrice),
           unit: editingProductUnit,
@@ -467,7 +496,7 @@ export default function FarmerDashboard() {
       await fetchProducts(userId);
     } catch (err) {
       console.error('Σφάλμα ενημέρωσης προϊόντος:', err);
-      alert('Σφάλμα: ' + (err as Error).message);
+      alert(err instanceof Error ? err.message : 'Σφάλμα ενημέρωσης προϊόντος.');
     } finally {
       setUpdatingProduct(false);
     }
@@ -489,7 +518,7 @@ export default function FarmerDashboard() {
         .from('products')
         .insert([
           {
-            title: prodTitle,
+            title: censorProfanity(prodTitle).trim(),
             quantity: parseFloat(prodQuantity),
             price: parseFloat(prodPrice),
             unit: prodUnit,
@@ -527,7 +556,7 @@ export default function FarmerDashboard() {
       await fetchProducts(userId);
     } catch (err) {
       console.error('Σφάλμα δημιουργίας προϊόντος:', err);
-      alert('Σφάλμα: ' + (err as Error).message);
+      alert(err instanceof Error ? err.message : 'Σφάλμα δημιουργίας προϊόντος.');
     } finally {
       setSubmittingProd(false);
     }
@@ -631,13 +660,13 @@ export default function FarmerDashboard() {
         const notificationMessage = status === 'confirmed'
           ? `Η παραγγελία σας για ${request.product_title} επιβεβαιώθηκε.`
           : status === 'ready'
-            ? `Η παραγγελία σας για ${request.product_title} ολοκληρώθηκε.`
+            ? `Η παραγγελία σας για ${request.product_title} ολοκληρώθηκε. Αφήστε αξιολόγηση για τον παραγωγό (1-5 αστέρια).`
             : `Η παραγγελία σας για ${request.product_title} απορρίφθηκε.`;
 
         const nextNotifications = addNotification(getNotificationStorageKey(request.buyer_id), {
           title: `Ενημέρωση παραγγελίας: ${statusLabel}`,
           status: statusLabel,
-          message: `Κατάσταση παραγγελίας: ${statusLabel}`,
+          message: notificationMessage,
         });
         setNotifications(nextNotifications);
         setNotificationCount(getUnreadNotificationCount(nextNotifications));
@@ -684,6 +713,7 @@ export default function FarmerDashboard() {
       }
 
       const updatedRequests = await fetchRequests(userId);
+      await fetchReviews(userId);
       const derivedRevenue = updatedRequests.reduce((sum, currentRequest) => {
         if (currentRequest.status === 'ready' && typeof currentRequest.profit === 'number') {
           return sum + currentRequest.profit;
@@ -1308,7 +1338,7 @@ export default function FarmerDashboard() {
                     type="text"
                     required
                     value={prodTitle}
-                    onChange={(e) => setProdTitle(e.target.value)}
+                    onChange={(e) => setProdTitle(censorProfanity(e.target.value))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
                     placeholder="π.χ. Εξαιρετικά Παρθένο Ελαιόλαδο"
                   />
@@ -1506,7 +1536,7 @@ export default function FarmerDashboard() {
                         type="text"
                         required
                         value={editingProductTitle}
-                        onChange={(e) => setEditingProductTitle(e.target.value)}
+                        onChange={(e) => setEditingProductTitle(censorProfanity(e.target.value))}
                         className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
                       />
                     </div>
@@ -1661,6 +1691,47 @@ export default function FarmerDashboard() {
             )}
           </section>
 
+          <section className={`mt-6 rounded-lg border border-stone-200 bg-white p-6 shadow-sm${activeTab !== 'requests' ? ' hidden' : ''}`}>
+            <div className="mb-4 flex items-center justify-between gap-4">
+              <div>
+                <h3 className="flex items-center gap-2 text-lg font-bold text-stone-900"><Star className="h-5 w-5 text-amber-500" />Αξιολογήσεις παραγωγού</h3>
+                <p className="mt-1 text-sm text-stone-500">Αξιολογήσεις που αφήνουν οι καταναλωτές μετά την ολοκλήρωση παραγγελίας.</p>
+              </div>
+              <span className="rounded-full bg-amber-50 px-3 py-1 text-sm font-semibold text-amber-800">{reviews.length} συνολικά</span>
+            </div>
+
+            {reviews.length === 0 ? (
+              <p className="text-sm text-stone-500">Δεν υπάρχουν αξιολογήσεις ακόμη.</p>
+            ) : (
+              <ul className="space-y-3">
+                {reviews.map((review) => {
+                  const relatedRequest = requests.find((request) => request.id === review.request_id);
+                  return (
+                    <li key={review.id} className="rounded-[18px] border border-stone-200 bg-stone-50 p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-semibold text-stone-900">{relatedRequest?.product_title ?? 'Παραγγελία προϊόντος'}</p>
+                          <p className="mt-1 text-xs text-stone-500">{new Date(review.created_at).toLocaleString('el-GR')}</p>
+                        </div>
+                        <div className="flex items-center gap-1" aria-label={`Βαθμολογία ${review.rating} στα 5`}>
+                          {Array.from({ length: 5 }, (_, index) => (
+                            <Star
+                              key={index}
+                              className={`h-4 w-4 ${index < review.rating ? 'fill-amber-400 text-amber-400' : 'text-amber-300/70'}`}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                      {review.message && (
+                        <p className="mt-2 text-sm text-stone-700">{review.message}</p>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </section>
+
           <section id="profile" className={activeTab !== 'profile' ? 'hidden' : 'rounded-[30px] border border-stone-200 bg-[#fbfcf8] p-6 shadow-[0_20px_40px_rgba(15,23,42,0.05)]'}>
             <div className="mx-auto max-w-6xl">
               <h2 className="mb-5 text-left text-2xl font-semibold text-stone-800">Το Προφίλ μου</h2>
@@ -1744,7 +1815,7 @@ export default function FarmerDashboard() {
 
                     setSavingProfile(true);
                     setErrorMsg('');
-                    const trimmedFullName = profileForm.fullName.trim();
+                    const trimmedFullName = censorProfanity(profileForm.fullName).trim();
                     const normalizedPhone = getValidNormalizedPhone(profileForm.phone.trim());
                     const trimmedAddress = profileForm.address.trim();
                     const trimmedCity = profileForm.city.trim();
@@ -1817,7 +1888,7 @@ export default function FarmerDashboard() {
                       type="text"
                       required
                       value={profileForm.fullName}
-                      onChange={(e) => setProfileForm({ ...profileForm, fullName: e.target.value })}
+                      onChange={(e) => setProfileForm({ ...profileForm, fullName: censorProfanity(e.target.value) })}
                       className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
                       placeholder="π.χ. Γιάννης Παπαδόπουλος"
                     />
@@ -2229,7 +2300,7 @@ export default function FarmerDashboard() {
                 >
                   <textarea
                     value={chatMessage}
-                    onChange={(e) => setChatMessage(e.target.value)}
+                    onChange={(e) => setChatMessage(censorProfanity(e.target.value))}
                     placeholder="Γράψτε το μήνυμά σας εδώ..."
                     maxLength={500}
                     rows={3}
