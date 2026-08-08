@@ -475,26 +475,41 @@ export default function FarmerDashboard() {
       if (updateError) throw updateError;
 
       if (editingProductImages.length > 0) {
-        const { error: deleteError } = await supabase
-          .from('product_images')
-          .delete()
-          .eq('product_id', editingProductId);
-
-        if (deleteError) throw deleteError;
-
         const imageRows = [] as Array<{ product_id: number; image_url: string; image_path: string; sort_order: number }>;
+        const uploadErrors: string[] = [];
+
         for (const [index, file] of editingProductImages.entries()) {
-          const { publicUrl, path } = await uploadImageToSupabase(supabase, 'product-images', userId, file);
-          imageRows.push({
-            product_id: editingProductId,
-            image_url: publicUrl,
-            image_path: path,
-            sort_order: index,
-          });
+          try {
+            const { publicUrl, path } = await uploadImageToSupabase(supabase, 'product-images', userId, file);
+            imageRows.push({
+              product_id: editingProductId,
+              image_url: publicUrl,
+              image_path: path,
+              sort_order: index,
+            });
+          } catch (uploadError) {
+            const message = uploadError instanceof Error ? uploadError.message : 'Δεν ήταν δυνατή η αποστολή της φωτογραφίας.';
+            uploadErrors.push(message);
+          }
         }
 
-        const { error: imageError } = await supabase.from('product_images').insert(imageRows);
-        if (imageError) throw imageError;
+        if (imageRows.length > 0) {
+          const { error: deleteError } = await supabase
+            .from('product_images')
+            .delete()
+            .eq('product_id', editingProductId);
+
+          if (deleteError) throw deleteError;
+
+          const { error: imageError } = await supabase.from('product_images').insert(imageRows);
+          if (imageError) throw imageError;
+        }
+
+        if (uploadErrors.length > 0) {
+          const message = uploadErrors[0] ?? 'Δεν ήταν δυνατή η αποστολή ορισμένων φωτογραφιών.';
+          setImageModerationMsg(message);
+          setErrorMsg(message);
+        }
       }
 
       resetEditProductState();
@@ -541,19 +556,33 @@ export default function FarmerDashboard() {
 
       if (insertedProduct?.id && productImages.length > 0) {
         const imageRows = [] as Array<{ product_id: number; image_url: string; image_path: string; sort_order: number }>;
+        const uploadErrors: string[] = [];
 
         for (const [index, file] of productImages.entries()) {
-          const { publicUrl, path } = await uploadImageToSupabase(supabase, 'product-images', userId, file);
-          imageRows.push({
-            product_id: insertedProduct.id,
-            image_url: publicUrl,
-            image_path: path,
-            sort_order: index,
-          });
+          try {
+            const { publicUrl, path } = await uploadImageToSupabase(supabase, 'product-images', userId, file);
+            imageRows.push({
+              product_id: insertedProduct.id,
+              image_url: publicUrl,
+              image_path: path,
+              sort_order: index,
+            });
+          } catch (uploadError) {
+            const message = uploadError instanceof Error ? uploadError.message : 'Δεν ήταν δυνατή η αποστολή της φωτογραφίας.';
+            uploadErrors.push(message);
+          }
         }
 
-        const { error: imageError } = await supabase.from('product_images').insert(imageRows);
-        if (imageError) throw imageError;
+        if (imageRows.length > 0) {
+          const { error: imageError } = await supabase.from('product_images').insert(imageRows);
+          if (imageError) throw imageError;
+        }
+
+        if (uploadErrors.length > 0) {
+          const message = uploadErrors[0] ?? 'Δεν ήταν δυνατή η αποστολή ορισμένων φωτογραφιών.';
+          setImageModerationMsg(message);
+          setErrorMsg(message);
+        }
       }
 
       setProdTitle('');
@@ -1616,6 +1645,11 @@ export default function FarmerDashboard() {
                       />
                       {editingProductImages.length > 0 && (
                         <p className="mt-2 text-xs text-stone-500">Επιλεγμένες νέες εικόνες: {editingProductImages.length}</p>
+                      )}
+                      {imageModerationMsg && (
+                        <div className="mt-2 rounded-md border border-rose-300 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700">
+                          {imageModerationMsg}
+                        </div>
                       )}
                     </div>
                   </div>

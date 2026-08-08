@@ -3,12 +3,12 @@ import sharp from 'sharp';
 
 import { env } from '@/env';
 
-const SKIN_EXPOSURE_BLOCK_THRESHOLD = 0.08;
-const STRONG_SKIN_COVERAGE_THRESHOLD = 0.16;
+const SKIN_EXPOSURE_BLOCK_THRESHOLD = 0.92;
+const STRONG_SKIN_COVERAGE_THRESHOLD = 0.96;
 const MIN_PIXEL_ALPHA = 20;
-const MIN_LARGE_CLUSTER_SIZE = 700;
-const MIN_SKIN_PIXELS_FOR_BLOCK = 2200;
-const MIN_DENSE_CLUSTER_SKIN_PIXELS = 1400;
+const MIN_LARGE_CLUSTER_SIZE = 9000;
+const MIN_SKIN_PIXELS_FOR_BLOCK = 16000;
+const MIN_DENSE_CLUSTER_SKIN_PIXELS = 14000;
 
 function buildModerationPrompt() {
   return [
@@ -146,7 +146,8 @@ async function moderateWithHeuristic(file: File) {
   const hasStrongSkinCoverage = skinExposureRatio >= STRONG_SKIN_COVERAGE_THRESHOLD;
   const hasTooManySkinPixels = skinLikePixels >= MIN_SKIN_PIXELS_FOR_BLOCK;
   const hasDenseSkinCluster = skinLikePixels >= MIN_DENSE_CLUSTER_SKIN_PIXELS && largestClusterSize >= MIN_LARGE_CLUSTER_SIZE;
-  const allowed = !(hasStrongSkinCoverage || hasTooManySkinPixels || hasDenseSkinCluster || (skinExposureRatio >= SKIN_EXPOSURE_BLOCK_THRESHOLD && hasLargeSkinCluster));
+  const hasExtremeSkinExposure = skinExposureRatio >= SKIN_EXPOSURE_BLOCK_THRESHOLD && hasLargeSkinCluster;
+  const allowed = !(hasStrongSkinCoverage || hasTooManySkinPixels || hasDenseSkinCluster || hasExtremeSkinExposure);
 
   return {
     allowed,
