@@ -8,6 +8,42 @@ const ALLOWED_BUCKETS = new Set(['avatars', 'product-images']);
 
 export const runtime = 'nodejs';
 
+function pickFirstNonEmpty(...values: Array<string | undefined>) {
+  for (const value of values) {
+    const normalized = value?.trim();
+    if (normalized) {
+      return normalized;
+    }
+  }
+
+  return undefined;
+}
+
+function getAwsRuntimeConfig() {
+  const bucket = pickFirstNonEmpty(
+    process.env.AWS_S3_BUCKET,
+    process.env.AWS_BUCKET_NAME,
+    process.env.S3_BUCKET_NAME,
+    env.AWS_S3_BUCKET,
+  );
+
+  const region = pickFirstNonEmpty(
+    process.env.AWS_REGION,
+    process.env.AWS_DEFAULT_REGION,
+    env.AWS_REGION,
+  );
+
+  const accessKeyId = pickFirstNonEmpty(process.env.AWS_ACCESS_KEY_ID, env.AWS_ACCESS_KEY_ID);
+  const secretAccessKey = pickFirstNonEmpty(process.env.AWS_SECRET_ACCESS_KEY, env.AWS_SECRET_ACCESS_KEY);
+
+  return {
+    bucket,
+    region,
+    accessKeyId,
+    secretAccessKey,
+  };
+}
+
 function sanitizeFilename(name: string) {
   return name
     .normalize('NFKD')
@@ -28,28 +64,32 @@ function buildPublicUrl(bucketName: string, region: string, key: string) {
 }
 
 function getS3Client() {
-  if (!env.AWS_REGION || !env.AWS_ACCESS_KEY_ID || !env.AWS_SECRET_ACCESS_KEY) {
+  const { region, accessKeyId, secretAccessKey } = getAwsRuntimeConfig();
+
+  if (!region || !accessKeyId || !secretAccessKey) {
     throw new Error('Λείπουν AWS credentials για upload εικόνων.');
   }
 
   return new S3Client({
-    region: env.AWS_REGION,
+    region,
     credentials: {
-      accessKeyId: env.AWS_ACCESS_KEY_ID,
-      secretAccessKey: env.AWS_SECRET_ACCESS_KEY,
+      accessKeyId,
+      secretAccessKey,
     },
   });
 }
 
 export async function POST(request: Request) {
-  if (!env.AWS_S3_BUCKET) {
+  const awsConfig = getAwsRuntimeConfig();
+
+  if (!awsConfig.bucket) {
     return NextResponse.json(
       { error: 'Δεν έχει ρυθμιστεί bucket για uploads. Χρησιμοποίησε AWS_S3_BUCKET (ή AWS_BUCKET_NAME / S3_BUCKET_NAME).' },
       { status: 500 },
     );
   }
 
-  if (!env.AWS_REGION) {
+  if (!awsConfig.region) {
     return NextResponse.json(
       { error: 'Δεν έχει ρυθμιστεί το AWS_REGION.' },
       { status: 500 },
@@ -97,7 +137,7 @@ export async function POST(request: Request) {
 
     await s3Client.send(
       new PutObjectCommand({
-        Bucket: env.AWS_S3_BUCKET,
+        Bucket: awsConfig.bucket,
         Key: objectKey,
         Body: body,
         ContentType: file.type,
@@ -107,7 +147,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       path: objectKey,
-      publicUrl: buildPublicUrl(env.AWS_S3_BUCKET, env.AWS_REGION, objectKey),
+      publicUrl: buildPublicUrl(awsConfig.bucket, awsConfig.region, objectKey),
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Αποτυχία upload εικόνας στο AWS.';
