@@ -145,6 +145,7 @@ export default function ConsumerDashboard() {
   const [message, setMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState<'products' | 'requests' | 'profile'>('products');
+  const [showWelcome, setShowWelcome] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileLayout, setMobileLayout] = useState<'grid' | 'list'>('grid');
   const [searchTerm, setSearchTerm] = useState('');
@@ -276,6 +277,11 @@ export default function ConsumerDashboard() {
   };
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const isMobile = /android|iphone|ipad|ipod|mobile/.test(window.navigator.userAgent.toLowerCase());
+      setShowWelcome(isMobile);
+    }
+
     const handleStorageChange = (event: StorageEvent) => {
       if (event.key === 'agrodirect-message-notifications') {
         syncNotificationCount(readNotificationCount());
@@ -1405,6 +1411,27 @@ export default function ConsumerDashboard() {
           {successMsg && <div className="rounded-md border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">{successMsg}</div>}
           {errorMsg && !selectedProduct && <div className="rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{errorMsg}</div>}
 
+          {showWelcome && (
+            <section className="mb-5 rounded-[30px] border border-emerald-200 bg-gradient-to-br from-emerald-700 to-emerald-900 p-5 text-white shadow-[0_16px_40px_rgba(5,150,105,0.18)] sm:p-6">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-100">Καλώς ήρθες</p>
+                  <h3 className="mt-2 text-2xl font-bold">Βρες φρέσκα προϊόντα από τοπικούς παραγωγούς</h3>
+                  <p className="mt-3 text-sm leading-7 text-emerald-50/90">
+                    Από εδώ μπορείς να δεις διαθέσιμα προϊόντα, να κάνεις αίτημα και να παρακολουθείς την πορεία της παραγγελίας σου.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowWelcome(false)}
+                  className="rounded-full border border-white/20 bg-white/10 px-2.5 py-1.5 text-sm font-medium text-white transition hover:bg-white/20"
+                >
+                  Κλείσιμο
+                </button>
+              </div>
+            </section>
+          )}
+
           <section id="products" data-section="products-section" data-coords="1,1" className={activeTab !== 'products' ? 'hidden' : ''}>
             <div className="w-full max-w-full overflow-x-hidden space-y-4 bg-[#fcfcf8] px-4 pb-6 pt-4 sm:hidden">
               <div className="relative overflow-hidden rounded-[28px] bg-[linear-gradient(135deg,#1f6b3d_0%,#2a8f4b_55%,#1f6b3d_100%)] px-5 py-5 text-white shadow-[0_20px_40px_rgba(31,107,61,0.18)]">
@@ -2313,7 +2340,10 @@ export default function ConsumerDashboard() {
         <div className="grid h-16 grid-cols-4">
           <button
             type="button"
-            onClick={() => setActiveTab('products')}
+            onClick={() => {
+              setActiveTab('products');
+              setShowWelcome(true);
+            }}
             className={`flex flex-col items-center justify-center gap-1 text-xs font-medium ${activeTab === 'products' ? 'text-emerald-700' : 'text-stone-500'}`}
           >
             <House className="h-5 w-5" />

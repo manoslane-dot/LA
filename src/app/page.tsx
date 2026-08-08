@@ -7,6 +7,8 @@ import {
   Star,
 } from "lucide-react";
 import { InstallPwaButton } from "@/components/InstallPwaButton";
+import { ShareInstallButton } from "@/components/ShareInstallButton";
+import { InstallQrCard } from "@/components/InstallQrCard";
 
 export default function Home() {
   return (
@@ -95,8 +97,14 @@ export default function Home() {
 
           <div className="mt-8 flex min-h-[72px] w-full max-w-xl items-center justify-center rounded-[20px] border border-white/20 bg-[#143c2b]/70 px-4 py-3 shadow-xl shadow-black/15 backdrop-blur-sm sm:mt-10 sm:w-fit sm:max-w-none">
             <div className="flex flex-col items-center gap-2 text-center sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-              <p className="text-sm font-semibold text-[#ffd47d]">Εγκατάσταση ως εφαρμογή</p>
-              <InstallPwaButton />
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="text-sm font-semibold text-[#ffd47d]">Εγκατάσταση ως εφαρμογή</p>
+                <InstallPwaButton />
+                <ShareInstallButton />
+              </div>
+              <div className="mt-4">
+                <InstallQrCard />
+              </div>
             </div>
           </div>
         </div>
