@@ -3,12 +3,12 @@ import sharp from 'sharp';
 
 import { env } from '@/env';
 
-const SKIN_EXPOSURE_BLOCK_THRESHOLD = 0.985;
-const STRONG_SKIN_COVERAGE_THRESHOLD = 0.995;
+const SKIN_EXPOSURE_BLOCK_THRESHOLD = 0.78;
+const STRONG_SKIN_COVERAGE_THRESHOLD = 0.88;
 const MIN_PIXEL_ALPHA = 20;
-const MIN_LARGE_CLUSTER_SIZE = 18000;
-const MIN_SKIN_PIXELS_FOR_BLOCK = 26000;
-const MIN_DENSE_CLUSTER_SKIN_PIXELS = 22000;
+const MIN_LARGE_CLUSTER_SIZE = 5000;
+const MIN_SKIN_PIXELS_FOR_BLOCK = 12000;
+const MIN_DENSE_CLUSTER_SKIN_PIXELS = 10000;
 
 function buildModerationPrompt() {
   return [
@@ -157,18 +157,6 @@ async function moderateWithHeuristic(file: File) {
   };
 }
 
-function looksExplicit(payload: { allowed?: boolean; reason?: string; labels?: string[]; confidence?: number } | null | undefined) {
-  if (!payload) {
-    return false;
-  }
-
-  const labels = (payload.labels ?? []).map((label) => label.toLowerCase());
-  const text = `${labels.join(' ')} ${payload.reason ?? ''}`.toLowerCase();
-
-  return labels.some((label) => ['unsafe-nudity', 'nsfw', 'nudity', 'sexual', 'porn', 'explicit', 'fetish', 'gore', 'violence'].includes(label))
-    || /(nudity|nude|sexual|porn|explicit|fetish|gore|graphic violence|violence)/.test(text);
-}
-
 async function moderateWithGemini(file: File) {
   const apiKey = env.GEMINI_API_KEY;
   if (!apiKey) {
@@ -237,7 +225,7 @@ export async function POST(request: Request) {
     const moderationResult = await moderateWithGemini(file);
     const heuristicResult = await moderateWithHeuristic(file);
 
-    if (moderationResult && moderationResult.allowed === false && looksExplicit(moderationResult)) {
+    if (moderationResult && moderationResult.allowed === false) {
       return NextResponse.json(
         {
           allowed: false,
