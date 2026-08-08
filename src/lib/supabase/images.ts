@@ -26,6 +26,28 @@ async function ensureImageIsAllowed(file: File) {
     return;
   }
 
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await fetch('/api/moderation/image', {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorPayload = await response.json().catch(() => null);
+      const message = typeof errorPayload?.error === 'string'
+        ? errorPayload.error
+        : 'Η εικόνα απορρίφθηκε: εντοπίστηκε πιθανό ακατάλληλο περιεχόμενο. Επιλέξτε άλλη εικόνα.';
+      throw new Error(message);
+    }
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('απορρίφθηκε')) {
+      throw error;
+    }
+  }
+
   const bitmap = await createImageBitmap(file);
   const canvas = document.createElement('canvas');
   canvas.width = 180;
