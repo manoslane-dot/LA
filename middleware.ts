@@ -4,7 +4,9 @@ import { getDashboardForRole, normalizeUserRole } from './src/lib/auth/roleRouti
 import { buildCompleteProfileRedirect, hasRequiredContactInfo } from './src/lib/auth/contactInfo';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const SUPABASE_ANON_KEY =
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
 function buildAuthRedirect(request: NextRequest): NextResponse {
   const redirectUrl = `${request.nextUrl.pathname}${request.nextUrl.search}`;
