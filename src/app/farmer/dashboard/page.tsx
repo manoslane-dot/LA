@@ -24,6 +24,7 @@ import {
 } from '@/lib/notifications';
 import { censorProfanity } from '@/lib/contentModeration';
 import { uploadImageToSupabase } from '@/lib/supabase/images';
+import { ContentModerationNotice } from '@/components/ContentModerationNotice';
 
 interface Product {
   id: number;
@@ -1496,6 +1497,9 @@ export default function FarmerDashboard() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Εικόνες προϊόντος (μέχρι 2)</label>
+                  <div className="mb-3">
+                    <ContentModerationNotice />
+                  </div>
                   <input
                     type="file"
                     accept="image/png,image/jpeg,image/webp"

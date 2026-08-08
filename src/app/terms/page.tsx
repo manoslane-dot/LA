@@ -195,6 +195,15 @@ export default function Terms() {
             </p>
           </section>
 
+          <section>
+            <h2 className="text-2xl font-bold text-stone-900 mb-4">10. Περιεχόμενο & Εικόνες</h2>
+            <div className="bg-white border border-stone-200 rounded-lg p-4">
+              <p className="text-stone-700 leading-relaxed">
+                Οι χρήστες δεσμεύονται να μην ανεβάζουν παράνομο, προσβλητικό ή μη αποδεκτό περιεχόμενο. Οι εικόνες που αποστέλλονται ελέγχονται αυτόματα για την προστασία της πλατφόρμας και των υπόλοιπων χρηστών.
+              </p>
+            </div>
+          </section>
+
           {/* Links */}
           <section className="pt-4 border-t border-stone-200">
             <h3 className="font-semibold text-stone-900 mb-3">Σχετικές σελίδες:</h3>

@@ -178,7 +178,13 @@ export default function Home() {
       </section>
 
       <footer className="bg-[#102d20] py-6 text-sm text-white/60">
-        <div className="mx-auto flex max-w-7xl flex-col gap-2 px-5 sm:flex-row sm:justify-between sm:px-8 lg:px-10"><p>AgroDirect © 2026. Ελληνική γη, άμεση αξία.</p></div>
+        <div className="mx-auto flex max-w-7xl flex-col gap-2 px-5 sm:flex-row sm:justify-between sm:px-8 lg:px-10">
+          <p>AgroDirect © 2026. Ελληνική γη, άμεση αξία.</p>
+          <div className="flex flex-wrap gap-4">
+            <Link href="/privacy" className="transition hover:text-white">Πολιτική Ιδιωτικότητας</Link>
+            <Link href="/terms" className="transition hover:text-white">Όροι Χρήσης</Link>
+          </div>
+        </div>
       </footer>
     </main>
   );

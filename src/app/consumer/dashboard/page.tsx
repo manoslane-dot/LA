@@ -32,6 +32,7 @@ import {
 } from '@/lib/geolocation';
 import { censorProfanity } from '@/lib/contentModeration';
 import { uploadImageToSupabase } from '@/lib/supabase/images';
+import { ContentModerationNotice } from '@/components/ContentModerationNotice';
 
 interface Product {
   id: number;
@@ -1866,6 +1867,9 @@ export default function ConsumerDashboard() {
                         {(userName ?? buyerEmail ?? 'U').charAt(0).toUpperCase()}
                       </span>
                     )}
+                  </div>
+                  <div className="mb-3">
+                    <ContentModerationNotice />
                   </div>
                   <label className="cursor-pointer rounded-lg border border-emerald-300 bg-white px-3 py-2 text-sm font-semibold text-emerald-700 text-left">
                     <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={handleAvatarUpload} />

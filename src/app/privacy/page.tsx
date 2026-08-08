@@ -142,12 +142,21 @@ export default function PrivacyPolicy() {
           <section>
             <h2 className="text-2xl font-bold text-stone-900 mb-4">6. Ασφάλεια Δεδομένων</h2>
             <p className="text-stone-700 leading-relaxed mb-3">
-              Χρησιμοποιούμε κρυπτογράφηση (HTTPS) και ασφαλείς πρακτικές για να προστατεύσουμε τα δεδομένα σας.
+              Χρησιμοποιούμε HTTPS, ασφαλείς πρακτικές αποθήκευσης και περιορισμένο access control για την προστασία των δεδομένων σας.
             </p>
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
               <p className="text-stone-700">
                 <strong>⚠️ Σημείωση:</strong> Καμία μέθοδος μετάδοσης στο διαδίκτυο δεν είναι 100% ασφαλής. 
                 Χρησιμοποιούμε βιομηχανικές πρακτικές, αλλά δεν μπορούμε να εγγυηθούμε απόλυτη ασφάλεια.
+              </p>
+            </div>
+          </section>
+
+          <section>
+            <h2 className="text-2xl font-bold text-stone-900 mb-4">7. Επεξεργασία Εικόνων & GDPR</h2>
+            <div className="bg-white border border-stone-200 rounded-lg p-4">
+              <p className="text-stone-700 leading-relaxed">
+                Όταν ανεβάζετε εικόνες, αυτές μπορεί να υποβληθούν σε αυτόματο έλεγχο για ακατάλληλο περιεχόμενο και να αποθηκευτούν με ασφαλή τρόπο στα υποστηριζόμενα μας συστήματα. Η επεξεργασία γίνεται για λόγους ασφαλείας της κοινότητας, συμμόρφωσης με πολιτικές περιεχομένου και προστασίας των χρηστών.
               </p>
             </div>
           </section>
