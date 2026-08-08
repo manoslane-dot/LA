@@ -3,8 +3,11 @@ import sharp from 'sharp';
 
 import { env } from '@/env';
 
-const SKIN_EXPOSURE_BLOCK_THRESHOLD = 0.68;
+const SKIN_EXPOSURE_BLOCK_THRESHOLD = 0.12;
+const STRONG_SKIN_COVERAGE_THRESHOLD = 0.22;
 const MIN_PIXEL_ALPHA = 20;
+const MIN_LARGE_CLUSTER_SIZE = 900;
+const MIN_SKIN_PIXELS_FOR_BLOCK = 2600;
 
 function buildModerationPrompt() {
   return [
@@ -17,7 +20,7 @@ function buildModerationPrompt() {
 
 function extractReason(payload: unknown): string {
   if (typeof payload !== 'object' || payload === null) {
-    return 'Η εικόνα απορρίφθηκε: εντοπίστηκε πιθανό ακατάλληλο περιεχόμενο.';
+    return 'Δεν επιτρέπονται NSFW / γυμνές / πορνοειδείς εικόνες σε αυτό το site.';
   }
 
   const candidate = payload as { reason?: unknown; error?: unknown };
@@ -28,7 +31,7 @@ function extractReason(payload: unknown): string {
     return candidate.error;
   }
 
-  return 'Η εικόνα απορρίφθηκε: εντοπίστηκε πιθανό ακατάλληλο περιεχόμενο.';
+  return 'Δεν επιτρέπονται NSFW / γυμνές / πορνοειδείς εικόνες σε αυτό το site.';
 }
 
 async function moderateWithHeuristic(file: File) {
@@ -38,25 +41,24 @@ async function moderateWithHeuristic(file: File) {
 
   let visiblePixels = 0;
   let skinLikePixels = 0;
-
   const channels = info.channels;
-  for (let index = 0; index < data.length; index += channels) {
-    const r = data[index] ?? 0;
-    const g = data[index + 1] ?? 0;
-    const b = data[index + 2] ?? 0;
-    const a = channels > 3 ? (data[index + 3] ?? 0) : 255;
+  const width = info.width;
+  const height = info.height;
+  const totalPixels = width * height;
+  const visited = new Uint8Array(totalPixels);
+  let largestClusterSize = 0;
 
+  const getIndex = (x: number, y: number) => y * width + x;
+  const isSkinTone = (r: number, g: number, b: number, a: number) => {
     if (a < MIN_PIXEL_ALPHA) {
-      continue;
+      return false;
     }
-
-    visiblePixels += 1;
 
     const max = Math.max(r, g, b);
     const min = Math.min(r, g, b);
     const chroma = max - min;
 
-    const isSkinTone = (
+    return (
       r > 95 &&
       g > 40 &&
       b > 20 &&
@@ -65,20 +67,90 @@ async function moderateWithHeuristic(file: File) {
       chroma > 15 &&
       Math.abs(r - g) > 15
     );
+  };
 
-    if (isSkinTone) {
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      const index = getIndex(x, y);
+      const pixelOffset = index * channels;
+      const r = data[pixelOffset] ?? 0;
+      const g = data[pixelOffset + 1] ?? 0;
+      const b = data[pixelOffset + 2] ?? 0;
+      const a = channels > 3 ? (data[pixelOffset + 3] ?? 0) : 255;
+
+      if (!isSkinTone(r, g, b, a)) {
+        continue;
+      }
+
       skinLikePixels += 1;
+      if (visited[index]) {
+        continue;
+      }
+
+      const stack = [index];
+      visited[index] = 1;
+      let clusterSize = 0;
+
+      while (stack.length > 0) {
+        const current = stack.pop();
+        if (current === undefined) {
+          continue;
+        }
+
+        clusterSize += 1;
+        const currentX = current % width;
+        const currentY = Math.floor(current / width);
+
+        const neighbors = [
+          [currentX - 1, currentY],
+          [currentX + 1, currentY],
+          [currentX, currentY - 1],
+          [currentX, currentY + 1],
+        ];
+
+        for (const [nextX, nextY] of neighbors) {
+          if (nextX < 0 || nextY < 0 || nextX >= width || nextY >= height) {
+            continue;
+          }
+
+          const nextIndex = getIndex(nextX, nextY);
+          if (visited[nextIndex]) {
+            continue;
+          }
+
+          const nextOffset = nextIndex * channels;
+          const nextR = data[nextOffset] ?? 0;
+          const nextG = data[nextOffset + 1] ?? 0;
+          const nextB = data[nextOffset + 2] ?? 0;
+          const nextA = channels > 3 ? (data[nextOffset + 3] ?? 0) : 255;
+
+          if (!isSkinTone(nextR, nextG, nextB, nextA)) {
+            continue;
+          }
+
+          visited[nextIndex] = 1;
+          stack.push(nextIndex);
+        }
+      }
+
+      if (clusterSize > largestClusterSize) {
+        largestClusterSize = clusterSize;
+      }
     }
   }
 
+  visiblePixels = totalPixels;
   const skinExposureRatio = visiblePixels === 0 ? 0 : skinLikePixels / visiblePixels;
-  const allowed = skinExposureRatio < SKIN_EXPOSURE_BLOCK_THRESHOLD;
+  const hasLargeSkinCluster = largestClusterSize >= MIN_LARGE_CLUSTER_SIZE;
+  const hasStrongSkinCoverage = skinExposureRatio >= STRONG_SKIN_COVERAGE_THRESHOLD;
+  const hasTooManySkinPixels = skinLikePixels >= MIN_SKIN_PIXELS_FOR_BLOCK;
+  const allowed = !(hasStrongSkinCoverage || hasTooManySkinPixels || (skinExposureRatio >= SKIN_EXPOSURE_BLOCK_THRESHOLD && hasLargeSkinCluster));
 
   return {
     allowed,
-    reason: allowed ? 'safe' : 'Η εικόνα απορρίφθηκε: εντοπίστηκε πιθανό ακατάλληλο περιεχόμενο.',
-    confidence: allowed ? 0.65 : 0.9,
-    labels: allowed ? ['safe'] : ['unsafe-skin-tone'],
+    reason: allowed ? 'safe' : 'Δεν επιτρέπονται NSFW / γυμνές / πορνοειδή εικόνες σε αυτό το site.',
+    confidence: allowed ? 0.65 : 0.98,
+    labels: allowed ? ['safe'] : ['unsafe-nudity', 'nsfw'],
   };
 }
 
@@ -183,7 +255,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         allowed: false,
-        error: 'Η εικόνα απορρίφθηκε: δεν ήταν δυνατή η ασφαλής επεξεργασία της.',
+        error: 'Δεν επιτρέπονται NSFW / γυμνές / πορνοειδείς εικόνες σε αυτό το site.',
       },
       { status: 400 }
     );
