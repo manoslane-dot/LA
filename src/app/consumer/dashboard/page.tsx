@@ -168,6 +168,8 @@ export default function ConsumerDashboard() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [showAvatarPreview, setShowAvatarPreview] = useState(false);
+  const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(null);
+  const [avatarPreviewError, setAvatarPreviewError] = useState('');
   const [notificationCount, setNotificationCount] = useState(0);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -1867,6 +1869,17 @@ export default function ConsumerDashboard() {
                   </div>
                   <label className="cursor-pointer rounded-lg border border-emerald-300 bg-white px-3 py-2 text-sm font-semibold text-emerald-700 text-left">
                     <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={handleAvatarUpload} />
+                  {avatarPreviewUrl && (
+                    <div className="mt-3 flex items-center gap-3 rounded-lg border border-stone-200 bg-stone-50 p-3">
+                      <img src={avatarPreviewUrl} alt="Προεπισκόπηση avatar" className="h-16 w-16 rounded-full border border-stone-200 object-cover" />
+                      <p className="text-sm text-stone-600">Προεπισκόπηση πριν την αποθήκευση</p>
+                    </div>
+                  )}
+                  {avatarPreviewError && (
+                    <div className="mt-2 rounded-md border border-rose-300 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700">
+                      {avatarPreviewError}
+                    </div>
+                  )}
                     {uploadingAvatar ? 'Αποστολή...' : 'Αλλαγή φωτογραφίας'}
                   </label>
                 </div>

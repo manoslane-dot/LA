@@ -135,9 +135,15 @@ export default function FarmerDashboard() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [showAvatarPreview, setShowAvatarPreview] = useState(false);
+  const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(null);
+  const [avatarPreviewError, setAvatarPreviewError] = useState('');
   const [selectedProductImage, setSelectedProductImage] = useState<string | null>(null);
   const [showProductImagePreview, setShowProductImagePreview] = useState(false);
   const [productImages, setProductImages] = useState<File[]>([]);
+  const [productPreviewUrls, setProductPreviewUrls] = useState<string[]>([]);
+  const [productPreviewError, setProductPreviewError] = useState('');
+  const [editingProductPreviewUrls, setEditingProductPreviewUrls] = useState<string[]>([]);
+  const [editingProductPreviewError, setEditingProductPreviewError] = useState('');
   const [productImagesByProductId, setProductImagesByProductId] = useState<Record<number, Array<{ image_url: string; image_path: string; sort_order: number }>>>({});
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [notificationCount, setNotificationCount] = useState(0);
@@ -404,14 +410,51 @@ export default function FarmerDashboard() {
     void checkUserAndFetchData();
   }, [router, supabase, fetchProducts, fetchRequests, fetchReviews]);
 
+  const revokePreviewUrls = (urls: string[]) => {
+    urls.forEach((url) => {
+      if (url.startsWith('blob:')) {
+        URL.revokeObjectURL(url);
+      }
+    });
+  };
+
+  const createPreviewForFile = async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await fetch('/api/moderation/image', {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorPayload = await response.json().catch(() => null);
+      const message = typeof errorPayload?.error === 'string'
+        ? errorPayload.error
+        : 'Δεν επιτρέπονται NSFW / γυμνές / πορνοειδείς εικόνες σε αυτό το site.';
+      throw new Error(message);
+    }
+
+    return URL.createObjectURL(file);
+  };
+
   const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file || !userId) return;
 
     setUploadingAvatar(true);
     setImageModerationMsg('');
+    setAvatarPreviewError('');
 
     try {
+      const previewUrl = await createPreviewForFile(file);
+      setAvatarPreviewUrl((current) => {
+        if (current && current.startsWith('blob:')) {
+          URL.revokeObjectURL(current);
+        }
+        return previewUrl;
+      });
+
       const { publicUrl } = await uploadImageToSupabase(supabase, 'avatars', userId, file);
       const { error } = await supabase.from('farmer_profiles').upsert({
         user_id: userId,
@@ -424,6 +467,13 @@ export default function FarmerDashboard() {
     } catch (err) {
       console.error('Σφάλμα upload avatar:', err);
       const message = err instanceof Error ? err.message : 'Δεν ήταν δυνατή η αποστολή της φωτογραφίας.';
+      setAvatarPreviewUrl((current) => {
+        if (current && current.startsWith('blob:')) {
+          URL.revokeObjectURL(current);
+        }
+        return null;
+      });
+      setAvatarPreviewError(message);
       setImageModerationMsg(message);
       setErrorMsg(message);
     } finally {
@@ -439,7 +489,10 @@ export default function FarmerDashboard() {
     setEditingProductUnit('κιλό');
     setEditingProductStatus('');
     setEditingProductImages([]);
-  }, []);
+    revokePreviewUrls(editingProductPreviewUrls);
+    setEditingProductPreviewUrls([]);
+    setEditingProductPreviewError('');
+  }, [editingProductPreviewUrls]);
 
   const handleStartEditProduct = (product: Product) => {
     setEditingProductId(product.id);
@@ -449,6 +502,9 @@ export default function FarmerDashboard() {
     setEditingProductUnit(product.unit || 'κιλό');
     setEditingProductStatus(product.status || '');
     setEditingProductImages([]);
+    revokePreviewUrls(editingProductPreviewUrls);
+    setEditingProductPreviewUrls([]);
+    setEditingProductPreviewError('');
   };
 
   const handleUpdateProduct = async (e: React.FormEvent) => {
@@ -1444,14 +1500,63 @@ export default function FarmerDashboard() {
                     type="file"
                     accept="image/png,image/jpeg,image/webp"
                     multiple
-                    onChange={(e) => {
+                    onChange={async (e) => {
                       const files = Array.from(e.target.files ?? []).slice(0, 2);
+                      revokePreviewUrls(productPreviewUrls);
+                      setProductPreviewUrls([]);
+                      setProductPreviewError('');
                       setProductImages(files);
+
+                      if (files.length === 0) {
+                        return;
+                      }
+
+                      const previewUrls: string[] = [];
+                      try {
+                        for (const file of files) {
+                          const previewUrl = await createPreviewForFile(file);
+                          previewUrls.push(previewUrl);
+                        }
+                        setProductPreviewUrls(previewUrls);
+                      } catch (err) {
+                        const message = err instanceof Error ? err.message : 'Δεν ήταν δυνατή η προεπισκόπηση της εικόνας.';
+                        setProductPreviewUrls([]);
+                        setProductPreviewError(message);
+                        setImageModerationMsg(message);
+                        setErrorMsg(message);
+                      }
                     }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
                   />
                   {productImages.length > 0 && (
                     <p className="mt-2 text-xs text-stone-500">Επιλεγμένες εικόνες: {productImages.length}</p>
+                  )}
+                  {productPreviewUrls.length > 0 && (
+                    <div className="mt-3 grid grid-cols-2 gap-2">
+                      {productPreviewUrls.map((previewUrl, index) => (
+                        <div key={previewUrl} className="relative">
+                          <img src={previewUrl} alt="Προεπισκόπηση προϊόντος" className="h-24 w-full rounded-md border border-stone-200 object-cover" />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              URL.revokeObjectURL(previewUrl);
+                              const nextUrls = productPreviewUrls.filter((_, previewIndex) => previewIndex !== index);
+                              setProductPreviewUrls(nextUrls);
+                              setProductImages((current) => current.filter((_, currentIndex) => currentIndex !== index));
+                            }}
+                            className="absolute right-1 top-1 rounded-full bg-stone-900/80 p-1 text-white"
+                            aria-label="Αφαίρεση προεπισκόπησης"
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {productPreviewError && (
+                    <div className="mt-2 rounded-md border border-rose-300 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700">
+                      {productPreviewError}
+                    </div>
                   )}
                 </div>
                 <button
@@ -1637,16 +1742,65 @@ export default function FarmerDashboard() {
                         type="file"
                         accept="image/png,image/jpeg,image/webp"
                         multiple
-                        onChange={(e) => {
+                        onChange={async (e) => {
                           const files = Array.from(e.target.files ?? []).slice(0, 2);
+                          revokePreviewUrls(editingProductPreviewUrls);
+                          setEditingProductPreviewUrls([]);
+                          setEditingProductPreviewError('');
                           setEditingProductImages(files);
+
+                          if (files.length === 0) {
+                            return;
+                          }
+
+                          const previewUrls: string[] = [];
+                          try {
+                            for (const file of files) {
+                              const previewUrl = await createPreviewForFile(file);
+                              previewUrls.push(previewUrl);
+                            }
+                            setEditingProductPreviewUrls(previewUrls);
+                          } catch (err) {
+                            const message = err instanceof Error ? err.message : 'Δεν ήταν δυνατή η προεπισκόπηση της εικόνας.';
+                            setEditingProductPreviewUrls([]);
+                            setEditingProductPreviewError(message);
+                            setImageModerationMsg(message);
+                            setErrorMsg(message);
+                          }
                         }}
                         className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
                       />
                       {editingProductImages.length > 0 && (
                         <p className="mt-2 text-xs text-stone-500">Επιλεγμένες νέες εικόνες: {editingProductImages.length}</p>
                       )}
-                      {imageModerationMsg && (
+                      {editingProductPreviewUrls.length > 0 && (
+                        <div className="mt-3 grid grid-cols-2 gap-2">
+                          {editingProductPreviewUrls.map((previewUrl, index) => (
+                            <div key={previewUrl} className="relative">
+                              <img src={previewUrl} alt="Προεπισκόπηση νέας εικόνας προϊόντος" className="h-24 w-full rounded-md border border-stone-200 object-cover" />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  URL.revokeObjectURL(previewUrl);
+                                  const nextUrls = editingProductPreviewUrls.filter((_, previewIndex) => previewIndex !== index);
+                                  setEditingProductPreviewUrls(nextUrls);
+                                  setEditingProductImages((current) => current.filter((_, currentIndex) => currentIndex !== index));
+                                }}
+                                className="absolute right-1 top-1 rounded-full bg-stone-900/80 p-1 text-white"
+                                aria-label="Αφαίρεση προεπισκόπησης"
+                              >
+                                <X className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {editingProductPreviewError && (
+                        <div className="mt-2 rounded-md border border-rose-300 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700">
+                          {editingProductPreviewError}
+                        </div>
+                      )}
+                      {imageModerationMsg && !editingProductPreviewError && (
                         <div className="mt-2 rounded-md border border-rose-300 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700">
                           {imageModerationMsg}
                         </div>
