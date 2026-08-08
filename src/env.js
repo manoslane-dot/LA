@@ -39,10 +39,13 @@ export const env = createEnv({
     NODE_ENV: process.env.NODE_ENV,
     SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
     GEMINI_API_KEY: process.env.GEMINI_API_KEY,
-    AWS_REGION: process.env.AWS_REGION,
     AWS_ACCESS_KEY_ID: process.env.AWS_ACCESS_KEY_ID,
     AWS_SECRET_ACCESS_KEY: process.env.AWS_SECRET_ACCESS_KEY,
-    AWS_S3_BUCKET: process.env.AWS_S3_BUCKET,
+    AWS_REGION: process.env.AWS_REGION ?? process.env.AWS_DEFAULT_REGION,
+    AWS_S3_BUCKET:
+      process.env.AWS_S3_BUCKET ??
+      process.env.AWS_BUCKET_NAME ??
+      process.env.S3_BUCKET_NAME,
     AWS_S3_PUBLIC_BASE_URL: process.env.AWS_S3_PUBLIC_BASE_URL,
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
     NEXT_PUBLIC_SUPABASE_ANON_KEY:

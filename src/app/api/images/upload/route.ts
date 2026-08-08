@@ -44,7 +44,7 @@ function getS3Client() {
 export async function POST(request: Request) {
   if (!env.AWS_S3_BUCKET) {
     return NextResponse.json(
-      { error: 'Δεν έχει ρυθμιστεί το AWS_S3_BUCKET.' },
+      { error: 'Δεν έχει ρυθμιστεί bucket για uploads. Χρησιμοποίησε AWS_S3_BUCKET (ή AWS_BUCKET_NAME / S3_BUCKET_NAME).' },
       { status: 500 },
     );
   }
