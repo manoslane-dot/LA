@@ -3,12 +3,12 @@ import sharp from 'sharp';
 
 import { env } from '@/env';
 
-const SKIN_EXPOSURE_BLOCK_THRESHOLD = 0.78;
-const STRONG_SKIN_COVERAGE_THRESHOLD = 0.88;
+const SKIN_EXPOSURE_BLOCK_THRESHOLD = 0.96;
+const STRONG_SKIN_COVERAGE_THRESHOLD = 0.99;
 const MIN_PIXEL_ALPHA = 20;
-const MIN_LARGE_CLUSTER_SIZE = 5000;
-const MIN_SKIN_PIXELS_FOR_BLOCK = 12000;
-const MIN_DENSE_CLUSTER_SKIN_PIXELS = 10000;
+const MIN_LARGE_CLUSTER_SIZE = 12000;
+const MIN_SKIN_PIXELS_FOR_BLOCK = 22000;
+const MIN_DENSE_CLUSTER_SKIN_PIXELS = 18000;
 
 function buildModerationPrompt() {
   return [
@@ -237,6 +237,10 @@ export async function POST(request: Request) {
       );
     }
 
+    if (moderationResult && moderationResult.allowed === true) {
+      return NextResponse.json({ allowed: true, source: 'gemini' });
+    }
+
     if (heuristicResult.allowed === false) {
       return NextResponse.json(
         {
@@ -247,10 +251,6 @@ export async function POST(request: Request) {
         },
         { status: 400 }
       );
-    }
-
-    if (moderationResult && moderationResult.allowed === true) {
-      return NextResponse.json({ allowed: true, source: 'gemini' });
     }
 
     return NextResponse.json({ allowed: true, source: 'heuristic' });
