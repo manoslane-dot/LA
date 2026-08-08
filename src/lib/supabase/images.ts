@@ -92,7 +92,7 @@ export async function compressAndNormalizeImage(file: File): Promise<File> {
 }
 
 export async function uploadImageToSupabase(
-  supabase: SupabaseClient,
+  _supabase: SupabaseClient,
   bucket: 'avatars' | 'product-images',
   userId: string,
   file: File
@@ -100,40 +100,35 @@ export async function uploadImageToSupabase(
   await ensureImageIsAllowed(file);
   const compressedFile = await compressAndNormalizeImage(file);
 
-  const extension = compressedFile.name.split('.').pop() || 'webp';
-  const path = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${extension}`;
+  const formData = new FormData();
+  formData.append('file', compressedFile);
+  formData.append('bucket', bucket);
+  formData.append('userId', userId);
 
-  const { data, error } = await supabase.storage.from(bucket).upload(path, compressedFile, {
-    cacheControl: '3600',
-    upsert: false,
-    contentType: compressedFile.type,
+  const response = await fetch('/api/images/upload', {
+    method: 'POST',
+    body: formData,
   });
 
-  if (error) {
-    throw error;
+  const payload = (await response.json().catch(() => null)) as {
+    path?: string;
+    publicUrl?: string;
+    error?: string;
+  } | null;
+
+  if (!response.ok) {
+    const message = typeof payload?.error === 'string'
+      ? payload.error
+      : 'Δεν ήταν δυνατή η αποστολή της εικόνας στο AWS.';
+    throw new Error(message);
   }
 
-  if (!data) {
-    throw new Error('Δεν δημιουργήθηκε αρχείο στο Supabase Storage');
-  }
-
-  let publicUrl = path;
-
-  try {
-    const { data: signedData, error: signedError } = await supabase.storage.from(bucket).createSignedUrl(path, 60 * 60 * 24 * 7);
-    if (!signedError && signedData?.signedUrl) {
-      publicUrl = signedData.signedUrl;
-    } else {
-      const { data: publicData } = supabase.storage.from(bucket).getPublicUrl(path);
-      publicUrl = publicData.publicUrl;
-    }
-  } catch {
-    const { data: publicData } = supabase.storage.from(bucket).getPublicUrl(path);
-    publicUrl = publicData.publicUrl;
+  if (!payload?.path || !payload?.publicUrl) {
+    throw new Error('Μη έγκυρη απόκριση από το AWS upload endpoint.');
   }
 
   return {
-    path,
-    publicUrl,
+    path: payload.path,
+    publicUrl: payload.publicUrl,
   };
 }
