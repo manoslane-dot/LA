@@ -39,13 +39,15 @@ async function ensureImageIsAllowed(file: File) {
       const errorPayload = await response.json().catch(() => null);
       const message = typeof errorPayload?.error === 'string'
         ? errorPayload.error
-        : 'Η εικόνα απορρίφθηκε: εντοπίστηκε πιθανό ακατάλληλο περιεχόμενο. Επιλέξτε άλλη εικόνα.';
+        : 'Δεν επιτρέπονται NSFW / γυμνές / πορνοειδείς εικόνες σε αυτό το site.';
       throw new Error(message);
     }
   } catch (error) {
-    if (error instanceof Error && error.message.includes('απορρίφθηκε')) {
+    if (error instanceof Error) {
       throw error;
     }
+
+    throw new Error('Δεν επιτρέπονται NSFW / γυμνές / πορνοειδείς εικόνες σε αυτό το site.');
   }
 
   const bitmap = await createImageBitmap(file);

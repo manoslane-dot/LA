@@ -108,6 +108,7 @@ export default function FarmerDashboard() {
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const [imageModerationMsg, setImageModerationMsg] = useState('');
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
@@ -408,6 +409,7 @@ export default function FarmerDashboard() {
     if (!file || !userId) return;
 
     setUploadingAvatar(true);
+    setImageModerationMsg('');
 
     try {
       const { publicUrl } = await uploadImageToSupabase(supabase, 'avatars', userId, file);
@@ -421,7 +423,9 @@ export default function FarmerDashboard() {
       setAvatarUrl(publicUrl);
     } catch (err) {
       console.error('Σφάλμα upload avatar:', err);
-      alert(err instanceof Error ? err.message : 'Δεν ήταν δυνατή η αποστολή της φωτογραφίας.');
+      const message = err instanceof Error ? err.message : 'Δεν ήταν δυνατή η αποστολή της φωτογραφίας.';
+      setImageModerationMsg(message);
+      setErrorMsg(message);
     } finally {
       setUploadingAvatar(false);
     }
@@ -453,6 +457,7 @@ export default function FarmerDashboard() {
     if (!editingProductTitle.trim() || !editingProductQuantity || !editingProductPrice) return;
 
     setUpdatingProduct(true);
+    setImageModerationMsg('');
 
     try {
       const { error: updateError } = await supabase
@@ -496,7 +501,9 @@ export default function FarmerDashboard() {
       await fetchProducts(userId);
     } catch (err) {
       console.error('Σφάλμα ενημέρωσης προϊόντος:', err);
-      alert(err instanceof Error ? err.message : 'Σφάλμα ενημέρωσης προϊόντος.');
+      const message = err instanceof Error ? err.message : 'Σφάλμα ενημέρωσης προϊόντος.';
+      setImageModerationMsg(message);
+      setErrorMsg(message);
     } finally {
       setUpdatingProduct(false);
     }
@@ -512,6 +519,7 @@ export default function FarmerDashboard() {
     }
 
     setSubmittingProd(true);
+    setImageModerationMsg('');
 
     try {
       const { data: insertedProduct, error: insertError } = await supabase
@@ -556,7 +564,9 @@ export default function FarmerDashboard() {
       await fetchProducts(userId);
     } catch (err) {
       console.error('Σφάλμα δημιουργίας προϊόντος:', err);
-      alert(err instanceof Error ? err.message : 'Σφάλμα δημιουργίας προϊόντος.');
+      const message = err instanceof Error ? err.message : 'Σφάλμα δημιουργίας προϊόντος.';
+      setImageModerationMsg(message);
+      setErrorMsg(message);
     } finally {
       setSubmittingProd(false);
     }
@@ -1770,10 +1780,17 @@ export default function FarmerDashboard() {
                         </span>
                       )}
                     </div>
-                    <label className="cursor-pointer rounded-lg border border-emerald-300 bg-white px-3 py-2 text-sm font-semibold text-emerald-700 text-left">
-                      <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={handleAvatarUpload} />
-                      {uploadingAvatar ? 'Αποστολή...' : 'Αλλαγή φωτογραφίας'}
-                    </label>
+                    <div className="flex flex-col gap-2">
+                      <label className="cursor-pointer rounded-lg border border-emerald-300 bg-white px-3 py-2 text-sm font-semibold text-emerald-700 text-left">
+                        <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={handleAvatarUpload} />
+                        {uploadingAvatar ? 'Αποστολή...' : 'Αλλαγή φωτογραφίας'}
+                      </label>
+                      {imageModerationMsg && (
+                        <div className="rounded-lg border border-rose-300 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700">
+                          {imageModerationMsg}
+                        </div>
+                      )}
+                    </div>
                   </div>
                   <div className="rounded-[22px] border border-stone-200 bg-white p-4 text-left shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
                     <p className="mb-1 text-left text-xs font-semibold text-stone-600">Ονοματεπώνυμο</p>

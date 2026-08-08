@@ -3,11 +3,12 @@ import sharp from 'sharp';
 
 import { env } from '@/env';
 
-const SKIN_EXPOSURE_BLOCK_THRESHOLD = 0.12;
-const STRONG_SKIN_COVERAGE_THRESHOLD = 0.22;
+const SKIN_EXPOSURE_BLOCK_THRESHOLD = 0.08;
+const STRONG_SKIN_COVERAGE_THRESHOLD = 0.16;
 const MIN_PIXEL_ALPHA = 20;
-const MIN_LARGE_CLUSTER_SIZE = 900;
-const MIN_SKIN_PIXELS_FOR_BLOCK = 2600;
+const MIN_LARGE_CLUSTER_SIZE = 700;
+const MIN_SKIN_PIXELS_FOR_BLOCK = 2200;
+const MIN_DENSE_CLUSTER_SKIN_PIXELS = 1400;
 
 function buildModerationPrompt() {
   return [
@@ -144,7 +145,8 @@ async function moderateWithHeuristic(file: File) {
   const hasLargeSkinCluster = largestClusterSize >= MIN_LARGE_CLUSTER_SIZE;
   const hasStrongSkinCoverage = skinExposureRatio >= STRONG_SKIN_COVERAGE_THRESHOLD;
   const hasTooManySkinPixels = skinLikePixels >= MIN_SKIN_PIXELS_FOR_BLOCK;
-  const allowed = !(hasStrongSkinCoverage || hasTooManySkinPixels || (skinExposureRatio >= SKIN_EXPOSURE_BLOCK_THRESHOLD && hasLargeSkinCluster));
+  const hasDenseSkinCluster = skinLikePixels >= MIN_DENSE_CLUSTER_SKIN_PIXELS && largestClusterSize >= MIN_LARGE_CLUSTER_SIZE;
+  const allowed = !(hasStrongSkinCoverage || hasTooManySkinPixels || hasDenseSkinCluster || (skinExposureRatio >= SKIN_EXPOSURE_BLOCK_THRESHOLD && hasLargeSkinCluster));
 
   return {
     allowed,
@@ -220,6 +222,7 @@ export async function POST(request: Request) {
 
   try {
     const moderationResult = await moderateWithGemini(file);
+    const heuristicResult = await moderateWithHeuristic(file);
 
     if (moderationResult && moderationResult.allowed === false) {
       return NextResponse.json(
@@ -233,11 +236,6 @@ export async function POST(request: Request) {
       );
     }
 
-    if (moderationResult && moderationResult.allowed === true) {
-      return NextResponse.json({ allowed: true, source: 'gemini' });
-    }
-
-    const heuristicResult = await moderateWithHeuristic(file);
     if (heuristicResult.allowed === false) {
       return NextResponse.json(
         {
@@ -248,6 +246,10 @@ export async function POST(request: Request) {
         },
         { status: 400 }
       );
+    }
+
+    if (moderationResult && moderationResult.allowed === true) {
+      return NextResponse.json({ allowed: true, source: 'gemini' });
     }
 
     return NextResponse.json({ allowed: true, source: 'heuristic' });

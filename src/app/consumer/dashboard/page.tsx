@@ -134,6 +134,7 @@ export default function ConsumerDashboard() {
   const [loading, setLoading] = useState(true);
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+  const [imageModerationMsg, setImageModerationMsg] = useState('');
   const [buyerId, setBuyerId] = useState<string | null>(null);
   const [buyerEmail, setBuyerEmail] = useState<string | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
@@ -837,6 +838,7 @@ export default function ConsumerDashboard() {
 
     setUploadingAvatar(true);
     setErrorMsg('');
+    setImageModerationMsg('');
 
     try {
       const { publicUrl } = await uploadImageToSupabase(supabase, 'avatars', buyerId, file);
@@ -850,7 +852,9 @@ export default function ConsumerDashboard() {
       setAvatarUrl(publicUrl);
     } catch (err) {
       console.error('Σφάλμα upload avatar:', err);
-      setErrorMsg(err instanceof Error ? err.message : 'Δεν ήταν δυνατή η αποστολή της φωτογραφίας.');
+      const message = err instanceof Error ? err.message : 'Δεν ήταν δυνατή η αποστολή της φωτογραφίας.';
+      setErrorMsg(message);
+      setImageModerationMsg(message);
     } finally {
       setUploadingAvatar(false);
     }
